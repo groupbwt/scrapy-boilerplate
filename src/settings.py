@@ -55,7 +55,4 @@ LOG_LEVEL = 'INFO'
 #    'scrapy.extensions.telnet.TelnetConsole': None,
 #}
 
-ITEM_PIPELINES = {
-    'pipelines.SitemapPipeline': 300,
-    'pipelines.ProfilePipeline': 300,
-}
+ITEM_PIPELINES = {}

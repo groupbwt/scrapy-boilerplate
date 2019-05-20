@@ -48,8 +48,7 @@ DOWNLOADER_MIDDLEWARES = {
     'middlewares.LogErrorsMiddleware': 550
 }
 
-# LOG_LEVEL = 'DEBUG'
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = os.getenv('LOG_LEVEL')
 
 #EXTENSIONS = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,

@@ -52,3 +52,6 @@ class PikaFactory(protocol.ReconnectingClientFactory):
 
     def ack_message(self, msg):
         msg.channel.basic_ack(delivery_tag=msg.method.delivery_tag)
+
+    def nack_message(self, msg):
+        msg.channel.basic_nack(delivery_tag=msg.method.delivery_tag)

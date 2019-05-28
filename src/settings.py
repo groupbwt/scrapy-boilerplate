@@ -55,3 +55,5 @@ LOG_LEVEL = os.getenv('LOG_LEVEL')
 #}
 
 ITEM_PIPELINES = {}
+
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))

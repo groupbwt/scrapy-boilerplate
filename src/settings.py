@@ -6,6 +6,7 @@ BOT_NAME = 'YOUR_BOT_NAME_HERE'
 
 SPIDER_MODULES = ['spiders']
 NEWSPIDER_MODULE = 'spiders'
+COMMANDS_MODULE = 'commands'
 
 PROXY = os.getenv('PROXY')
 PROXY_AUTH = os.getenv('PROXY_AUTH')

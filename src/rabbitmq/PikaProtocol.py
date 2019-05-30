@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+import os
+
 from pika import spec
 from pika.adapters import twisted_connection
 from twisted.internet import defer, protocol
@@ -19,7 +22,7 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
     @inlineCallbacks
     def connectionReady(self):
         self._channel = yield self.channel()
-        yield self._channel.basic_qos(prefetch_count=2)
+        yield self._channel.basic_qos(prefetch_count=os.getenv('CONCURRENT_REQUESTS'))
         # yield self._channel.add_on_close_callback(self.on_channel_close)
         self.connected = True
         yield self._channel.confirm_delivery()

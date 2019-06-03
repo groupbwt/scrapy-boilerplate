@@ -26,7 +26,7 @@ HTTPERROR_ALLOW_ALL = True
 
 #COOKIES_ENABLED = False
 
-#TELNETCONSOLE_ENABLED = False
+TELNETCONSOLE_ENABLED = False
 TELNETCONSOLE_PASSWORD = 'password'
 
 # Override the default request headers:

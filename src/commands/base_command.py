@@ -13,10 +13,10 @@ class BaseCommand(ScrapyCommand):
     def __init__(self, logger=None):
         super().__init__()
         self.settings = get_project_settings()
-        self.engine = create_engine(mysql_connection_string())
 
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.engine = create_engine(mysql_connection_string())
+        construct_session = sessionmaker(bind=self.engine)
+        self.session = construct_session()
 
         self.logger = logger or logging.getLogger(name=__name__)
 

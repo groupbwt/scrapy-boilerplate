@@ -1,2 +1,1 @@
-from .SitemapLinkItem import SitemapLinkItem
-from .ProfileItem import ProfileItem
+# -*- coding: utf-8 -*-

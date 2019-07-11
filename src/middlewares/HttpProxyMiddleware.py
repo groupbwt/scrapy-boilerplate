@@ -7,7 +7,7 @@ class HttpProxyMiddleware(object):
         proxy = spider.settings.get("PROXY")
         proxy_auth = spider.settings.get("PROXY_AUTH")
         if proxy:
-            if proxy_auth is not None:
+            if proxy_auth:
                 request.headers["Proxy-Authorization"] = basic_auth_header(
                     *proxy_auth.split(":")
                 )

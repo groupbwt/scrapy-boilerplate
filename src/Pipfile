@@ -4,17 +4,20 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+black = "*"
+ipython = "*"
+pylint = "*"
 
 [packages]
-scrapy = "*"
-pillow = "*"
-sqlalchemy = "*"
-sqlalchemy-migrate = "*"
-pymysql = "*"
-pika = "*"
-requests = "*"
-w3lib = "*"
-ipython = "*"
-scrapy-fake-useragent = "*"
-brotli = "*"
 alembic = "*"
+brotli = "*"
+pika = "*"
+pillow = "*"
+pymysql = "*"
+requests = "*"
+scrapy = "*"
+sqlalchemy = "*"
+w3lib = "*"
+
+[pipenv]
+allow_prereleases = true

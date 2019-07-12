@@ -3,7 +3,7 @@ import sys
 
 # hack to bypass top-level import error
 cur_dir = os.path.dirname(os.path.realpath(__file__))
-root_dir = os.path.abspath(os.path.join(cur_dir, '..'))
+root_dir = os.path.abspath(os.path.join(cur_dir, ".."))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
@@ -29,23 +29,22 @@ DeclarativeBase.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-logger = logging.getLogger('pika')
+logger = logging.getLogger("pika")
 logger.setLevel(logging.WARNING)
 logging.basicConfig(level=logging.INFO)
 
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(
-        host=os.getenv('RABBITMQ_HOST'),
-        port=os.getenv('RABBITMQ_PORT'),
-        virtual_host=os.getenv('RABBITMQ_VIRTUAL_HOST'),
+        host=os.getenv("RABBITMQ_HOST"),
+        port=os.getenv("RABBITMQ_PORT"),
+        virtual_host=os.getenv("RABBITMQ_VIRTUAL_HOST"),
         credentials=pika.credentials.PlainCredentials(
-            username=os.getenv('RABBITMQ_USER'),
-            password=os.getenv('RABBITMQ_PASS')
-        )
+            username=os.getenv("RABBITMQ_USER"), password=os.getenv("RABBITMQ_PASS")
+        ),
     )
 )
 channel = connection.channel()
-channel.queue_declare(queue=os.getenv('SAVER_QUEUE'), durable=True)
+channel.queue_declare(queue=os.getenv("SAVER_QUEUE"), durable=True)
 
 
 def sigterm_handler(_signo, _stack_frame):
@@ -60,7 +59,7 @@ def parse_money(value):
         return value
 
     try:
-        value = int(float(value.strip('$').replace(',', '')))
+        value = int(float(value.strip("$").replace(",", "")))
     except ValueError:
         return None
 
@@ -70,12 +69,12 @@ def parse_money(value):
 def callback(ch, method, properties, body):
     data = json.loads(body.decode())
 
-    link_id = data['link_id']
-    parse_success = data['parse_success']
+    link_id = data["link_id"]
+    parse_success = data["parse_success"]
 
     if link_id is not None:
         link = session.query(SitemapLink).get(int(link_id))
-        response_code = int(data['response_code'])
+        response_code = int(data["response_code"])
         if response_code > 399:
             link.status = response_code
         else:
@@ -84,7 +83,7 @@ def callback(ch, method, properties, body):
         session.add(link)
 
     if parse_success:
-        logging.info("Processing profile <{}>".format(data['id']))
+        logging.info("Processing profile <{}>".format(data["id"]))
         profile = Profile()
         mapper = inspect(Profile)
 
@@ -103,31 +102,29 @@ def callback(ch, method, properties, body):
 
         session.add(profile)
     else:
-        logging.info('Processing failed link <{}> with status {}'.format(
-            link_id, link.status))
+        logging.info(
+            "Processing failed link <{}> with status {}".format(link_id, link.status)
+        )
 
     try:
         session.commit()
     except IntegrityError:
         session.rollback()
-        logging.error('IntegrityError')
+        logging.error("IntegrityError")
     except InvalidRequestError:
         session.rollback()
-        logging.error('InvalidRequestError')
+        logging.error("InvalidRequestError")
 
     try:
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except ChannelWrongStateError:
-        logging.error('Failed to ack message')
+        logging.error("Failed to ack message")
 
 
-channel.basic_consume(
-    queue=os.getenv('SAVER_QUEUE'),
-    on_message_callback=callback
-)
+channel.basic_consume(queue=os.getenv("SAVER_QUEUE"), on_message_callback=callback)
 
 try:
-    logging.info(' [*] Waiting for messages. To exit press CTRL+C')
+    logging.info(" [*] Waiting for messages. To exit press CTRL+C")
     channel.start_consuming()
 except KeyboardInterrupt:
     pass

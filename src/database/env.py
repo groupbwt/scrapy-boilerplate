@@ -4,7 +4,7 @@ import sys
 
 # hack to bypass top-level import error
 cur_dir = os.path.dirname(os.path.realpath(__file__))
-root_dir = os.path.abspath(os.path.join(cur_dir, '..'))
+root_dir = os.path.abspath(os.path.join(cur_dir, ".."))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
@@ -35,7 +35,7 @@ target_metadata = None
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-config.set_main_option('sqlalchemy.url', mysql_connection_string())
+config.set_main_option("sqlalchemy.url", mysql_connection_string())
 
 
 def run_migrations_offline():
@@ -51,9 +51,7 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -73,9 +71,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

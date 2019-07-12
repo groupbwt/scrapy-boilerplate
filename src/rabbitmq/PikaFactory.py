@@ -11,7 +11,7 @@ from .PikaProtocol import PikaProtocol
 
 
 class PikaFactory(protocol.ReconnectingClientFactory):
-    name = 'AMQP:Factory'
+    name = "AMQP:Factory"
 
     def __init__(self, parameters):
         self.parameters = parameters
@@ -20,24 +20,23 @@ class PikaFactory(protocol.ReconnectingClientFactory):
         self.read_list = []
 
     def startedConnecting(self, connector):
-        log.msg('Started to connect.', system=self.name)
+        log.msg("Started to connect.", system=self.name)
 
     def buildProtocol(self, addr):
         self.resetDelay()
-        log.msg('Connected', system=self.name)
+        log.msg("Connected", system=self.name)
         self.client = PikaProtocol(self, self.parameters)
         return self.client
 
     def clientConnectionLost(self, connector, reason):  # pylint: disable=W0221
-        log.msg('Lost connection.  Reason: %s' % reason.value, system=self.name)
-        protocol.ReconnectingClientFactory.clientConnectionLost(
-            self, connector, reason)
+        log.msg("Lost connection.  Reason: %s" % reason.value, system=self.name)
+        protocol.ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        log.msg(
-            'Connection failed. Reason: %s' % reason.value, system=self.name)
+        log.msg("Connection failed. Reason: %s" % reason.value, system=self.name)
         protocol.ReconnectingClientFactory.clientConnectionFailed(
-            self, connector, reason)
+            self, connector, reason
+        )
 
     def send_message(self, exchange=None, routing_key=None, message=None):
         self.queued_messages.append((exchange, routing_key, message))

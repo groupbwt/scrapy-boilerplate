@@ -13,7 +13,7 @@ from twisted.python import log
 
 class PikaProtocol(twisted_connection.TwistedProtocolConnection):
     connected = False
-    name = 'AMQP:Protocol'
+    name = "AMQP:Protocol"
 
     def __init__(self, factory, parameters):
         super().__init__(parameters)
@@ -22,7 +22,7 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
     @inlineCallbacks
     def connectionReady(self):
         self._channel = yield self.channel()
-        yield self._channel.basic_qos(prefetch_count=os.getenv('CONCURRENT_REQUESTS'))
+        yield self._channel.basic_qos(prefetch_count=os.getenv("CONCURRENT_REQUESTS"))
         # yield self._channel.add_on_close_callback(self.on_channel_close)
         self.connected = True
         yield self._channel.confirm_delivery()
@@ -43,21 +43,21 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
         if exchange:
             yield self._channel.exchange_declare(
                 exchange=exchange,
-                exchange_type='topic',
+                exchange_type="topic",
                 durable=True,
-                auto_delete=False)
+                auto_delete=False,
+            )
 
         yield self._channel.queue_declare(queue=routing_key, durable=True)
         if exchange:
             yield self._channel.queue_bind(queue=routing_key, exchange=exchange)
             yield self._channel.queue_bind(
-                queue=routing_key, exchange=exchange, routing_key=routing_key)
+                queue=routing_key, exchange=exchange, routing_key=routing_key
+            )
 
-        (
-            queue,
-            _consumer_tag,
-        ) = yield self._channel.basic_consume(
-            queue=routing_key, auto_ack=False)
+        (queue, _consumer_tag) = yield self._channel.basic_consume(
+            queue=routing_key, auto_ack=False
+        )
         d = queue.get()
         d.addCallback(self._read_item, queue, callback)
         d.addErrback(self._read_item_err)
@@ -67,16 +67,12 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
         d = queue.get()
         d.addCallback(self._read_item, queue, callback)
         d.addErrback(self._read_item_err)
-        (
-            channel,
-            deliver,
-            _props,
-            msg,
-        ) = item
+        (channel, deliver, _props, msg) = item
 
         log.msg(
-            '%s (%s): %s' % (deliver.exchange, deliver.routing_key, repr(msg)),
-            system='Pika:<=')
+            "%s (%s): %s" % (deliver.exchange, deliver.routing_key, repr(msg)),
+            system="Pika:<=",
+        )
         d = defer.maybeDeferred(callback, item)
         # logging.error('reading and acking')
         # d.addCallbacks(lambda _: channel.basic_ack(deliver.delivery_tag),
@@ -94,34 +90,25 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
         """If connected, send all waiting messages."""
         if self.connected:
             while self.factory.queued_messages:
-                (
-                    exchange,
-                    r_key,
-                    message,
-                ) = self.factory.queued_messages.pop(0)
+                (exchange, r_key, message) = self.factory.queued_messages.pop(0)
                 self.send_message(exchange, r_key, message)
 
     @inlineCallbacks
     def send_message(self, exchange, routing_key, msg):
         """Send a single message."""
-        log.msg(
-            '%s (%s): %s' % (exchange, routing_key, repr(msg)),
-            system='Pika:=>')
+        log.msg("%s (%s): %s" % (exchange, routing_key, repr(msg)), system="Pika:=>")
         yield self._channel.exchange_declare(
-            exchange=exchange,
-            exchange_type='topic',
-            durable=True,
-            auto_delete=False)
+            exchange=exchange, exchange_type="topic", durable=True, auto_delete=False
+        )
         yield self._channel.queue_declare(queue=routing_key, durable=True)
         yield self._channel.queue_bind(queue=routing_key, exchange=exchange)
         yield self._channel.queue_bind(
-            queue=routing_key, exchange=exchange, routing_key=routing_key)
+            queue=routing_key, exchange=exchange, routing_key=routing_key
+        )
         prop = spec.BasicProperties(delivery_mode=2)
         try:
             yield self._channel.basic_publish(
-                exchange=exchange,
-                routing_key=routing_key,
-                body=msg,
-                properties=prop)
+                exchange=exchange, routing_key=routing_key, body=msg, properties=prop
+            )
         except Exception as error:  # pylint: disable=W0703
-            log.msg('Error while sending message: %s' % error, system=self.name)
+            log.msg("Error while sending message: %s" % error, system=self.name)

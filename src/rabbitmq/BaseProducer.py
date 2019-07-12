@@ -4,7 +4,7 @@ import sys
 
 # hack to bypass top-level import error
 cur_dir = os.path.dirname(os.path.realpath(__file__))
-root_dir = os.path.abspath(os.path.join(cur_dir, '..'))
+root_dir = os.path.abspath(os.path.join(cur_dir, ".."))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
@@ -32,19 +32,19 @@ class BaseProducer(object):
 
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                host=os.getenv('RABBITMQ_HOST'),
-                port=os.getenv('RABBITMQ_PORT'),
-                virtual_host=os.getenv('RABBITMQ_VIRTUAL_HOST'),
+                host=os.getenv("RABBITMQ_HOST"),
+                port=os.getenv("RABBITMQ_PORT"),
+                virtual_host=os.getenv("RABBITMQ_VIRTUAL_HOST"),
                 credentials=pika.credentials.PlainCredentials(
-                    username=os.getenv('RABBITMQ_USER'),
-                    password=os.getenv('RABBITMQ_PASS')
-                )
+                    username=os.getenv("RABBITMQ_USER"),
+                    password=os.getenv("RABBITMQ_PASS"),
+                ),
             )
         )
         self.channel = self.connection.channel()
-        queue = kwargs.get('queue', None)
+        queue = kwargs.get("queue", None)
         if queue is None:
-            queue = os.getenv('QUEUE')
+            queue = os.getenv("QUEUE")
         self.queue_name = queue
         self.queue = self.channel.queue_declare(queue=queue, durable=True)
 
@@ -54,7 +54,7 @@ class BaseProducer(object):
         self.channel.close()
         self.connection.close()
 
-    def set_logger(self, name='COMMAND', level='DEBUG'):
+    def set_logger(self, name="COMMAND", level="DEBUG"):
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel(level)
 

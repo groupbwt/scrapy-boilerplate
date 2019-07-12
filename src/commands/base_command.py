@@ -20,6 +20,6 @@ class BaseCommand(ScrapyCommand):
 
         self.logger = logger or logging.getLogger(name=__name__)
 
-    def set_logger(self, name='COMMAND', level='DEBUG'):
+    def set_logger(self, name="COMMAND", level="DEBUG"):
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel(level)

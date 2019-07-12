@@ -44,7 +44,6 @@ DEFAULT_REQUEST_HEADERS = {
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None,
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-    'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,
     'middlewares.HttpProxyMiddleware': 543,
     'middlewares.LogErrorsMiddleware': 550
 }

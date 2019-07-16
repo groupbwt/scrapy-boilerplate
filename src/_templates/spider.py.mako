@@ -1,13 +1,14 @@
+## -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
 import scrapy
 
 
-class Spider(scrapy.Spider):
-    name = "spider_name"
+class ${spider_class}(scrapy.Spider):
+    name = "${spider_name}"
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super(Spider, cls).from_crawler(crawler, *args, **kwargs)
+        spider = super(${spider_class}, cls).from_crawler(crawler, *args, **kwargs)
         return spider
 
     def __init__(self):

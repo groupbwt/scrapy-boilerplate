@@ -7,6 +7,7 @@ verify_ssl = true
 black = "*"
 ipython = "*"
 pylint = "*"
+mako = "*"
 
 [packages]
 alembic = "*"

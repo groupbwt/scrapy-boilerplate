@@ -4,7 +4,7 @@ from scrapy import signals
 
 
 class ${class_name}(object):
-@classmethod
+    @classmethod
     def from_crawler(cls, crawler):
         s = cls()
         crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)

@@ -1,7 +1,18 @@
 ## -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
 from sqlalchemy import func
-from sqlalchemy import Column, Integer, String, Boolean, JSON, Date, DateTime, Text, Float, TIMESTAMP
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    JSON,
+    Date,
+    DateTime,
+    Text,
+    Float,
+    TIMESTAMP,
+)
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 

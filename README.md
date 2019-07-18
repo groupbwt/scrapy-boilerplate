@@ -12,6 +12,7 @@ This is a boilerblape for new Scrapy projects.
 - RabbitMQ integrated via [pika](https://github.com/pika/pika/)
 - single file for each class
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
+- [Black](https://github.com/python/black) to ensure codestyle consistency
 
 ## Installation
 

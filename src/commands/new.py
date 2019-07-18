@@ -57,7 +57,7 @@ class NewCommand(ScrapyCommand):
         command_name = inflection.underscore(class_name)
         spider_name = inflection.underscore(class_name)
         table_name = inflection.pluralize(inflection.underscore(class_name))
-        logger.name = inflection.underscore(class_name).upper()
+        logger_name = inflection.underscore(class_name).upper()
 
         file_prefix = DEST_PREFIXES.get(template_type, [])
         file_name = command_name if template_type == "command" else class_name
@@ -73,7 +73,11 @@ class NewCommand(ScrapyCommand):
         out_file = open(file_path, "w")
 
         rendered_code = template.render(
-            spider_class=spider_class, spider_name=spider_name
+            class_name=class_name,
+            command_name=command_name,
+            spider_name=spider_name,
+            table_name=table_name,
+            logger_name=logger_name,
         )
 
         print(rendered_code)
@@ -85,10 +89,11 @@ class NewCommand(ScrapyCommand):
         init_file = open(init_file_path)
 
         lines = init_file.readlines()
+        lines = [line.strip() for line in lines if line.strip()]
 
         new_import = f"from .{file_name} import {class_name}"
 
-        imports = [line for line in lines[1:] if line]
+        imports = [line for line in lines[1:]]
         imports = set(imports)
         imports.add(new_import)
         imports = sorted(list(imports))

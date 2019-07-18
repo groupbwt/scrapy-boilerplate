@@ -24,15 +24,42 @@ class NewCommand(ScrapyCommand):
         self.set_logger('new', self.settings.get('LOG_LEVEL'))
         configure_logging()
 
-        script_name = args[0]
-        self.logger.debug(script_name)
+        if len(args) < 2:
+            self.logger.critical("invalid args count")
+            sys.exit(1)
 
-        template_name = os.path.join("_templates", "{}.py.mako".format(script_name))
+        SUPPORTED_TEMPLATE_TYPES = [name.split(".")[0] for name in os.listdir("_templates")]
+        DEST_PREFIXES = {
+            "command": ["commands"],
+            "extension": ["extensions"],
+            "item": ["items"],
+            "middleware": ["middlewares"],
+            "model": ["database", "models"],
+            "pipeline": ["pipelines"],
+            "spider_middleware": ["middlewares"],
+            "spider": ["spiders"],
+        }
+
+        template_type = args[0]
+        self.logger.debug(template_type)
+
+        if template_type not in SUPPORTED_TEMPLATE_TYPES:
+            self.logger.critical("unsupported template type: %s", template_type)
+            self.logger.info("supported are: %s", repr(SUPPORTED_TEMPLATE_TYPES))
+            sys.exit(1)
+
+        template_name = os.path.join("_templates", "{}.py.mako".format(template_type))
         template = Template(filename=template_name)
 
-        spider_class = inflection.camelize(args[1])
-        spider_name = inflection.underscore(spider_class)
-        file_path = os.path.join("spiders", "{}.py".format(spider_class))
+        class_name = inflection.camelize(args[1])
+        command_name = inflection.underscore(class_name)
+        spider_name = inflection.underscore(class_name)
+        table_name = inflection.pluralize(inflection.underscore(class_name))
+        logger.name = inflection.underscore(class_name).upper()
+
+        file_prefix = DEST_PREFIXES.get(template_type, [])
+        file_name = command_name if template_type == "command" else class_name
+        file_path = os.path.join(*file_prefix, "{}.py".format(file_name))
 
         if os.path.exists(file_path):
             self.logger.warning("file already exists")
@@ -43,27 +70,26 @@ class NewCommand(ScrapyCommand):
 
         out_file = open(file_path, "w")
 
-        spider_code = template.render(
+        rendered_code = template.render(
             spider_class=spider_class,
             spider_name=spider_name
         )
 
-        print(spider_code)
+        print(rendered_code)
 
-        out_file.write(spider_code)
+        out_file.write(rendered_code)
         out_file.close()
 
-        init_file_path = os.path.join("spiders", "__init__.py")
+        init_file_path = os.path.join(*file_prefix, "__init__.py")
         init_file = open(init_file_path)
 
         lines = init_file.readlines()
 
-        new_import = "from .{spider_class} import {spider_class}".format(spider_class=spider_class)
+        new_import = f"from .{file_name} import {class_name}"
 
         imports = [line for line in lines[1:] if line]
         imports = set(imports)
         imports.add(new_import)
-
         imports = sorted(list(imports))
 
         lines = lines[:1] + imports
@@ -71,10 +97,8 @@ class NewCommand(ScrapyCommand):
         init_file.close()
         init_file = open(init_file_path, "w")
 
-        for line in lines:
-            init_file.write(line)
-
+        init_file.write("\n".join(lines))
         init_file.write("\n")
         init_file.close()
 
-        self.logger.info("created spider %s", spider_class)
+        self.logger.info("created %s %s", template_type, file_name)

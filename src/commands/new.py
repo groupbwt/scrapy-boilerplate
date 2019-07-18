@@ -21,14 +21,16 @@ class NewCommand(ScrapyCommand):
         self.logger.setLevel(level)
 
     def run(self, args, opts):
-        self.set_logger('new', self.settings.get('LOG_LEVEL'))
+        self.set_logger("new", self.settings.get("LOG_LEVEL"))
         configure_logging()
 
         if len(args) < 2:
             self.logger.critical("invalid args count")
             sys.exit(1)
 
-        SUPPORTED_TEMPLATE_TYPES = [name.split(".")[0] for name in os.listdir("_templates")]
+        SUPPORTED_TEMPLATE_TYPES = [
+            name.split(".")[0] for name in os.listdir("_templates")
+        ]
         DEST_PREFIXES = {
             "command": ["commands"],
             "extension": ["extensions"],
@@ -65,14 +67,13 @@ class NewCommand(ScrapyCommand):
             self.logger.warning("file already exists")
             do_overwrite = input("overwrite? [y/N] ")
 
-            if do_overwrite.lower() not in ['y', 'yes']:
+            if do_overwrite.lower() not in ["y", "yes"]:
                 return
 
         out_file = open(file_path, "w")
 
         rendered_code = template.render(
-            spider_class=spider_class,
-            spider_name=spider_name
+            spider_class=spider_class, spider_name=spider_name
         )
 
         print(rendered_code)

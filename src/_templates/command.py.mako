@@ -5,7 +5,9 @@ import signal
 import sys
 import os
 
+% if use_rabbit:
 import pika
+% endif
 from scrapy.utils.log import configure_logging
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, InvalidRequestError, DataError
@@ -23,6 +25,7 @@ class ${class_name}(BaseCommand):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 
+        % if use_rabbit:
         logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))
 
         parameters = pika.ConnectionParameters(
@@ -40,6 +43,7 @@ class ${class_name}(BaseCommand):
         queue_name = ""
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=os.getenv(queue_name, ""), durable=True)
+        % endif
 
         self.stopped = False
 
@@ -57,6 +61,8 @@ class ${class_name}(BaseCommand):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
+        % if use_rabbit:
         self.channel.close()
         self.connection.close()
+        % endif
         self.session.close()

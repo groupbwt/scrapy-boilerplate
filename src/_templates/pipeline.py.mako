@@ -1,7 +1,9 @@
 ## -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
 
+% if use_rabbit:
 import pika
+% endif
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DataError, IntegrityError, InvalidRequestError
 from sqlalchemy.orm import sessionmaker
@@ -14,6 +16,7 @@ class ${class_name}(object):
         self.engine = create_engine(mysql_connection_string())
         self.session = None
 
+        % if use_rabbit:
         logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))
 
         parameters = pika.ConnectionParameters(
@@ -31,6 +34,7 @@ class ${class_name}(object):
         queue_name = ""
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=os.getenv(queue_name, ""), durable=True)
+        % endif
 
     def open_spider(self, spider):
         make_session = sessionmaker(bind=self.engine)
@@ -43,6 +47,8 @@ class ${class_name}(object):
         return item
 
     def close_spider(self, spider):
+        % if use_rabbit:
         self.channel.close()
         self.connection.close()
+        % endif
         self.session.close()

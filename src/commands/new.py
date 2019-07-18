@@ -20,6 +20,16 @@ class NewCommand(ScrapyCommand):
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel(level)
 
+    def add_options(self, parser):
+        super().add_options(parser)
+
+        parser.add_option(
+            '--rabbit',
+            action="store_true",
+            dest="use_rabbit",
+            default=False,
+        )
+
     def run(self, args, opts):
         self.set_logger("new", self.settings.get("LOG_LEVEL"))
         configure_logging()
@@ -78,6 +88,7 @@ class NewCommand(ScrapyCommand):
             spider_name=spider_name,
             table_name=table_name,
             logger_name=logger_name,
+            use_rabbit=opts.use_rabbit
         )
 
         print(rendered_code)

@@ -1,7 +1,6 @@
 ## -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
 import scrapy
-
 % if use_rabbit:
 from rabbitmq import RabbitSpider
 % endif
@@ -35,7 +34,6 @@ class ${class_name}(${ancestors}):
     def prepare_request(self, method, header_frame, body):
         pass
     % endif
-
     def start_requests(self):
         % if use_rabbit:
         yield self.next_request()
@@ -50,4 +48,6 @@ class ${class_name}(${ancestors}):
         % if use_rabbit:
         self.channel.close()
         self.connection.close()
+        % else:
+        pass
         % endif

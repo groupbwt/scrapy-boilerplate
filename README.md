@@ -10,6 +10,7 @@ This is a boilerblape for new Scrapy projects.
 - [Pipenv](https://github.com/pypa/pipenv) for dependency management
 - SQLAlchemy ORM with alembic migrations
 - RabbitMQ integrated via [pika](https://github.com/pika/pika/)
+- configuration via ENV variables and/or `.env` file
 - single file for each class
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
 - [Black](https://github.com/python/black) to ensure codestyle consistency
@@ -22,8 +23,9 @@ To create a new project using this boilerplate, you need to:
 2. Edit `BOT_NAME` in `settings.py` to your project name.
 3. Issue `pipenv install --dev --pre` to install dependencies from Pipfile.
 4. Change git origin to your actual project repository: `git remote set-url origin {your-project-link-here}` **OR** just delete `.git` folder at the root of the project.
-5. ???
-6. PROFIT!
+5. Copy `.env.example` to `.env`
+6. ???
+7. PROFIT!
 
 ## Usage
 

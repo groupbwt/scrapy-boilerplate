@@ -86,6 +86,7 @@ class NewCommand(ScrapyCommand):
             do_overwrite = input("overwrite? [y/N] ")
 
             if do_overwrite.lower() not in ["y", "yes"]:
+                print("aborted")
                 return
 
         out_file = open(file_path, "w")
@@ -99,7 +100,8 @@ class NewCommand(ScrapyCommand):
             use_rabbit=opts.use_rabbit,
         )
 
-        print(rendered_code)
+        if opts.debug:
+            print(rendered_code)
 
         out_file.write(rendered_code)
         out_file.close()

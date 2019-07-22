@@ -1,6 +1,6 @@
 ## -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy import (
     Column,
     Integer,
@@ -23,7 +23,7 @@ from .JSONSerializable import JSONSerializable
 class ${class_name}(Base, JSONSerializable):
     __tablename__ = "${table_name}"
 
-    id = Column("id", Integer, primary_key=True)
+    id = Column("id", Integer(), primary_key=True)
 
     created_at = Column("created_at", TIMESTAMP, server_default=func.now())
     updated_at = Column(

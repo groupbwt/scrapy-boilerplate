@@ -19,13 +19,10 @@ This is a boilerblape for new Scrapy projects.
 
 To create a new project using this boilerplate, you need to:
 
-1. Clone the repository and change dir to `src`.
-2. Edit `BOT_NAME` in `settings.py` to your project name.
-3. Issue `pipenv install --dev --pre` to install dependencies from Pipfile.
-4. Change git origin to your actual project repository: `git remote set-url origin {your-project-link-here}` **OR** just delete `.git` folder at the root of the project.
-5. Copy `.env.example` to `.env`
-6. ???
-7. PROFIT!
+1. Clone the repository.
+2. Run the installation script: `./install.sh`
+3. ???
+4. PROFIT!
 
 ## Usage
 

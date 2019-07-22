@@ -2,7 +2,7 @@
 import os
 
 
-BOT_NAME = "YOUR_BOT_NAME_HERE"
+BOT_NAME = "YOUR_PROJECT_NAME"
 
 SPIDER_MODULES = ["spiders"]
 NEWSPIDER_MODULE = "spiders"

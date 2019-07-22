@@ -15,7 +15,6 @@ class ${class_name}(object):
     def __init__(self):
         self.engine = create_engine(mysql_connection_string())
         self.session = None
-
         % if use_rabbit:
         logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))
 

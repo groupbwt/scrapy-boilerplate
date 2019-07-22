@@ -24,7 +24,7 @@ class ${class_name}(${ancestors}):
         % endif
         return spider
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         scrapy.Spider.__init__(self, *args, **kwargs)
         % if use_rabbit:
         RabbitSpider.__init__(self, *args, **kwargs)

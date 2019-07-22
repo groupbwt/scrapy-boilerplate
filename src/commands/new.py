@@ -73,7 +73,7 @@ class NewCommand(ScrapyCommand):
 
         class_name = inflection.camelize(args[1])
         command_name = inflection.underscore(class_name)
-        spider_name = inflection.underscore(class_name)
+        spider_name = inflection.underscore(class_name).replace("_spider", "")
         table_name = inflection.pluralize(inflection.underscore(class_name))
         logger_name = inflection.underscore(class_name).upper()
 

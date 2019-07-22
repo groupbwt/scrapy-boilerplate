@@ -34,6 +34,13 @@ class NewCommand(ScrapyCommand):
         )
 
         parser.add_option(
+            "--item",
+            dest="item_class",
+            default="",
+            help="item class for pipeline",
+        )
+
+        parser.add_option(
             "-d",
             "--debug",
             action="store_true",
@@ -76,6 +83,7 @@ class NewCommand(ScrapyCommand):
         spider_name = inflection.underscore(class_name).replace("_spider", "")
         table_name = inflection.pluralize(inflection.underscore(class_name))
         logger_name = inflection.underscore(class_name).upper()
+        item_class = inflection.camelize(opts.item_class) if opts.item_class else None
 
         file_prefix = DEST_PREFIXES.get(template_type, [])
         file_name = command_name if template_type == "command" else class_name
@@ -98,6 +106,7 @@ class NewCommand(ScrapyCommand):
             table_name=table_name,
             logger_name=logger_name,
             use_rabbit=opts.use_rabbit,
+            item_class=item_class,
         )
 
         if opts.debug:

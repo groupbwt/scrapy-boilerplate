@@ -8,6 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import DataError, IntegrityError, InvalidRequestError
 from sqlalchemy.orm import sessionmaker
 
+% if item_class:
+from items import ${item_class}
+% endif
 from util import mysql_connection_string
 
 
@@ -40,8 +43,10 @@ class ${class_name}(object):
         self.session = make_session()
 
     def process_item(self, item, spider):
-        # if isinstance(item, SampleItem):
-        #     pass
+        % if item_class:
+        if isinstance(item, ${item_class}):
+            pass
+        % endif
 
         return item
 

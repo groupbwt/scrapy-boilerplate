@@ -25,6 +25,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Cleared README"
 fi
 
+echo "Installing pipenv dependencies"
+pipenv install --dev --pre
+
 echo "Setup finished, your project is ready!"
 rm -f install.sh
 popd > /dev/null

@@ -14,6 +14,7 @@ This is a boilerblape for new Scrapy projects.
 - single file for each class
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
 - [Black](https://github.com/python/black) to ensure codestyle consistency
+- Docker-ready (see [here](#docker))
 
 ## Installation
 
@@ -50,3 +51,14 @@ The first argument (`spider`) is a type of class file to be generated, and can b
 The second argument is class name.
 
 Also for `pipeline` and `spider` class an option `--rabbit` can be used to add RabbitMQ connection code to generated source.
+
+
+### Docker
+
+The project includes Dockerfiles and docker-compose configuration for running your spiders in containers.
+
+Also, a configuration for default RabbitMQ server is included.
+
+Dockerfiles are located inside the `docker` subdirectory, and the `docker-compose.yml` - at the root of the project. You might want to change the `CMD` of the scrapy container to something more relevant to your project. To do so, edit `docker/scrapy/Dockerfile`.
+
+Docker-compose takes configuration values from ENV. Environment can also be provided by creating a `.env` file at the root of the project (see `.docker_env.example` as a sample). Creating of dotenv for docker is handled in the `install.sh` script by default.

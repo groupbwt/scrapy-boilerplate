@@ -24,25 +24,25 @@ class ${class_name}(BaseCommand):
         self.engine = create_engine(mysql_connection_string())
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-
         % if use_rabbit:
-        logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))
+        logging.getLogger("pika").setLevel(self.settings.get("PIKA_LOG_LEVEL"))
 
         parameters = pika.ConnectionParameters(
-            host=os.getenv("RABBITMQ_HOST"),
-            port=os.getenv("RABBITMQ_PORT"),
-            virtual_host=os.getenv("RABBITMQ_VIRTUAL_HOST"),
+            host=self.settings.get("RABBITMQ_HOST"),
+            port=self.settings.get("RABBITMQ_PORT"),
+            virtual_host=self.settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=os.getenv("RABBITMQ_USER"), password=os.getenv("RABBITMQ_PASS")
+                username=self.settings.get("RABBITMQ_USER"),
+                password=self.settings.get("RABBITMQ_PASS")
             ),
             heartbeat=0,
         )
 
         self.connection = pika.BlockingConnection(parameters)
 
-        queue_name = ""
+        queue_name = ""  # get queue name from somewhere
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=os.getenv(queue_name, ""), durable=True)
+        self.channel.queue_declare(queue=queue_name, durable=True)
         % endif
 
         self.stopped = False

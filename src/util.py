@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 import os
+
+from scrapy.utils.project import get_project_settings
 
 
 def mysql_connection_string():
+    settings = get_project_settings()
     return "mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8mb4".format(
-        os.getenv("MYSQL_USER"),
-        os.getenv("MYSQL_PASS"),
-        os.getenv("MYSQL_HOST"),
-        os.getenv("MYSQL_PORT"),
-        os.getenv("MYSQL_DB"),
+        settings.get("MYSQL_USER"),
+        settings.get("MYSQL_PASS"),
+        settings.get("MYSQL_HOST"),
+        settings.get("MYSQL_PORT"),
+        settings.get("MYSQL_DB"),
     )

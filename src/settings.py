@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 BOT_NAME = "YOUR_PROJECT_NAME"
 
@@ -57,3 +61,16 @@ LOG_LEVEL = os.getenv("LOG_LEVEL")
 ITEM_PIPELINES = {}
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASS = os.getenv("MYSQL_PASS")
+MYSQL_HOST = os.getenv("MYSQL_HOST")
+MYSQL_PORT = os.getenv("MYSQL_PORT")
+MYSQL_DB = os.getenv("MYSQL_DB")
+
+PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL")
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+RABBITMQ_PORT = os.getenv("RABBITMQ_PORT")
+RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")

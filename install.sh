@@ -5,8 +5,13 @@ pushd $DIR > /dev/null
 
 read -p "Enter project name (snake_cased): " project_name
 
+echo "Creating .env files"
+cp -i src/.env.example src/.env
+cp -i .docker_env.example .env
+
 echo "Updating project name"
 sed -ie "s/YOUR_PROJECT_NAME/$project_name/g" src/settings.py
+sed -ie "s/YOUR_PROJECT_NAME/$project_name/g" .env
 
 read -p "Create new git repo? "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -14,9 +19,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -rf .git
     git init
 fi
-
-echo "Creating .env file"
-cp -i src/.env.example src/.env
 
 read -p "Clear README? "
 if [[ $REPLY =~ ^[Yy]$ ]]; then

@@ -61,3 +61,5 @@ coverage.xml
 .python-version
 
 Pipfile.lock
+
+docker/.docker_env

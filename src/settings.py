@@ -1,25 +1,29 @@
 # -*- coding: utf-8 -*-
 import os
 
+from dotenv import load_dotenv
 
-BOT_NAME = "YOUR_BOT_NAME_HERE"
+
+load_dotenv()
+
+BOT_NAME = "YOUR_PROJECT_NAME"
 
 SPIDER_MODULES = ["spiders"]
 NEWSPIDER_MODULE = "spiders"
 COMMANDS_MODULE = "commands"
 
-PROXY = os.getenv("PROXY")
-PROXY_AUTH = os.getenv("PROXY_AUTH")
+PROXY = os.getenv("PROXY", "")
+PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = os.getenv("CONCURRENT_REQUESTS")
-CONCURRENT_REQUESTS_PER_DOMAIN = os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN")
-DOWNLOAD_DELAY = os.getenv("DOWNLOAD_DELAY")
-DOWNLOAD_TIMEOUT = os.getenv("DOWNLOAD_TIMEOUT")
+CONCURRENT_REQUESTS = os.getenv("CONCURRENT_REQUESTS", 16)
+CONCURRENT_REQUESTS_PER_DOMAIN = os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
+DOWNLOAD_DELAY = os.getenv("DOWNLOAD_DELAY", 0)
+DOWNLOAD_TIMEOUT = os.getenv("DOWNLOAD_TIMEOUT", 180)
 
 # HTTPERROR_ALLOWED_CODES = [404, 405, 407, 429, 456, 503]
 HTTPERROR_ALLOW_ALL = True
@@ -48,7 +52,7 @@ DOWNLOADER_MIDDLEWARES = {
     "middlewares.LogErrorsMiddleware": 550,
 }
 
-LOG_LEVEL = os.getenv("LOG_LEVEL")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # EXTENSIONS = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
@@ -57,3 +61,16 @@ LOG_LEVEL = os.getenv("LOG_LEVEL")
 ITEM_PIPELINES = {}
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+
+MYSQL_USER = os.getenv("MYSQL_USER", "127.0.0.1")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "")
+MYSQL_HOST = os.getenv("MYSQL_HOST", 3306)
+MYSQL_PORT = os.getenv("MYSQL_PORT", "root")
+MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
+
+PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", 5672)
+RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "guest")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "/")

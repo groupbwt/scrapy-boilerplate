@@ -1,14 +1,64 @@
 # scrapy-boilerplate
 
-Это шаблон для новых проектов на Scrapy.
+This is a boilerblape for new Scrapy projects.
 
-## Установка и запуск
+*The project is a WIP, so expect major changes and additions (mostly latter).*
 
-Для того, чтобы начатть новый проект на основе этого шаблона, нужно выполнить следующее:
+## Features
 
-1. Склонировать этот репозиторий и перейти в подкаталог `src`.
-2. Поменять `BOT_NAME` в `settings.py` на название своего проекта.
-3. Выполнить команду `pipenv install` для установки базовых необходимых зависимостей из Pipfile.
-4. Заменить origin репозитория на git-ссылку актуального проекта: `git remote set-url origin {your-project-link-here}`
-5. ???
-6. PROFIT!
+- Python 3.6+
+- [Pipenv](https://github.com/pypa/pipenv) for dependency management
+- SQLAlchemy ORM with alembic migrations
+- RabbitMQ integrated via [pika](https://github.com/pika/pika/)
+- configuration via ENV variables and/or `.env` file
+- single file for each class
+- code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
+- [Black](https://github.com/python/black) to ensure codestyle consistency
+- Docker-ready (see [here](#docker))
+
+## Installation
+
+To create a new project using this boilerplate, you need to:
+
+1. Clone the repository.
+2. Run the installation script: `./install.sh`
+3. ???
+4. PROFIT!
+
+## Usage
+
+The boilerplate comes with some pre-written classes and helper scripts and functions, which are described in this section.
+
+### Code generation
+
+There is a scrapy command to generate class files and automatically add imports ti `__init__` files. It can be used as follows:
+
+```
+scrapy new spider SampleSpider
+```
+
+The first argument (`spider`) is a type of class file to be generated, and can be one of the following:
+
+- command
+- extension
+- item
+- middleware
+- model
+- pipeline
+- spider_middleware
+- spider
+
+The second argument is class name.
+
+Also for `pipeline` and `spider` class an option `--rabbit` can be used to add RabbitMQ connection code to generated source.
+
+
+### Docker
+
+The project includes Dockerfiles and docker-compose configuration for running your spiders in containers.
+
+Also, a configuration for default RabbitMQ server is included.
+
+Dockerfiles are located inside the `docker` subdirectory, and the `docker-compose.yml` - at the root of the project. You might want to change the `CMD` of the scrapy container to something more relevant to your project. To do so, edit `docker/scrapy/Dockerfile`.
+
+Docker-compose takes configuration values from ENV. Environment can also be provided by creating a `.env` file at the root of the project (see `.docker_env.example` as a sample). Creating of dotenv for docker is handled in the `install.sh` script by default.

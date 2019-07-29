@@ -10,8 +10,8 @@ cp -i src/.env.example src/.env
 cp -i .docker_env.example .env
 
 echo "Updating project name"
-sed -ie "s/YOUR_PROJECT_NAME/$project_name/g" src/settings.py
-sed -ie "s/YOUR_PROJECT_NAME/$project_name/g" .env
+sed -i "s/YOUR_PROJECT_NAME/$project_name/g" src/settings.py
+sed -i "s/YOUR_PROJECT_NAME/$project_name/g" .env
 
 read -p "Create new git repo? "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -28,7 +28,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo "Installing pipenv dependencies"
+pushd ./src > /dev/null
 pipenv install --dev --pre
+popd > /dev/null
 
 echo "Setup finished, your project is ready!"
 rm -f install.sh

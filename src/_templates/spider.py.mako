@@ -19,9 +19,6 @@ class ${class_name}(${ancestors}):
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super(${class_name}, cls).from_crawler(crawler, *args, **kwargs)
         crawler.signals.connect(spider.spider_closed, signal=scrapy.signals.spider_closed)
-        % if use_rabbit:
-        crawler.signals.connect(spider.spider_idle, signal=scrapy.signals.spider_idle)
-        % endif
         return spider
 
     def __init__(self, *args, **kwargs):

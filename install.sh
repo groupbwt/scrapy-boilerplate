@@ -32,6 +32,12 @@ pushd ./src > /dev/null
 pipenv install --dev --pre
 popd > /dev/null
 
+echo "Adding pre-commit hooks"
+pushd ./src > /dev/null
+PYTHON=$(pipenv --py)
+popd > /dev/null
+$PYTHON -m pre_commit install
+
 echo "Setup finished, your project is ready!"
 rm -f install.sh
 popd > /dev/null

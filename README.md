@@ -13,7 +13,7 @@ This is a boilerblape for new Scrapy projects.
 - configuration via ENV variables and/or `.env` file
 - single file for each class
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
-- [Black](https://github.com/python/black) to ensure codestyle consistency
+- [Black](https://github.com/psf/black) to ensure codestyle consistency
 - Docker-ready (see [here](#docker))
 
 ## Installation

@@ -13,7 +13,7 @@ This is a boilerblape for new Scrapy projects.
 - configuration via ENV variables and/or `.env` file
 - single file for each class
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
-- [Black](https://github.com/psf/black) to ensure codestyle consistency
+- [Black](https://github.com/psf/black) to ensure codestyle consistency (see [here](#black))
 - Docker-ready (see [here](#docker))
 
 ## Installation
@@ -62,3 +62,9 @@ Also, a configuration for default RabbitMQ server is included.
 Dockerfiles are located inside the `docker` subdirectory, and the `docker-compose.yml` - at the root of the project. You might want to change the `CMD` of the scrapy container to something more relevant to your project. To do so, edit `docker/scrapy/Dockerfile`.
 
 Docker-compose takes configuration values from ENV. Environment can also be provided by creating a `.env` file at the root of the project (see `.docker_env.example` as a sample). Creating of dotenv for docker is handled in the `install.sh` script by default.
+
+### Black
+
+Black is the uncompromising Python code formatter. It is used in thsi project to ensure code style consistensy in the least intrusive fashion.
+
+Black is included in Pipfile dev-dependencies. A pre-commit hook for running autoformatting is also included, via [pre-commit](https://pre-commit.com) tool. It is installed automatically, if you run `install.sh`. Otherwise, to use it you need to run `pre-commit install` in the root project folder after installing pre-commit itself.

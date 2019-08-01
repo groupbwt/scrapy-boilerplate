@@ -16,6 +16,7 @@ This is a boilerblape for new Scrapy projects.
 - [Black](https://github.com/psf/black) to ensure codestyle consistency (see [here](#black))
 - Docker-ready (see [here](#docker))
 - PM2-ready (see [here](#pm2))
+- supports single-IP/rotating proxy config out of the box (see [here](#proxy-middleware))
 
 ## Installation
 
@@ -77,3 +78,9 @@ This boilerplate contains a sample PM2 config file along with a bash startup scr
 All you need to do, is copy/edit `src/pm2/commands/command_example.sh` and change the `exec` part to the command actually needed to be run, and then create `process.json` ecosystem file (based on `src/pm2/process.example.json`) to start the script.
 
 Then, cd to `src/pm2` and run `pm2 start process.json`.
+
+### Proxy middleware
+
+A scrapy downloader middleware to use a proxy server is included in `src/middlewares/HttpProxyMiddleware.py` and is enabled by default. You can use it by providing proxy endpoint with the env variable (or in the `.env` file) `PROXY` in the format `host:port`. Proxy authentication can also be provided in the `PROXY_AUTH` variable, using the format `user:password`. If provided, it is encoded as a Basic HTTP Auth and put into `Proxy-Authorization` header.
+
+A single-endpoint proxy is used by default, assuming usage of rotating proxies service. If you want to provide your own list of proxies, an external package has to be used, as this use-case is not yet covered by this boilerplate.

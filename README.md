@@ -16,6 +16,8 @@ Master branch is to be considered as always ready to use, with major changes/fea
 - code generation scripts for classes: spiders, pipelines, etc. (see [this section](#code-generation))
 - [Black](https://github.com/psf/black) to ensure codestyle consistency (see [here](#black))
 - Docker-ready (see [here](#docker))
+- PM2-ready (see [here](#pm2))
+- supports single-IP/rotating proxy config out of the box (see [here](#proxy-middleware))
 
 ## Installation
 
@@ -53,6 +55,7 @@ The second argument is class name.
 
 Also for `pipeline` and `spider` class an option `--rabbit` can be used to add RabbitMQ connection code to generated source.
 
+Option `--item` is supported for generating pipelines, which adds an import and type-check for a provided item class to the resulting code.
 
 ### Docker
 
@@ -69,3 +72,17 @@ Docker-compose takes configuration values from ENV. Environment can also be prov
 Black is the uncompromising Python code formatter. It is used in thsi project to ensure code style consistensy in the least intrusive fashion.
 
 Black is included in Pipfile dev-dependencies. A pre-commit hook for running autoformatting is also included, via [pre-commit](https://pre-commit.com) tool. It is installed automatically, if you run `install.sh`. Otherwise, to use it you need to run `pre-commit install` in the root project folder after installing pre-commit itself.
+
+### PM2
+
+This boilerplate contains a sample PM2 config file along with a bash startup script that sets up all the necessary environment to run scrapy with this process manager.
+
+All you need to do, is copy/edit `src/pm2/commands/command_example.sh` and change the `exec` part to the command actually needed to be run, and then create `process.json` ecosystem file (based on `src/pm2/process.example.json`) to start the script.
+
+Then, cd to `src/pm2` and run `pm2 start process.json`.
+
+### Proxy middleware
+
+A scrapy downloader middleware to use a proxy server is included in `src/middlewares/HttpProxyMiddleware.py` and is enabled by default. You can use it by providing proxy endpoint with the env variable (or in the `.env` file) `PROXY` in the format `host:port`. Proxy authentication can also be provided in the `PROXY_AUTH` variable, using the format `user:password`. If provided, it is encoded as a Basic HTTP Auth and put into `Proxy-Authorization` header.
+
+A single-endpoint proxy is used by default, assuming usage of rotating proxies service. If you want to provide your own list of proxies, an external package has to be used, as this use-case is not yet covered by this boilerplate.

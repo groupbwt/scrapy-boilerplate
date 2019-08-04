@@ -54,6 +54,7 @@ The second argument is class name.
 
 Also for `pipeline` and `spider` class an option `--rabbit` can be used to add RabbitMQ connection code to generated source.
 
+Option `--item` is supported for generating pipelines, which adds an import and type-check for a provided item class to the resulting code.
 
 ### Docker
 

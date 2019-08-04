@@ -2,7 +2,8 @@
 
 This is a boilerblape for new Scrapy projects.
 
-*The project is a WIP, so expect major changes and additions (mostly latter).*
+*The project is a WIP, so expect major changes and additions (mostly latter).
+Master branch is to be considered as always ready to use, with major changes/features introduced in feature branches.*
 
 ## Features
 

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+import operator
 import os
+import re
 import sys
 
 import inflection
@@ -34,10 +36,15 @@ class NewCommand(ScrapyCommand):
         )
 
         parser.add_option(
-            "--item",
-            dest="item_class",
-            default="",
-            help="item class for pipeline",
+            "--item", dest="item_class", default="", help="item class for pipeline"
+        )
+
+        parser.add_option(
+            "-s",
+            "--settings",
+            dest="pipeline_priority",
+            default=None,
+            help="add pipeline to settings with specified priority",
         )
 
         parser.add_option(
@@ -48,6 +55,39 @@ class NewCommand(ScrapyCommand):
             default=False,
             help="enable debug output for this command",
         )
+
+    def _add_pipeline_to_settings(self, class_name, priority):
+        try:
+            priority = str(abs(int(priority)))
+        except TypeError:
+            priority = 300
+
+        with open("settings.py", "r") as settings_file:
+            settings_text = settings_file.read()
+
+        pipelines_regex = r"ITEM_PIPELINES\s*=\s*{.*?}"
+
+        pipelines_str = re.search(pipelines_regex, settings_text, re.DOTALL)
+        capture = pipelines_str.group(0)
+        capture_inner = re.search(r"{(.*)}", capture, re.DOTALL)
+        capture_inner = capture_inner.group(1)
+        capture_inner = re.sub(r"\s", "", capture_inner)
+        pipelines_list = capture_inner.split(",")
+        pipelines_list = [i for i in pipelines_list if i]
+        pipelines_list = [i.split(":") for i in pipelines_list]
+        pipelines_list = [(i[0].strip("'\""), i[1]) for i in pipelines_list]
+        pipelines_list.append((class_name, priority))
+        pipelines_list = sorted(pipelines_list, key=operator.itemgetter(1))
+        pipelines_list = [('"{}"'.format(i[0]), i[1]) for i in pipelines_list]
+        pipelines_str = ",\n    ".join((": ".join(i) for i in pipelines_list))
+        pipelines_str = "    " + pipelines_str + ","
+        pipelines_str = "ITEM_PIPELINES = {{\n{}\n}}".format(pipelines_str)
+        settings_text = re.sub(
+            pipelines_regex, pipelines_str, settings_text, flags=re.DOTALL
+        )
+
+        with open("settings.py", "w") as settings_file:
+            settings_file.write(settings_text)
 
     def run(self, args, opts):
         if len(args) < 2:
@@ -111,6 +151,11 @@ class NewCommand(ScrapyCommand):
 
         if opts.debug:
             print(rendered_code)
+
+        if template_type == "pipeline" and opts.pipeline_priority:
+            self._add_pipeline_to_settings(
+                f"pipelines.{class_name}", opts.pipeline_priority
+            )
 
         out_file.write(rendered_code)
         out_file.close()

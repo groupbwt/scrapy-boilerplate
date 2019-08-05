@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+from distutils.util import strtobool
 
 from dotenv import load_dotenv
 
@@ -74,3 +75,10 @@ RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", 5672)
 RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "guest")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "/")
+
+try:
+    HTTPCACHE_ENABLED = strtobool(os.getenv("HTTPCACHE_ENABLED", "False"))
+except ValueError:
+    HTTPCACHE_ENABLED = False
+
+HTTPCACHE_IGNORE_HTTP_CODES = list(map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s)))

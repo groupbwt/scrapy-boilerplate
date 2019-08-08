@@ -20,11 +20,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     git init
 fi
 
-read -p "Clear README? "
+read -p "Delete README? "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    dirname=${PWD##*/}
-    echo -e "# $dirname\n" > README.md
-    echo "Cleared README"
+    rm -f README.md
+    echo "Deleted README"
 fi
 
 echo "Installing pipenv dependencies"

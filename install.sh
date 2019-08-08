@@ -31,7 +31,7 @@ pushd ./src > /dev/null
 pipenv install --dev --pre
 popd > /dev/null
 
-read -p "Add pre-commit hooks?"
+read -p "Add pre-commit hooks? "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   pushd ./src > /dev/null
   PYTHON=$(pipenv --py)

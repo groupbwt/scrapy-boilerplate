@@ -24,7 +24,8 @@ class RabbitSpider:
             port=settings.get("RABBITMQ_PORT"),
             virtual_host=settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=settings.get("RABBITMQ_USER"), password=settings.get("RABBITMQ_PASS")
+                username=settings.get("RABBITMQ_USER"),
+                password=settings.get("RABBITMQ_PASS"),
             ),
             heartbeat=0,
         )

@@ -81,4 +81,6 @@ try:
 except ValueError:
     HTTPCACHE_ENABLED = False
 
-HTTPCACHE_IGNORE_HTTP_CODES = list(map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s)))
+HTTPCACHE_IGNORE_HTTP_CODES = list(
+    map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s))
+)

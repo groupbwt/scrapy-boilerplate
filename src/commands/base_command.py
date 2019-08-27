@@ -6,7 +6,7 @@ from scrapy.utils.project import get_project_settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from util import mysql_connection_string
+from helpers import mysql_connection_string
 
 
 class BaseCommand(ScrapyCommand):

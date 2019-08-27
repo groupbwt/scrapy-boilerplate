@@ -15,7 +15,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from util import mysql_connection_string
+from helpers import mysql_connection_string
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

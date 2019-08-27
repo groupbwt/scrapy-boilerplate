@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, InvalidRequestError, DataError
 from sqlalchemy.orm import sessionmaker
 
-from util import mysql_connection_string
+from helpers import mysql_connection_string
 from .base_command import BaseCommand
 
 

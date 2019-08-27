@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 % if item_class:
 from items import ${item_class}
 % endif
-from util import mysql_connection_string
+from helpers import mysql_connection_string
 
 
 class ${class_name}(object):

@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from .base import Base
+from .Base import Base
 from .JSONSerializable import JSONSerializable
 
 

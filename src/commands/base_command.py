@@ -4,7 +4,7 @@ import logging
 from scrapy.commands import ScrapyCommand
 from scrapy.utils.project import get_project_settings
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 from helpers import mysql_connection_string
 
@@ -15,8 +15,7 @@ class BaseCommand(ScrapyCommand):
         self.settings = get_project_settings()
 
         self.engine = create_engine(mysql_connection_string())
-        construct_session = sessionmaker(bind=self.engine)
-        self.session = construct_session()
+        self.session = Session(self.engine)
 
         self.logger = logger or logging.getLogger(name=__name__)
 

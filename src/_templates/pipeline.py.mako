@@ -6,7 +6,7 @@ import pika
 % endif
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DataError, IntegrityError, InvalidRequestError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 % if item_class:
 from items import ${item_class}
@@ -40,8 +40,7 @@ class ${class_name}(object):
         % endif
 
     def open_spider(self, spider):
-        make_session = sessionmaker(bind=self.engine)
-        self.session = make_session()
+        self.session = Session(self.engine)
 
     def process_item(self, item, spider):
         % if item_class:

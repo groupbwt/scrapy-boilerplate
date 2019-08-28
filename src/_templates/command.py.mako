@@ -11,7 +11,7 @@ import pika
 from scrapy.utils.log import configure_logging
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, InvalidRequestError, DataError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 from helpers import mysql_connection_string
 from .base_command import BaseCommand
@@ -22,8 +22,7 @@ class ${class_name}(BaseCommand):
         super().__init__()
 
         self.engine = create_engine(mysql_connection_string())
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.session = Session(self.engine)
         % if use_rabbit:
         logging.getLogger("pika").setLevel(self.settings.get("PIKA_LOG_LEVEL"))
 

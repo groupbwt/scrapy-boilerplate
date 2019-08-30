@@ -4,7 +4,6 @@
       "name": "command_example",
       "cwd": "./commands",
       "script": "./command_example.sh",
-      "interpreter": "/bin/bash",
       "exec_interpreter": "/bin/bash",
       "instances": 1,
       "combine_logs": true,

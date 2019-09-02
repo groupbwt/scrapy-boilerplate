@@ -6,8 +6,11 @@ pushd $DIR > /dev/null
 read -p "Is this a new project install? [Y/n] "
 if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     project_name=""
-    until [ -z $project_name]; do
+    while [[ -z $project_name ]]; do
         read -p "Enter project name (snake_cased): " project_name
+        if [[ -z $project_name ]]; then
+            echo "Project name must not be empty!"
+        fi
     done
 
     echo "Creating .env files"

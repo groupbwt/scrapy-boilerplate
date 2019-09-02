@@ -13,14 +13,14 @@ echo "Updating project name"
 sed -i "s/YOUR_PROJECT_NAME/$project_name/g" src/settings.py
 sed -i "s/YOUR_PROJECT_NAME/$project_name/g" .env
 
-read -p "Create new git repo? "
+read -p "Create new git repo? [y/N] "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Removing .git folder"
     rm -rf .git
     git init
 fi
 
-read -p "Delete README? "
+read -p "Delete README? [y/N] "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -f README.md
     echo "Deleted README"
@@ -31,7 +31,7 @@ pushd ./src > /dev/null
 pipenv install --dev --pre
 popd > /dev/null
 
-read -p "Add pre-commit hooks? "
+read -p "Add pre-commit hooks? [y/N] "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   pushd ./src > /dev/null
   PYTHON=$(pipenv --py)

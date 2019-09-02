@@ -25,7 +25,7 @@ cp -i .docker_env.example .env
 
 if [[ $FIRST_TIME ]]; then
     echo "Updating project name"
-    file_names = ("src/settings.py" ".docker_env.example" ".env")
+    file_names=("src/settings.py" ".docker_env.example" ".env")
     for file_name in "${file_names[@]}"; do
         sed -i "s/YOUR_PROJECT_NAME/$project_name/g" "$file_name"
     done

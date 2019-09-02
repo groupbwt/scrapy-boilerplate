@@ -3,8 +3,13 @@
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 pushd $DIR > /dev/null
 
+FIRST_TIME=1
 read -p "Is this a new project install? [Y/n] "
-if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    FIRST_TIME=0
+fi
+
+if [[ $FIRST_TIME ]]; then
     project_name=""
     while [[ -z $project_name ]]; do
         read -p "Enter project name (snake_cased): " project_name
@@ -12,14 +17,18 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             echo "Project name must not be empty!"
         fi
     done
+fi
 
-    echo "Creating .env files"
-    cp -i src/.env.example src/.env
-    cp -i .docker_env.example .env
+echo "Creating .env files"
+cp -i src/.env.example src/.env
+cp -i .docker_env.example .env
 
+if [[ $FIRST_TIME ]]; then
     echo "Updating project name"
-    sed -i "s/YOUR_PROJECT_NAME/$project_name/g" src/settings.py
-    sed -i "s/YOUR_PROJECT_NAME/$project_name/g" .env
+    file_names = ("src/settings.py" ".docker_env.example" ".env")
+    for file_name in "${file_names[@]}"; do
+        sed -i "s/YOUR_PROJECT_NAME/$project_name/g" "$file_name"
+    done
 
     read -p "Create new git repo? [y/N] "
     if [[ $REPLY =~ ^[Yy]$ ]]; then

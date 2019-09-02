@@ -5,8 +5,6 @@ import os
 import re
 import sys
 
-import inflection
-from mako.template import Template
 from scrapy.commands import ScrapyCommand
 from scrapy.exceptions import UsageError
 from scrapy.utils.log import configure_logging
@@ -90,6 +88,13 @@ class NewCommand(ScrapyCommand):
             settings_file.write(settings_text)
 
     def run(self, args, opts):
+        try:
+            import inflection
+            from mako.template import Template
+        except ImportError as err:
+            self.logger.critical(err.message)
+            self.logger.warning("aborting!")
+
         if len(args) < 2:
             raise UsageError()
 

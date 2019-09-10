@@ -9,7 +9,7 @@ if [[ $REPLY =~ ^[Nn]$ ]]; then
     FIRST_TIME=0
 fi
 
-if [[ $FIRST_TIME ]]; then
+if [[ $FIRST_TIME == 1 ]]; then
     project_name=""
     while [[ -z $project_name ]]; do
         read -p "Enter project name (snake_cased): " project_name
@@ -23,7 +23,7 @@ echo "Creating .env files"
 cp -i src/.env.example src/.env
 cp -i .docker_env.example .env
 
-if [[ $FIRST_TIME ]]; then
+if [[ $FIRST_TIME == 1 ]]; then
     echo "Updating project name"
     file_names=("src/settings.py" ".docker_env.example" ".env")
     for file_name in "${file_names[@]}"; do

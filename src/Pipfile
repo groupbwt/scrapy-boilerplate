@@ -8,6 +8,7 @@ black = "*"
 ipython = "*"
 pylint = "*"
 pre-commit = "*"
+scrapy_new = "*"
 
 [packages]
 alembic = "*"

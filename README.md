@@ -34,7 +34,7 @@ The boilerplate comes with some pre-written classes and helper scripts and funct
 
 ### Code generation
 
-There is a scrapy command to generate class files and automatically add imports ti `__init__` files. It can be used as follows:
+There is a scrapy command to generate class files and automatically add imports to `__init__` files. It can be used as follows:
 
 ```
 scrapy new spider SampleSpider
@@ -87,7 +87,7 @@ A scrapy downloader middleware to use a proxy server is included in `src/middlew
 
 A single-endpoint proxy is used by default, assuming usage of rotating proxies service. If you want to provide your own list of proxies, an external package has to be used, as this use-case is not yet covered by this boilerplate.
 
-## File & folder structure
+## File and folder structure
 
 This boilerplate offers a more intuitive alternative to Scrapy's default project structure. Here, file/directory structure is more flattened and re-arranged a bit.
 

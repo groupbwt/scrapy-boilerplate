@@ -7,8 +7,6 @@ verify_ssl = true
 black = "*"
 ipython = "*"
 pylint = "*"
-mako = "*"
-inflection = "*"
 pre-commit = "*"
 
 [packages]

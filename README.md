@@ -34,7 +34,11 @@ The boilerplate comes with some pre-written classes and helper scripts and funct
 
 ### Code generation
 
-There is a scrapy command to generate class files and automatically add imports to `__init__` files. It can be used as follows:
+There is a scrapy command to generate class files and automatically add imports to `__init__` files.
+
+The command is a part of a separate [package](https://github.com/KristobalJunta/scrapy-command-new). The repository contains code of the command and default tempaltes used for generation.
+
+It can be used as follows:
 
 ```
 scrapy new spider SampleSpider

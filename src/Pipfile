@@ -7,9 +7,8 @@ verify_ssl = true
 black = "*"
 ipython = "*"
 pylint = "*"
-mako = "*"
-inflection = "*"
 pre-commit = "*"
+scrapy-new = "*"
 
 [packages]
 alembic = "*"

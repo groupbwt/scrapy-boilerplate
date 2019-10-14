@@ -8,7 +8,6 @@ services:
       - '${RABBITMQ_MANAGEMENT_HTTP_HOST_PORT}:15672'
       - '${RABBITMQ_MANAGEMENT_HTTPS_HOST_PORT}:15671'
     privileged: true
-    hostname: tr-rabbitmq
     volumes:
       - '${DATA_PATH_HOST}/rabbitmq:/var/lib/rabbitmq/mnesia'
 

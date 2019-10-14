@@ -18,4 +18,4 @@ RUN pipenv lock && pipenv install --dev --pre --system
 WORKDIR /var/app
 
 # change this to actual scraper command if necessary
-CMD ["sh", "-c", "scrapy shell"]
+CMD ["sh", "-c", "python"]

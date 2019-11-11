@@ -11,7 +11,7 @@ import scrapy
 from scrapy.utils.project import get_project_settings
 
 
-class RabbitSpider:
+class RabbitMixin:
     """
     Mixin to interact with RabbitMQ
     """

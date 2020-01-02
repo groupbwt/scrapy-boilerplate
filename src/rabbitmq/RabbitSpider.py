@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 import os
-import re
-import sys
 import time
 
 import pika
-import scrapy
 from scrapy.utils.project import get_project_settings
 
 
@@ -37,18 +33,29 @@ class RabbitSpider:
             prefetch_count=int(settings.get("CONCURRENT_REQUESTS", 1))
         )
 
-    def prepare_request(self):
+    def prepare_request(self, method, header_frame, body):
         raise NotImplementedError
 
+    def get_queue_name_from(self):
+        raise NotImplementedError  # example: return os.getenv("PUSHER_QUEUE", "")
+
+    def get_queue_name_to(self):
+        raise NotImplementedError  # example: return os.getenv("SAVER_QUEUE", "")
+
+    def declare_queue_from(self):
+        return self.channel.queue_declare(queue=self.get_queue_name_from(), durable=True)
+
+    def declare_queue_to(self):
+        return self.channel.queue_declare(queue=self.get_queue_name_to(), durable=True)
+
     def next_request(self):
-        queue_name = os.getenv("PUSHER_QUEUE", "")
         while True:
-            stats = self.channel.queue_declare(queue=queue_name, durable=True)
+            stats = self.declare_queue_from()
             if stats.method.message_count > 0:
-                method, header_frame, body = self.channel.basic_get(queue_name)
+                method, header_frame, body = self.channel.basic_get(self.get_queue_name_from())
 
                 if body:
                     return self.prepare_request(method, header_frame, body)
             else:
                 self.logger.warning("No messages in the queue, waiting...")
-                time.sleep(30)
+                time.sleep(int(os.getenv("SPIDERS_SLEEP_INTERVAL", 30)))

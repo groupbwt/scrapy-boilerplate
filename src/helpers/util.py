@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-
 from scrapy.utils.project import get_project_settings
 
 

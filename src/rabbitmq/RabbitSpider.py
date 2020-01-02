@@ -51,7 +51,7 @@ class RabbitSpider:
     def next_request(self):
         while True:
             stats = self.declare_queue_from()
-            if stats.method.message_count > 0:
+            if stats.method.message_count:
                 method, header_frame, body = self.channel.basic_get(self.get_queue_name_from())
 
                 if body:

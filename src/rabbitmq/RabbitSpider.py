@@ -9,8 +9,7 @@ from scrapy.utils.project import get_project_settings
 
 class RabbitSpider:
     def __init__(self, *args, **kwargs):
-        settings = get_project_settings()
-        self.rabbitmq_connect(settings)
+        self.rabbitmq_connect(get_project_settings())
 
     def rabbitmq_connect(self, settings):
         logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))

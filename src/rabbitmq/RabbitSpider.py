@@ -9,8 +9,7 @@ from scrapy.utils.project import get_project_settings
 
 class RabbitSpider:
     def __init__(self, *args, **kwargs):
-        settings = get_project_settings()
-        self.rabbitmq_connect(settings)
+        self.rabbitmq_connect(get_project_settings())
 
     def rabbitmq_connect(self, settings):
         logging.getLogger("pika").setLevel(os.getenv("PIKA_LOG_LEVEL"))
@@ -51,7 +50,7 @@ class RabbitSpider:
     def next_request(self):
         while True:
             stats = self.declare_queue_from()
-            if stats.method.message_count > 0:
+            if stats.method.message_count:
                 method, header_frame, body = self.channel.basic_get(self.get_queue_name_from())
 
                 if body:

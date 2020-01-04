@@ -19,33 +19,22 @@ PROXY_ENABLED = os.getenv("PROXY_ENABLED", False)
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 
-ROBOTSTXT_OBEY = False
-
-# Configure maximum concurrent requests performed by Scrapy (default: 16)
 CONCURRENT_REQUESTS = os.getenv("CONCURRENT_REQUESTS", 16)
 CONCURRENT_REQUESTS_PER_DOMAIN = os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
 DOWNLOAD_DELAY = os.getenv("DOWNLOAD_DELAY", 0)
 DOWNLOAD_TIMEOUT = os.getenv("DOWNLOAD_TIMEOUT", 180)
 
-# HTTPERROR_ALLOWED_CODES = [404, 405, 407, 429, 456, 503]
-HTTPERROR_ALLOW_ALL = True
-
-# COOKIES_ENABLED = False
+ROBOTSTXT_OBEY = False
+COOKIES_ENABLED = True
 
 TELNETCONSOLE_ENABLED = False
 TELNETCONSOLE_PASSWORD = "password"
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    # Upgrade-Insecure-Requests: 1
     "Cache-Control": "max-age=0",
 }
-
-# SPIDER_MIDDLEWARES = {}
 
 DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": None,
@@ -56,13 +45,7 @@ DOWNLOADER_MIDDLEWARES = {
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_FILE = os.getenv("LOG_FILE") if os.getenv("LOG_FILE", "") else None
 
-# EXTENSIONS = {
-#    'scrapy.extensions.telnet.TelnetConsole': None,
-# }
-
 ITEM_PIPELINES = {}
-
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 MYSQL_USER = os.getenv("MYSQL_USER", "127.0.0.1")
 MYSQL_PASS = os.getenv("MYSQL_PASS", "")

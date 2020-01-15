@@ -114,7 +114,7 @@ class PikaSelectConnection:
 
     def on_message_consume_callback(self, channel, basic_deliver, properties, body):
         delivery_tag = basic_deliver.delivery_tag
-        self.logger.info(f'Received message # {delivery_tag} from {properties.app_id}: {body}')
+        self.logger.info(f'Received message # {delivery_tag} from {self.queue_name}: {body}')
 
         self.message_processing(channel, basic_deliver, properties, body)
 

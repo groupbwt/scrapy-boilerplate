@@ -130,7 +130,7 @@ class PikaSelectConnection:
             self.connection.ioloop.stop()
 
     def on_channel_closed_callback(self, channel, reason):
-        self.logger.warning(f'Channel {channel} was closed: {reason}')
+        self.logger.info(f'Channel {channel} was closed: {reason}')
         self.is_consuming = False
         if self.connection.is_closing or self.connection.is_closed:
             self.logger.info('Connection is closing or already closed')

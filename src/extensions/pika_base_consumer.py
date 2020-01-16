@@ -5,7 +5,7 @@ from pika.channel import Channel
 from scrapy import signals
 from scrapy.exceptions import DontCloseSpider
 
-from helpers import PikaSelectConnection, LoggerMixin
+from helpers import PikaSelectConnection, LoggerMixin, RMQObject
 
 
 class PikaBaseConsumer(LoggerMixin):
@@ -15,7 +15,6 @@ class PikaBaseConsumer(LoggerMixin):
         crawler.signals.connect(ext.spider_opened, signal=signals.spider_opened)
         crawler.signals.connect(ext.spider_idle, signal=signals.spider_idle)
 
-        crawler.signals.connect(ext.item_scraped, signal=signals.item_scraped)
         crawler.signals.connect(ext.item_dropped, signal=signals.item_dropped)
         crawler.signals.connect(ext.item_error, signal=signals.item_error)
         crawler.signals.connect(ext.spider_error, signal=signals.spider_error)
@@ -58,10 +57,10 @@ class PikaBaseConsumer(LoggerMixin):
     def message_processing(self, channel: Channel, basic_deliver, properties, body):
         message = json.loads(body)
 
-        rmq_object = {
-            'success_callback': functools.partial(channel.basic_ack, basic_deliver.delivery_tag),
-            'failed_callback': functools.partial(channel.basic_nack, basic_deliver.delivery_tag)
-        }
+        rmq_object = RMQObject(
+            functools.partial(channel.basic_ack, basic_deliver.delivery_tag),
+            functools.partial(channel.basic_nack, basic_deliver.delivery_tag)
+        )
 
         try:
             self.crawler.engine.crawl(self.rmq_settings['create_request_callback'](message, rmq_object), self.spider)
@@ -69,22 +68,14 @@ class PikaBaseConsumer(LoggerMixin):
             self.spider.logger.warning(e.__repr__())
             self.rmq_connection.stop()
 
-    # TODO Unhandled exception:
-    #  There may be a situation with duplication - item was successful, but parse function ended with an error
-    #  item_scraped -> spider_error -> Exception
-
-    def item_scraped(self, item, response, spider):
-        self.logger.debug('item_scraped')
-        response.meta['rmq_object']['success_callback']()
-
     def item_error(self, item, response, spider, failure):
         self.logger.debug('item_error')
-        response.meta['rmq_object']['failed_callback']()
+        response.meta['rmq_object'].nack()
 
     def item_dropped(self, item, response, exception, spider):
         self.logger.debug('item_dropped')
-        response.meta['rmq_object']['failed_callback']()
+        response.meta['rmq_object'].nack()
 
     def spider_error(self, failure, response, spider):
         self.logger.debug('spider_error')
-        response.meta['rmq_object']['failed_callback']()
+        response.meta['rmq_object'].nack()

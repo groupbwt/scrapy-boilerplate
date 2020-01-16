@@ -1,14 +1,16 @@
+import logging
 from typing import Callable
+from scrapy.utils.project import get_project_settings
+
+settings = get_project_settings()
+logger = logging.getLogger(f"scrapy.RMQObject")
+logger.setLevel(settings.get('LOG_LEVEL'))
 
 
 class RMQObject:
     def __init__(self, ack_callback: Callable, nack_callback: Callable):
         self.__ack_callback = ack_callback
         self.__nack_callback = nack_callback
-
-    def __disable_callbacks(self):
-        self.ack = lambda: None
-        self.nack = lambda: None
 
     def ack(self):
         self.__ack_callback()
@@ -17,3 +19,10 @@ class RMQObject:
     def nack(self):
         self.__nack_callback()
         self.__disable_callbacks()
+
+    def __disable_callbacks(self):
+        self.ack = self.__duplicate_call
+        self.nack = self.__duplicate_call
+
+    def __duplicate_call(self):
+        logger.warning(f'{self.__class__.__name__} duplicate ack/nack called')

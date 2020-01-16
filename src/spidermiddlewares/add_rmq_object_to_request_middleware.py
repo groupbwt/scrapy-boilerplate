@@ -7,7 +7,6 @@ from extensions import PikaBaseConsumer
 
 class AddRMQObjectToRequestMiddleware:
     def __init__(self, crawler: Crawler):
-
         for component in crawler.extensions.middlewares:
             if isinstance(component, PikaBaseConsumer):
                 break

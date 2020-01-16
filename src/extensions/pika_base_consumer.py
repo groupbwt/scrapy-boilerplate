@@ -3,9 +3,10 @@ import functools
 
 from pika.channel import Channel
 from scrapy import signals
-from scrapy.exceptions import DontCloseSpider
+from scrapy.exceptions import DontCloseSpider, NotConfigured
 
 from helpers import PikaSelectConnection, LoggerMixin, RMQObject
+from spidermiddlewares import AddRMQObjectToRequestMiddleware
 
 
 class PikaBaseConsumer(LoggerMixin):
@@ -21,9 +22,14 @@ class PikaBaseConsumer(LoggerMixin):
         return ext
 
     def __init__(self, crawler):
+        for key in crawler.settings['SPIDER_MIDDLEWARES'].keys():
+            if AddRMQObjectToRequestMiddleware.__name__ in key:
+                break
+        else:
+            raise NotConfigured
+
         super().__init__(settings=crawler.settings)
         self.settings = crawler.settings
-        self.count_idle_signal = 0
         self.crawler = crawler
         self.spider = None
         self.rmq_connection = None

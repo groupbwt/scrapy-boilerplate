@@ -63,7 +63,9 @@ class PikaBaseConsumer(LoggerMixin):
         )
 
         try:
-            self.crawler.engine.crawl(self.rmq_settings['create_request_callback'](message, rmq_object), self.spider)
+            request = self.rmq_settings['create_request_callback'](message)
+            request.meta['rmq_object'] = rmq_object
+            self.crawler.engine.crawl(request, self.spider)
         except AssertionError as e:
             self.spider.logger.warning(e.__repr__())
             self.rmq_connection.stop()

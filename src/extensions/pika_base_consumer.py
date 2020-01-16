@@ -3,10 +3,10 @@ import functools
 
 from pika.channel import Channel
 from scrapy import signals
-from scrapy.exceptions import DontCloseSpider, NotConfigured
+from scrapy.exceptions import DontCloseSpider
 
 from helpers import PikaSelectConnection, LoggerMixin, RMQObject
-from spidermiddlewares import AddRMQObjectToRequestMiddleware
+from spidermiddlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
 
 
 class PikaBaseConsumer(LoggerMixin):
@@ -26,7 +26,7 @@ class PikaBaseConsumer(LoggerMixin):
             if AddRMQObjectToRequestMiddleware.__name__ in key:
                 break
         else:
-            raise NotConfigured
+            raise Exception(f'AddRMQObjectToRequestMiddleware is required for use {self.__class__.__name__}')
 
         super().__init__(settings=crawler.settings)
         self.settings = crawler.settings

@@ -1,5 +1,8 @@
+from typing import Callable
+
+
 class RMQObject:
-    def __init__(self, ack_callback, nack_callback):
+    def __init__(self, ack_callback: Callable, nack_callback: Callable):
         self.__ack_callback = ack_callback
         self.__nack_callback = nack_callback
 

@@ -22,6 +22,7 @@ class PikaBaseConsumer(LoggerMixin):
         return ext
 
     def __init__(self, crawler):
+        # checks in settings.py and custom_settings
         for key in crawler.settings['SPIDER_MIDDLEWARES'].keys():
             if AddRMQObjectToRequestMiddleware.__name__ in key:
                 break

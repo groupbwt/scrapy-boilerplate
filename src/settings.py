@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 from distutils.util import strtobool
 
@@ -54,6 +55,8 @@ MYSQL_PORT = os.getenv("MYSQL_PORT", "root")
 MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
 
 PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")
+logging.getLogger("pika").setLevel(PIKA_LOG_LEVEL)
+
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
 RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", 5672)
 RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "guest")

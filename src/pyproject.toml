@@ -1,12 +1,5 @@
 [tool.black]
-line-length = 88
-target-version = ['py36', 'py37']
+line-length = 99
+target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.venv
-  | \.scrapy
-)/
-'''
+exclude = '/(\.eggs|\.git|\.venv|\.scrapy)/'

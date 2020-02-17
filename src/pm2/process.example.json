@@ -9,9 +9,6 @@
       "combine_logs": true,
       "out_file": "../logs/command_example.log",
       "error_file": "../logs/command_example.log",
-      "env": {
-        "PIPENV_VENV_IN_PROJECT": true
-      }
     }
   ]
 }

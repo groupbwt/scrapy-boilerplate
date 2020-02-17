@@ -8,7 +8,7 @@ Master branch is to be considered as always ready to use, with major changes/fea
 ## Features
 
 - Python 3.6+
-- [Pipenv](https://github.com/pypa/pipenv) for dependency management
+- [Poetry](https://github.com/python-poetry/poetry) for dependency management
 - SQLAlchemy ORM with alembic migrations
 - RabbitMQ integrated via [pika](https://github.com/pika/pika/)
 - configuration via ENV variables and/or `.env` file

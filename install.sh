@@ -21,11 +21,10 @@ fi
 
 echo "Creating .env files"
 cp -i src/.env.example src/.env
-cp -i .docker_env.example .env
 
 if [[ $FIRST_TIME == 1 ]]; then
     echo "Updating project name"
-    file_names=("src/settings.py" ".docker_env.example" ".env")
+    file_names=("src/settings.py" ".env")
     for file_name in "${file_names[@]}"; do
         sed -i "s/YOUR_PROJECT_NAME/$project_name/g" "$file_name"
     done

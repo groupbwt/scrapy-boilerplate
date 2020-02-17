@@ -1,9 +1,0 @@
-.vscode/
-.idea/
-
-doc/
-docker_data/
-sql/
-
-src/.venv/
-src/node_modules/

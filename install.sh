@@ -44,17 +44,12 @@ if [[ $FIRST_TIME == 1 ]]; then
     fi
 fi
 
-echo "Installing pipenv dependencies"
-pushd ./src > /dev/null
-pipenv install --dev --pre
-popd > /dev/null
+echo "Installing poetry dependencies"
+poetry install
 
 read -p "Add pre-commit hooks? [y/N] "
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    pushd ./src > /dev/null
-    PYTHON=$(pipenv --py)
-    popd > /dev/null
-    $PYTHON -m pre_commit install
+    poetry run python -m pre_commit install
 fi
 
 echo "Setup finished, your project is ready!"

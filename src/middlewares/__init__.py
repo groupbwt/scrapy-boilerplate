@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-from .HttpProxyMiddleware import HttpProxyMiddleware
-from .LogErrorsMiddleware import LogErrorsMiddleware
+from .http_proxy_middleware import HttpProxyMiddleware
+from .log_errors_middleware import LogErrorsMiddleware

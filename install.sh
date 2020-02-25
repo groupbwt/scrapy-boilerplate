@@ -24,7 +24,7 @@ cp -i src/.env.example src/.env
 
 if [[ $FIRST_TIME == 1 ]]; then
     echo "Updating project name"
-    file_names=("src/settings.py" ".env")
+    file_names=("src/settings.py" ".env" "pyproject.toml")
     for file_name in "${file_names[@]}"; do
         sed -i "s/YOUR_PROJECT_NAME/$project_name/g" "$file_name"
     done

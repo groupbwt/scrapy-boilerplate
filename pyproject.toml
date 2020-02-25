@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ivt-images-scraper"
+name = "YOUR_PROJECT_NAME"
 version = "0.5.0"
 description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]

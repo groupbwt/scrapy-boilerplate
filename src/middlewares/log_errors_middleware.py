@@ -1,7 +1,7 @@
 import scrapy
 
 
-class LogErrorsMiddleware(object):
+class LogErrorsMiddleware:
     def process_response(self, request, response, spider):
         if response.status >= 400:
             spider.logger.critical(

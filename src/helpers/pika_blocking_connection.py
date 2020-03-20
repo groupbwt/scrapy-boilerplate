@@ -4,9 +4,9 @@ from scrapy.utils.project import get_project_settings
 from helpers import pika_connection_parameters
 
 
-class PikaBlockingConnection(object):
+class PikaBlockingConnection:
     def __init__(self, queue_name, settings=None):
-        super(PikaBlockingConnection, self).__init__()
+        super().__init__()
 
         if not isinstance(settings, dict):
             settings = get_project_settings()

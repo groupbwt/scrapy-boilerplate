@@ -2,18 +2,15 @@
 import os
 import sys
 
-# hack to bypass top-level import error
-cur_dir = os.path.dirname(os.path.realpath(__file__))
-root_dir = os.path.abspath(os.path.join(cur_dir, ".."))
-if root_dir not in sys.path:
-    sys.path.append(root_dir)
-
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+
+# hack to bypass top-level import error
+sys.path.append(os.path.join(sys.path[0], "../../src/"))
 
 from helpers import mysql_connection_string
 

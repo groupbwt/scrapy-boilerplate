@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "YOUR_PROJECT_NAME"
-version = "0.5.0"
+version = "1.8.0"
 description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
 

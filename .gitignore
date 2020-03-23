@@ -11,6 +11,7 @@ venv.bak/
 
 .vscode/
 .idea/
+.mypy_cache/
 
 src/pm2/process.json
 

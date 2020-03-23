@@ -21,3 +21,6 @@ class BaseCommand(ScrapyCommand):
     def set_logger(self, name: str = "COMMAND", level: str = "DEBUG"):
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel(level)
+
+    def run(self, args, opts):
+        raise NotImplementedError

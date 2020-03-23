@@ -1,6 +1,7 @@
 import pika
-from scrapy.utils.project import get_project_settings
+import logging
 
+from scrapy.utils.project import get_project_settings
 from helpers import pika_connection_parameters
 
 
@@ -11,6 +12,7 @@ class PikaBlockingConnection:
         if not isinstance(settings, dict):
             settings = get_project_settings()
 
+        logging.getLogger("pika").setLevel(settings.get("PIKA_LOG_LEVEL"))
         self.rabbit_connection = pika.BlockingConnection(pika_connection_parameters(settings))
 
         self.queue_name = queue_name

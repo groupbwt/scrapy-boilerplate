@@ -4,8 +4,9 @@ import os
 from distutils.util import strtobool
 
 from dotenv import load_dotenv
+from dotenv_linter.cli import lint
 
-
+lint((".env", ".env.example"))
 load_dotenv()
 
 BOT_NAME = "YOUR_PROJECT_NAME"

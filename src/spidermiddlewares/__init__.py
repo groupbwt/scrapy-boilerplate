@@ -1,2 +1,0 @@
-
-from .add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware

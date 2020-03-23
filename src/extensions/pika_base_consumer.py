@@ -8,7 +8,7 @@ from scrapy.http import Response
 from twisted.python.failure import Failure
 
 from helpers import PikaSelectConnection, LoggerMixin, RMQObject
-from spidermiddlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
+from middlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
 from scrapy.crawler import Crawler
 
 

@@ -12,18 +12,21 @@ class RMQObject:
     def __init__(self, ack_callback: Callable, nack_callback: Callable):
         self.__ack_callback = ack_callback
         self.__nack_callback = nack_callback
+        self.is_callback_enabled = True
 
     def ack(self) -> None:
-        self.__ack_callback()
-        self.__disable_callbacks()
+        if self.is_callback_enabled:
+            self.__ack_callback()
+            self.is_callback_enabled = False
+        else:
+            self.__duplicate_call()
 
     def nack(self) -> None:
-        self.__nack_callback()
-        self.__disable_callbacks()
-
-    def __disable_callbacks(self) -> None:
-        self.ack = self.__duplicate_call
-        self.nack = self.__duplicate_call
+        if self.is_callback_enabled:
+            self.__nack_callback()
+            self.is_callback_enabled = False
+        else:
+            self.__duplicate_call()
 
     def __duplicate_call(self) -> None:
         logger.warning(f"{self.__class__.__name__} duplicate ack/nack called")

@@ -1,7 +1,7 @@
-from typing import Union, Iterable
+from typing import Iterable, Union
 
 import scrapy
-from scrapy import Request, Item, Spider
+from scrapy import Item, Request, Spider
 from scrapy.http import Response
 
 

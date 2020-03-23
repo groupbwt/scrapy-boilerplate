@@ -1,7 +1,7 @@
 import pika
 from pika import ConnectionParameters
-from scrapy.utils.project import get_project_settings
 from scrapy.settings import Settings
+from scrapy.utils.project import get_project_settings
 
 
 def pika_connection_parameters(settings: Settings = None) -> ConnectionParameters:

@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from helpers import mysql_connection_string
+from sqlalchemy import engine_from_config, pool
 
 # hack to bypass top-level import error
 sys.path.append(os.path.join(sys.path[0], "../../src/"))
 
-from helpers import mysql_connection_string
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

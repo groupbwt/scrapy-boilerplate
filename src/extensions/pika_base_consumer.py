@@ -1,15 +1,14 @@
-import json
 import functools
+import json
 
+from helpers import LoggerMixin, PikaSelectConnection, RMQObject
+from middlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
 from pika.channel import Channel
-from scrapy import signals, Spider, Item
+from scrapy import Item, Spider, signals
+from scrapy.crawler import Crawler
 from scrapy.exceptions import DontCloseSpider
 from scrapy.http import Response
 from twisted.python.failure import Failure
-
-from helpers import PikaSelectConnection, LoggerMixin, RMQObject
-from middlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
-from scrapy.crawler import Crawler
 
 
 class PikaBaseConsumer(LoggerMixin):

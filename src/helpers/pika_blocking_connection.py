@@ -1,10 +1,9 @@
-import pika
 import logging
 
-from scrapy.utils.project import get_project_settings
-from scrapy.settings import Settings
-
+import pika
 from helpers import pika_connection_parameters
+from scrapy.settings import Settings
+from scrapy.utils.project import get_project_settings
 
 
 class PikaBlockingConnection:

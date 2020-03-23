@@ -2,13 +2,11 @@
 import os
 import time
 
-from pika.spec import BasicProperties
-
-from scrapy import Request
-from scrapy.utils.project import get_project_settings
-from scrapy.settings import Settings
-
 from helpers import PikaBlockingConnection
+from pika.spec import BasicProperties
+from scrapy import Request
+from scrapy.settings import Settings
+from scrapy.utils.project import get_project_settings
 
 
 class RabbitSpider(PikaBlockingConnection):

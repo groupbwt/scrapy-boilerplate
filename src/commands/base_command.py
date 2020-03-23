@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from helpers import mysql_connection_string
 from scrapy.commands import ScrapyCommand
 from scrapy.utils.project import get_project_settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-
-from helpers import mysql_connection_string
 
 
 class BaseCommand(ScrapyCommand):

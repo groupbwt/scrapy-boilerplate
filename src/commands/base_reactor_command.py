@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from scrapy.utils.log import configure_logging
-
 from scrapy.commands import ScrapyCommand
+from scrapy.utils.log import configure_logging
 from twisted.internet import reactor
 
 

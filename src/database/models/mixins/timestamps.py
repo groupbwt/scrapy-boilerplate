@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import text, Column
+from sqlalchemy import Column, text
 from sqlalchemy.dialects.mysql import TIMESTAMP
 
 
 class MysqlTimestampsMixin:
     created_at = Column(
-        "created_at",
-        TIMESTAMP,
-        nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
+        "created_at", TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"),
     )
     updated_at = Column(
         "updated_at",

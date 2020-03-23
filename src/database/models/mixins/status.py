@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import text, Column
+from sqlalchemy import Column, text
 from sqlalchemy.dialects.mysql import MEDIUMINT
 
 

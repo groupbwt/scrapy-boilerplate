@@ -1,11 +1,11 @@
-import pika
-from pika.channel import Channel
-from scrapy.utils.project import get_project_settings
 import logging
 from typing import Callable
-from twisted.internet import reactor
 
+import pika
 from helpers import pika_connection_parameters
+from pika.channel import Channel
+from scrapy.utils.project import get_project_settings
+from twisted.internet import reactor
 
 
 class PikaSelectConnection:

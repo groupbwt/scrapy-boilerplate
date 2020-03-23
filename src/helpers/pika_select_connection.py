@@ -1,8 +1,9 @@
 import logging
-from typing import Callable
+from typing import Any, Callable, Dict, Union
 
 import pika
 from helpers import pika_connection_parameters
+from pika import SelectConnection
 from pika.channel import Channel
 from scrapy.utils.project import get_project_settings
 from twisted.internet import reactor
@@ -11,14 +12,17 @@ from twisted.internet import reactor
 class PikaSelectConnection:
     EXCHANGE = "message"
     EXCHANGE_TYPE = "topic"
-    DEFAULT_OPTIONS = {"enable_delivery_confirmations": True, "prefetch_count": 8}
+    DEFAULT_OPTIONS: Dict[str, Union[bool, int]] = {
+        "enable_delivery_confirmations": True,
+        "prefetch_count": 8,
+    }
 
     def __init__(
         self,
         queue_name: str,
-        callback: Callable,
+        callback: Callable[..., Any],
         is_consumer: bool,
-        options: dict = None,
+        options: Dict[str, Union[bool, int]] = None,
         settings=None,
     ):
         """
@@ -37,17 +41,21 @@ class PikaSelectConnection:
 
         self.settings = settings
         self.queue_name = queue_name
-        self.channel = None
-        self.connection = None
+        self.channel: Channel = None
+        self.connection: SelectConnection = None
         self.consumer_tag = None
 
         self.is_closing = False
         self.is_consuming = False
         self.is_consumer = is_consumer
-        self.OPTIONS = dict()
+        self.OPTIONS = {}
 
         if options:
-            options = dict()
+            # dont know why, but options were overriden here
+            options = {}
+        else:
+            # options should not be None
+            options = {}
 
         self.OPTIONS["enable_delivery_confirmations"] = options.get(
             "enable_delivery_confirmations", self.DEFAULT_OPTIONS["enable_delivery_confirmations"]
@@ -57,7 +65,7 @@ class PikaSelectConnection:
         )
 
         if callable(callback):
-            self.message_processing = callback
+            self.message_processing_callback = callback
         else:
             raise Exception("Callback object is not callable")
 
@@ -131,7 +139,13 @@ class PikaSelectConnection:
         self.message_processing(channel, basic_deliver, properties, body)
 
     def message_processing(self, channel, basic_deliver, properties, body):
-        raise NotImplementedError(f"{self.__class__.__name__}.message_processing not implemented")
+        if self.message_processing_callback:
+            # TODO possible error here, do not know if method signature is correct
+            self.message_processing_callback(channel, basic_deliver, properties, body)
+        else:
+            raise NotImplementedError(
+                f"{self.__class__.__name__}.message_processing_callback not implemented"
+            )
 
     def on_open_error_callback(self, connection):
         self.logger.warning("on_open_error_callback called, method not implement")

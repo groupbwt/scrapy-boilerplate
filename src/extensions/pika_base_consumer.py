@@ -1,5 +1,6 @@
 import functools
 import json
+from typing import Callable, Dict, Union
 
 from helpers import LoggerMixin, PikaSelectConnection, RMQObject
 from middlewares.add_rmq_object_to_request_middleware import AddRMQObjectToRequestMiddleware
@@ -36,9 +37,10 @@ class PikaBaseConsumer(LoggerMixin):
         super().__init__(settings=crawler.settings)
         self.settings = crawler.settings
         self.crawler = crawler
-        self.spider = None
-        self.rmq_connection = None
-        self.rmq_settings = None
+        self.spider: Spider = None
+        self.rmq_connection: PikaSelectConnection = None
+        self.rmq_settings: Dict[str, Union[object, Callable]] = {}
+        self.create_request_callback: Callable = lambda: NotImplementedError
         self.count = 0
 
     def spider_opened(self, spider: Spider):
@@ -50,7 +52,10 @@ class PikaBaseConsumer(LoggerMixin):
                 raise Exception(f'Spider rmq_settings object has no key "{field}"')
 
         self.spider = spider
-        self.rmq_settings = spider.rmq_settings
+        self.rmq_settings = spider.rmq_settings if spider.rmq_settings else {}
+        callback = self.rmq_settings.get("create_request_callback")
+        if callable(callback):
+            self.create_request_callback = callback
 
         self.rmq_connection = PikaSelectConnection(
             queue_name=self.rmq_settings["queue"],
@@ -74,7 +79,7 @@ class PikaBaseConsumer(LoggerMixin):
         )
 
         try:
-            request = self.rmq_settings["create_request_callback"](message)
+            request = self.create_request_callback(message)
             request.meta["rmq_object"] = rmq_object
             self.crawler.engine.crawl(request, self.spider)
         except AssertionError as e:

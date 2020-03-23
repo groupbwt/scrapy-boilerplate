@@ -22,6 +22,7 @@ scrapy-new = "^0.1.5"
 black = "^19.10b0"
 pylint = "^2.4.4"
 pre-commit = "^2.0.1"
+isort = "^4.3.21"
 
 [tool.black]
 line-length = 99

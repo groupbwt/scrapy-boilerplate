@@ -10,7 +10,7 @@ from helpers import mysql_connection_string
 
 
 class BaseCommand(ScrapyCommand):
-    def __init__(self, logger=None):
+    def __init__(self, logger: logging.Logger = None):
         super().__init__()
         self.settings = get_project_settings()
 
@@ -19,6 +19,6 @@ class BaseCommand(ScrapyCommand):
 
         self.logger = logger or logging.getLogger(name=__name__)
 
-    def set_logger(self, name="COMMAND", level="DEBUG"):
+    def set_logger(self, name: str = "COMMAND", level: str = "DEBUG"):
         self.logger = logging.getLogger(name=name)
         self.logger.setLevel(level)

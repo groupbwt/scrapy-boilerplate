@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from .base import Base
+from sqlalchemy.orm import Table
 
 
-class JSONSerializable(Base):
+class JSONSerializable:
+    def __init__(self):
+        self.__table__: Table = None
+
     def _serialize(self, value: object) -> object:
         if type(value) not in (int, float, bool, type(None)):
             return str(value)

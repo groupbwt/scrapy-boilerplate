@@ -2,9 +2,9 @@
 import logging
 import os
 from distutils.util import strtobool
+from typing import Dict
 
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -46,7 +46,7 @@ DOWNLOADER_MIDDLEWARES = {
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_FILE = os.getenv("LOG_FILE") if os.getenv("LOG_FILE", "") else None
 
-ITEM_PIPELINES = {}
+ITEM_PIPELINES: Dict[str, int] = {}
 
 MYSQL_USER = os.getenv("MYSQL_USER", "127.0.0.1")
 MYSQL_PASS = os.getenv("MYSQL_PASS", "")

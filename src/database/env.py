@@ -4,11 +4,11 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from helpers import mysql_connection_string
 from sqlalchemy import engine_from_config, pool
 
 # hack to bypass top-level import error
 sys.path.append(os.path.join(sys.path[0], "../../src/"))
+from helpers import mysql_connection_string  # isort:skip
 
 
 # this is the Alembic Config object, which provides

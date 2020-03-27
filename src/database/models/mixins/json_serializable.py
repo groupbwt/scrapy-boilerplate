@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy.orm import Table
+from sqlalchemy import Table
 
 
 class JSONSerializable:
-    def __init__(self):
-        self.__table__: Table = None
+    __table__: Table = None
 
-    def _serialize(self, value: object) -> object:
+    @staticmethod
+    def _serialize(value: object) -> object:
         if type(value) not in (int, float, bool, type(None)):
             return str(value)
 

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BOT_NAME = "YOUR_PROJECT_NAME"
+BOT_NAME = "{{cookiecutter.project_name}}"
 
 SPIDER_MODULES = ["spiders"]
 NEWSPIDER_MODULE = "spiders"

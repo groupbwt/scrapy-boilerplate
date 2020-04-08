@@ -1,7 +1,7 @@
 import logging
 
 import pika
-from helpers import pika_connection_parameters
+from .pika_connection_parameters import pika_connection_parameters
 from scrapy.settings import Settings
 from scrapy.utils.project import get_project_settings
 

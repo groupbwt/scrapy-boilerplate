@@ -1,0 +1,11 @@
+{
+    "full_name": "Your Name",
+    "email": "your email",
+    "github_username": "username",
+    "project_name": "Scrapy Boilerplate",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+    "project_short_description": "This is a boilerplate for new Scrapy projects.",
+    "release_date": "2020-00-00",
+    "year": "2020",
+    "version": "0.1.0"
+}

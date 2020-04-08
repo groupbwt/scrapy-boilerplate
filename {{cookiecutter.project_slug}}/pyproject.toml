@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "YOUR_PROJECT_NAME"
-version = "2.0.0"
+name = "{{cookiecutter.project_name}}"
+version = "{{cookiecutter.version}}"
 description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
 

@@ -52,7 +52,6 @@ The first argument (`spider`) is a type of class file to be generated, and can b
 - middleware
 - model
 - pipeline
-- spider_middleware
 - spider
 
 The second argument is class name.
@@ -60,6 +59,12 @@ The second argument is class name.
 Also for `pipeline` and `spider` class an option `--rabbit` can be used to add RabbitMQ connection code to generated source.
 
 Option `--item` is supported for generating pipelines, which adds an import and type-check for a provided item class to the resulting code.
+
+Option `--settings` is also supported for pipelines, extension, middlewares and spider middlewares. It has an optional integer value `PRIORITY` that adds specified priority. If only `-s` is used, settings file will be `settings.py`.
+
+(experimental) Option `--file` is used for specifying settings file name (or class). You can use spider file for adding newly generated class to spiders' `custom_settings` property. If you enumerate file names (or class names) using `,` (like `-f SomeSpider,AnotherSpider`) - script will add generated class to custom_settings of each file. If only `-f` is used, will be used default priority (300).
+
+Option `--terminal` will output 'custom_settings' code to terminal.
 
 ### Docker
 

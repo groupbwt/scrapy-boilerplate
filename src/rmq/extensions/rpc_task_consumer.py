@@ -99,13 +99,10 @@ class RPCTaskConsumer(object):
         parameters = pika.ConnectionParameters(
             host=self.__spider.settings.get("RABBITMQ_HOST"),
             port=int(self.__spider.settings.get("RABBITMQ_PORT")),
-            virtual_host=self.__spider.settings.get("RABBITMQ_VHOST")
-                         or self.__spider.settings.get("RABBITMQ_VIRTUAL_HOST"),
+            virtual_host=self.__spider.settings.get("RABBITMQ_VHOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=self.__spider.settings.get("RABBITMQ_USERNAME")
-                         or self.__spider.settings.get("RABBITMQ_USER"),
-                password=self.__spider.settings.get("RABBITMQ_PASSWORD")
-                         or self.__spider.settings.get("RABBITMQ_PASS"),
+                username=self.__spider.settings.get("RABBITMQ_USERNAME"),
+                password=self.__spider.settings.get("RABBITMQ_PASSWORD"),
             ),
             heartbeat=RMQDefaultOptions.CONNECTION_HEARTBEAT.value,
         )

@@ -13,8 +13,10 @@ logger = logging.getLogger(__name__)
 
 class PikaSelectConnection:
     _MAX_CONNECT_ATTEMPTS = 3
+    _MAX_GRACEFUL_STOP_ATTEMPTS = 60
     _RECONNECT_TIMEOUT = 5
     _EMPTY_QUEUE_DELAY = 5
+    _CHECK_DELIVERY_CONFIRMATION_DELAY = 1
 
     _DEFAULT_OPTIONS = {
         'enable_delivery_confirmations': True,
@@ -47,6 +49,7 @@ class PikaSelectConnection:
         # status of stopping connection
         self._stopping = False
         self._current_connect_attempts_count = 0
+        self._current_graceful_stop_attempts_count = 0
 
         self._message_number = 0
         self._deliveries = []
@@ -57,6 +60,8 @@ class PikaSelectConnection:
         self._consuming = False
 
         self.__ignore_ack_after = None
+
+        self.shutdown_event_handler = None
 
     @log_current_thread
     def connect(self):
@@ -238,7 +243,21 @@ class PikaSelectConnection:
         logger.debug('Published {} messages, {} have yet to be confirmed, {} were acked and {} were nacked'.format(
             self._message_number, len(self._deliveries), self._acked, self._nacked))
 
-    def publish_message(self, message, queue_name: str = None, properties: dict = None):
+    def get_ready_messages_count(self, queue_name=None, callback=None):
+        if queue_name is None:
+            queue_name = self.queue_name
+        cb = functools.partial(
+            self._exec_get_ready_messages_count_issuer_callback,
+            callback=callback
+        )
+        self._channel.queue_declare(queue=queue_name, callback=cb, durable=True, passive=True)
+
+    def _exec_get_ready_messages_count_issuer_callback(self, frame, callback):
+        message_count = frame.method.message_count
+        if callback is not None:
+            callback(message_count=message_count)
+
+    def publish_message(self, message, queue_name: str = None, properties: pika.BasicProperties = None):
         if self._channel is None or not self._channel.is_open:
             return
         if queue_name is None:
@@ -246,12 +265,18 @@ class PikaSelectConnection:
         if properties is None:
             properties = pika.BasicProperties(content_type='application/json', delivery_mode=2)
 
-        cb = functools.partial(self.publish_to_ensured_queue,
-                               message=message,
-                               queue_name=queue_name,
-                               properties=properties
-                               )
-        self._channel.queue_declare(queue=queue_name, callback=cb, durable=True)
+        if queue_name == self.queue_name:
+            self._channel.basic_publish('', queue_name, message, properties)
+            self._message_number += 1
+            self._deliveries.append(self._message_number)
+            logger.debug('Published message # {}'.format(self._message_number))
+        else:
+            cb = functools.partial(self.publish_to_ensured_queue,
+                                   message=message,
+                                   queue_name=queue_name,
+                                   properties=properties
+                                   )
+            self._channel.queue_declare(queue=queue_name, callback=cb, durable=True)
 
     def publish_to_ensured_queue(self, _unused_frame, message, queue_name, properties):
         self._channel.basic_publish('', queue_name, message, properties)
@@ -310,8 +335,6 @@ class PikaSelectConnection:
 
     @log_current_thread
     def run(self):
-        if reactor.running:
-            reactor.addSystemEventTrigger('before', 'shutdown', self.stop_from_reactor_event)
         while self._current_connect_attempts_count < self._MAX_CONNECT_ATTEMPTS and not self._stopping:
             self.connection = None
             self._deliveries = []
@@ -320,14 +343,44 @@ class PikaSelectConnection:
             self._message_number = 0
 
             self.connection = self.connect()
+
+            if self.shutdown_event_handler is not None:
+                try:
+                    reactor.removeSystemEventTrigger(self.shutdown_event_handler)
+                except (KeyError, ValueError, TypeError):
+                    pass
+                self.shutdown_event_handler = None
+            if reactor.running:
+                cb = functools.partial(
+                    self.connection.ioloop.add_callback_threadsafe,
+                    self.stop_from_reactor_event
+                )
+                self.shutdown_event_handler = reactor.addSystemEventTrigger('before', 'shutdown', cb)
+
             self.connection.ioloop.start()
         logger.info('Stopped')
 
     def stop_from_reactor_event(self):
         logger.debug("stop called from reactor event")
-        self.stop()
+        if self.options.get('enable_delivery_confirmations', self._DEFAULT_OPTIONS['enable_delivery_confirmations']) \
+                and len(self._deliveries):
+            self._current_graceful_stop_attempts_count += 1
+            if self._current_graceful_stop_attempts_count < self._MAX_GRACEFUL_STOP_ATTEMPTS:
+                self.connection.ioloop.call_later(self._CHECK_DELIVERY_CONFIRMATION_DELAY, self.stop_from_reactor_event)
+            else:
+                self.stop()
+        else:
+            self.stop()
 
     def stop(self):
+        if self.shutdown_event_handler is not None:
+            try:
+                reactor.removeSystemEventTrigger(self.shutdown_event_handler)
+            except (KeyError, ValueError, TypeError):
+                pass
+            self.shutdown_event_handler = None
+        self._current_connect_attempts_count = 0
+        self._current_graceful_stop_attempts_count = 0
         self.can_interact = False
         self.__owner_update_can_interact_value()
         if self.is_consumer:

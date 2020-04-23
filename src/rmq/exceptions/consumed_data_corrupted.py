@@ -1,0 +1,2 @@
+class ConsumedDataCorrupted(Exception):
+    pass

@@ -40,7 +40,6 @@ DEFAULT_REQUEST_HEADERS = {
 DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": None,
     "middlewares.HttpProxyMiddleware": 543,
-    "middlewares.LogErrorsMiddleware": 550,
 }
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

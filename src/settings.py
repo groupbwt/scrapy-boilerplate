@@ -16,7 +16,7 @@ COMMANDS_MODULE = "commands"
 
 PROXY = os.getenv("PROXY", "")
 PROXY_AUTH = os.getenv("PROXY_AUTH", "")
-PROXY_ENABLED = os.getenv("PROXY_ENABLED", False)
+PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 

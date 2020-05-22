@@ -4,6 +4,11 @@ repos:
     hooks:
       - id: black
         language_version: python3
+  - repo: https://github.com/asottile/seed-isort-config
+    rev: v1.9.1
+    hooks:
+      - id: seed-isort-config
+        args: [--application-directories=./src]
   - repo: https://github.com/timothycrosley/isort
     rev: master
     hooks:

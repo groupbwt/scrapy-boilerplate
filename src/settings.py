@@ -18,12 +18,15 @@ PROXY = os.getenv("PROXY", "")
 PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/73.0.3683.103 Safari/537.36"
+)
 
-CONCURRENT_REQUESTS = os.getenv("CONCURRENT_REQUESTS", 16)
-CONCURRENT_REQUESTS_PER_DOMAIN = os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
-DOWNLOAD_DELAY = os.getenv("DOWNLOAD_DELAY", 0)
-DOWNLOAD_TIMEOUT = os.getenv("DOWNLOAD_TIMEOUT", 180)
+CONCURRENT_REQUESTS = int(os.getenv("CONCURRENT_REQUESTS", "16"))
+CONCURRENT_REQUESTS_PER_DOMAIN = int(os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN", "8"))
+DOWNLOAD_DELAY = int(os.getenv("DOWNLOAD_DELAY", "0"))
+DOWNLOAD_TIMEOUT = int(os.getenv("DOWNLOAD_TIMEOUT", "180"))
 
 ROBOTSTXT_OBEY = False
 COOKIES_ENABLED = True
@@ -47,17 +50,17 @@ LOG_FILE = os.getenv("LOG_FILE") if os.getenv("LOG_FILE", "") else None
 
 ITEM_PIPELINES: Dict[str, int] = {}
 
-MYSQL_USER = os.getenv("MYSQL_USER", "127.0.0.1")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
 MYSQL_PASS = os.getenv("MYSQL_PASS", "")
-MYSQL_HOST = os.getenv("MYSQL_HOST", 3306)
-MYSQL_PORT = os.getenv("MYSQL_PORT", "root")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
 MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
 
 PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")
 logging.getLogger("pika").setLevel(PIKA_LOG_LEVEL)
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
-RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", 5672)
+RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
 RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "guest")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "/")

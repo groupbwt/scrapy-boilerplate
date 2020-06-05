@@ -676,6 +676,44 @@ scrapy = ">=2.0.0,<3.0.0"
 
 [[package]]
 category = "main"
+description = "Scrapy extension for integration of Sentry SDK to Scrapy projects"
+name = "scrapy-sentry-sdk"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "0.3.0"
+
+[package.dependencies]
+scrapy = ">=1.6"
+sentry-sdk = ">=0.14.3,<0.15.0"
+
+[[package]]
+category = "main"
+description = "Python client for Sentry (https://getsentry.com)"
+name = "sentry-sdk"
+optional = false
+python-versions = "*"
+version = "0.14.4"
+
+[package.dependencies]
+certifi = "*"
+urllib3 = ">=1.10.0"
+
+[package.extras]
+aiohttp = ["aiohttp (>=3.5)"]
+beam = ["beam (>=2.12)"]
+bottle = ["bottle (>=0.12.13)"]
+celery = ["celery (>=3)"]
+django = ["django (>=1.8)"]
+falcon = ["falcon (>=1.4)"]
+flask = ["flask (>=0.11)", "blinker (>=1.1)"]
+pyspark = ["pyspark (>=2.4.4)"]
+rq = ["rq (>=0.6)"]
+sanic = ["sanic (>=0.8)"]
+sqlalchemy = ["sqlalchemy (>=1.2)"]
+tornado = ["tornado (>=5)"]
+
+[[package]]
+category = "main"
 description = "Service identity verification for pyOpenSSL & cryptography."
 name = "service-identity"
 optional = false
@@ -863,7 +901,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "ea0263ca0ac05af823deb879023c7e3db7426b0f2ddff92d03077653d456fc13"
+content-hash = "0a32a1fe67cc6034d14fc60b65db50b575ea25066c2dbb9d77c2ac1e052c05ee"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1301,6 +1339,14 @@ scrapy = [
 scrapy-new = [
     {file = "scrapy_new-0.1.6-py3-none-any.whl", hash = "sha256:a553601dea3b63eaa708f040a16a38d681e77d24901d68b42c9c7e5730abbf27"},
     {file = "scrapy_new-0.1.6.tar.gz", hash = "sha256:ecf9147c6db2fccd4880d523776f3cf2431ea58fe9eee6351fd0c1dcdeb961c4"},
+]
+scrapy-sentry-sdk = [
+    {file = "scrapy_sentry_sdk-0.3.0-py3-none-any.whl", hash = "sha256:fffb5cba8eae9cf341b08f3f419a5ec7b58b673e00cda931ae635cc2837594d0"},
+    {file = "scrapy_sentry_sdk-0.3.0.tar.gz", hash = "sha256:8a1251d3f7a880665cd32284c1c812a8b023b2578ab89333081581b7422b891f"},
+]
+sentry-sdk = [
+    {file = "sentry-sdk-0.14.4.tar.gz", hash = "sha256:0e5e947d0f7a969314aa23669a94a9712be5a688ff069ff7b9fc36c66adc160c"},
+    {file = "sentry_sdk-0.14.4-py2.py3-none-any.whl", hash = "sha256:799a8bf76b012e3030a881be00e97bc0b922ce35dde699c6537122b751d80e2c"},
 ]
 service-identity = [
     {file = "service_identity-18.1.0-py2.py3-none-any.whl", hash = "sha256:001c0707759cb3de7e49c078a7c0c9cd12594161d3bf06b9c254fdcb1a60dc36"},

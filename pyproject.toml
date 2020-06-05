@@ -16,6 +16,7 @@ w3lib = "^1.21.0"
 python-dotenv = "^0.10.5"
 dotenv-linter = "^0.1.5"
 mysqlclient = "^1.4.6"
+scrapy-sentry-sdk = "^0.3.0"
 
 [tool.poetry.dev-dependencies]
 scrapy-new = "^0.1.5"

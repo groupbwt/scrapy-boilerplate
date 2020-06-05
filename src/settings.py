@@ -73,3 +73,17 @@ except ValueError:
 HTTPCACHE_IGNORE_HTTP_CODES = list(
     map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s))
 )
+
+EXTENSIONS = {}
+
+# Send exceptions to Sentry
+IS_SENTRY_ENABLED = os.getenv("IS_SENTRY_ENABLED", "false").lower() == "true"
+if IS_SENTRY_ENABLED:
+    SENTRY_DSN = os.getenv("SENTRY_DSN", None)
+    # Optionally, additional configuration options can be provided
+    SENTRY_CLIENT_OPTIONS = {
+        # these correspond to the sentry_sdk.init kwargs
+        "release": os.getenv("RELEASE", "0.0.0")
+    }
+    # Load SentryLogging extension before others
+    EXTENSIONS["scrapy_sentry_sdk.extensions.SentryLogging"] = 1

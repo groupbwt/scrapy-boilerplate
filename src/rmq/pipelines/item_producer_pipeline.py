@@ -13,7 +13,12 @@ from rmq.items import RMQItem
 logger = logging.getLogger(__name__)
 
 
-class ItemProducerPipeline(object):
+class ItemProducerPipeline:
+    """Pipeline for publishing items to rabbitmq.
+    
+    Requires 'result_queue_name' attribute in spider class
+    """
+
     _DEFAULT_HEARTBEAT = 300
 
     @classmethod
@@ -44,7 +49,9 @@ class ItemProducerPipeline(object):
 
         """Check spider for correct declared callbacks/errbacks/methods/variables"""
         if self._validate_spider_has_attributes() is False:
-            raise CloseSpider('Attached spider has no configured task_queue_name and processing_tasks observer')
+            raise CloseSpider(
+                "Attached spider has no configured task_queue_name and processing_tasks observer"
+            )
 
         """Configure loggers"""
         logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
@@ -75,13 +82,20 @@ class ItemProducerPipeline(object):
             while len(self.pending_items_buffer) and self._can_interact:
                 self.send_message(self.pending_items_buffer.pop(0))
             if isinstance(self.rmq_connection.connection, pika.SelectConnection):
-                self.rmq_connection.connection.ioloop.add_callback_threadsafe(self.rmq_connection.stop)
+                self.rmq_connection.connection.ioloop.add_callback_threadsafe(
+                    self.rmq_connection.stop
+                )
 
     def _validate_spider_has_attributes(self):
-        spider_attributes = [attr for attr in dir(self.__spider) if not callable(getattr(self.__spider, attr))]
-        if 'result_queue_name' not in spider_attributes:
+        spider_attributes = [
+            attr for attr in dir(self.__spider) if not callable(getattr(self.__spider, attr))
+        ]
+        if "result_queue_name" not in spider_attributes:
             return False
-        if not isinstance(self.__spider.result_queue_name, str) or len(self.__spider.result_queue_name) == 0:
+        if (
+            not isinstance(self.__spider.result_queue_name, str)
+            or len(self.__spider.result_queue_name) == 0
+        ):
             return False
         return True
 
@@ -94,11 +108,12 @@ class ItemProducerPipeline(object):
 
     def raise_close_spider(self):
         if self.crawler.engine.slot is None or self.crawler.engine.slot.closing:
-            logger.critical('SPIDER ALREADY CLOSED')
+            logger.critical("SPIDER ALREADY CLOSED")
             return
         self.crawler.engine.close_spider(self.__spider)
 
     def connect(self, parameters, queue_name):
+        """Creates and runs pika select connection"""
         c = PikaSelectConnection(
             parameters,
             queue_name,
@@ -107,18 +122,22 @@ class ItemProducerPipeline(object):
                 "enable_delivery_confirmations": False,
                 "prefetch_count": self.__spider.settings.get("CONCURRENT_REQUESTS", 1),
             },
-            is_consumer=False
+            is_consumer=False,
         )
         c.run()
 
     def send_message(self, item):
+        """Sends message to rabbitmq"""
         if isinstance(self.rmq_connection.connection, pika.SelectConnection):
             item_as_dictionary = dict(item)
-            del item_as_dictionary[RMQConstants.DELIVERY_TAG_META_KEY.value]
-            cb = functools.partial(self.rmq_connection.publish_message, message=json.dumps(item_as_dictionary))
+            del item_as_dictionary[self.delivery_tag_meta_key]
+            cb = functools.partial(
+                self.rmq_connection.publish_message, message=json.dumps(item_as_dictionary)
+            )
             self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
 
     def process_item(self, item, spider):
+        """Invoked when item is processed"""
         if isinstance(item, RMQItem):
             if self._can_interact:
                 while len(self.pending_items_buffer):

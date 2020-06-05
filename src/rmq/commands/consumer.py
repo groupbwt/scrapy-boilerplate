@@ -1,25 +1,25 @@
-import logging
-import json
-import pika
 import functools
+import json
+import logging
 from enum import Enum
 from optparse import OptionValueError
-from scrapy.commands import ScrapyCommand
-from scrapy.utils.project import get_project_settings
-from scrapy.utils.log import configure_logging
-from twisted.internet import reactor
-from twisted.enterprise import adbapi
-from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
-from sqlalchemy.dialects import mysql
-from MySQLdb.cursors import DictCursor
-from MySQLdb import OperationalError
 
+import pika
+from MySQLdb import OperationalError
+from MySQLdb.cursors import DictCursor
+from scrapy.commands import ScrapyCommand
+from scrapy.utils.log import configure_logging
+from scrapy.utils.project import get_project_settings
+from sqlalchemy import select, update
+from sqlalchemy.dialects import mysql
+from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
+from twisted.enterprise import adbapi
+from twisted.internet import reactor
+
+from database.models.search import SearchEngineQuery
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions
 from rmq.utils.decorators import call_once
-
-from database.models.search import SearchEngineQuery
-from sqlalchemy import select, update
 
 
 class Consumer(ScrapyCommand):
@@ -36,7 +36,10 @@ class Consumer(ScrapyCommand):
         self.project_settings = get_project_settings()
         self.logger = logging.getLogger(Consumer.__class__.__name__)
 
-        self.action_modes = [Consumer.CommandModes.ACTION.value, Consumer.CommandModes.WORKER.value]
+        self.action_modes = [
+            Consumer.CommandModes.ACTION.value,
+            Consumer.CommandModes.WORKER.value,
+        ]
         self.mode = Consumer.CommandModes.DEFAULT.value
         self.prefetch_count = self._DEFAULT_PREFETCH_COUNT
 
@@ -61,23 +64,42 @@ class Consumer(ScrapyCommand):
 
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
-        parser.add_option("-q", "--queue", type="str", dest="queue_name",
-                          help="Queue name to consume messages",
-                          action="callback", callback=self.queue_option_callback)
-        parser.add_option("-m", "--mode", type="choice", choices=self.action_modes, default="action",
-                          dest="mode", help="Command run mode: action for one time execution and exit or worker")
-        parser.add_option("-p", "--prefetch_count", type="int", default=None,
-                          dest="prefetch_count", help="RabbitMQ consumer prefetch count setting")
+        parser.add_option(
+            "-q",
+            "--queue",
+            type="str",
+            dest="queue_name",
+            help="Queue name to consume messages",
+            action="callback",
+            callback=self.queue_option_callback,
+        )
+        parser.add_option(
+            "-m",
+            "--mode",
+            type="choice",
+            choices=self.action_modes,
+            default="action",
+            dest="mode",
+            help="Command run mode: action for one time execution and exit or worker",
+        )
+        parser.add_option(
+            "-p",
+            "--prefetch_count",
+            type="int",
+            default=None,
+            dest="prefetch_count",
+            help="RabbitMQ consumer prefetch count setting",
+        )
 
     def queue_option_callback(self, _option, opt, value, parser):
         if value is not None and len(str(value).strip()):
             self.queue_name = value
-            setattr(parser.values, 'queue_name', value)
+            setattr(parser.values, "queue_name", value)
         else:
-            raise OptionValueError(f'Option {opt} has incorrect value provided')
+            raise OptionValueError(f"Option {opt} has incorrect value provided")
 
     def init_queue_name(self, opts):
-        queue_name = getattr(opts, 'queue_name', None)
+        queue_name = getattr(opts, "queue_name", None)
         if queue_name is None:
             queue_name = self.queue_name
         if queue_name is None:
@@ -88,11 +110,11 @@ class Consumer(ScrapyCommand):
         return queue_name
 
     def init_prefetch_count(self, opts):
-        mode = getattr(opts, 'mode', None)
+        mode = getattr(opts, "mode", None)
         if mode == Consumer.CommandModes.ACTION.value:
             self.prefetch_count = 1
         thread_pool = reactor.getThreadPool()
-        if thread_pool and hasattr(thread_pool, 'max'):
+        if thread_pool and hasattr(thread_pool, "max"):
             self.prefetch_count = int(thread_pool.max - (thread_pool.max % 4))
         if opts.prefetch_count is not None and opts.prefetch_count > 0:
             self.prefetch_count = opts.prefetch_count
@@ -111,7 +133,7 @@ class Consumer(ScrapyCommand):
             db=self.project_settings.get("DB_DATABASE"),
             charset="utf8mb4",
             use_unicode=True,
-            cursorclass=DictCursor
+            cursorclass=DictCursor,
         )
 
     def execute(self, _args, opts):
@@ -137,26 +159,31 @@ class Consumer(ScrapyCommand):
         delivery_tag = message.get("method").delivery_tag
         ack_cb = nack_cb = None
         if isinstance(self.rmq_connection.connection, pika.SelectConnection):
-            ack_cb = call_once(functools.partial(
-                self.rmq_connection.connection.ioloop.add_callback_threadsafe,
-                functools.partial(self.rmq_connection.acknowledge_message, delivery_tag=delivery_tag)
-            ))
-            nack_cb = call_once(functools.partial(
-                self.rmq_connection.connection.ioloop.add_callback_threadsafe,
-                functools.partial(self.rmq_connection.negative_acknowledge_message, delivery_tag=delivery_tag)
-            ))
+            ack_cb = call_once(
+                functools.partial(
+                    self.rmq_connection.connection.ioloop.add_callback_threadsafe,
+                    functools.partial(
+                        self.rmq_connection.acknowledge_message, delivery_tag=delivery_tag
+                    ),
+                )
+            )
+            nack_cb = call_once(
+                functools.partial(
+                    self.rmq_connection.connection.ioloop.add_callback_threadsafe,
+                    functools.partial(
+                        self.rmq_connection.negative_acknowledge_message, delivery_tag=delivery_tag
+                    ),
+                )
+            )
 
         message_body = json.loads(message["body"])
 
         d = self.db_connection_pool.runInteraction(self.process_message, message_body)
         d.addCallback(
-            self.on_message_processed,
-            ack_callback=ack_cb,
-            nack_callback=nack_cb,
-        ).addErrback(
-            self.on_message_process_failure,
-            nack_callback=nack_cb
-        ).addBoth(self._check_mode)
+            self.on_message_processed, ack_callback=ack_cb, nack_callback=nack_cb,
+        ).addErrback(self.on_message_process_failure, nack_callback=nack_cb).addBoth(
+            self._check_mode
+        )
 
         self._can_get_next_message = True
 
@@ -170,7 +197,9 @@ class Consumer(ScrapyCommand):
         """
         stmt = self.build_message_store_stmt(message_body)
         if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(dialect=mysql.dialect(), compile_kwargs={"literal_binds": True})
+            stmt_compiled = stmt.compile(
+                dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}
+            )
             transaction.execute(str(stmt_compiled))
             # transaction.execute(str(stmt_compiled), stmt_compiled.params)
         else:
@@ -205,15 +234,17 @@ class Consumer(ScrapyCommand):
 
     def on_message_process_failure(self, failure, nack_callback=None):
         failure.trap(Exception)
-        self.logger.error('failure: {}'.format(failure))
+        self.logger.error("failure: {}".format(failure))
         if callable(nack_callback):
             nack_callback()
         if failure.check(NotImplementedError):
             self.logger.critical("Required method is not implemented. Shutting down...")
             reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
         if failure.check(OperationalError):
-            if '1065' in failure.getErrorMessage():
-                self.logger.critical("Got empty query to DB. Incorrect implementation. Shutting down...")
+            if "1065" in failure.getErrorMessage():
+                self.logger.critical(
+                    "Got empty query to DB. Incorrect implementation. Shutting down..."
+                )
                 reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
 
     def _check_mode(self, arg):
@@ -246,7 +277,7 @@ class Consumer(ScrapyCommand):
                 "enable_delivery_confirmations": False,
                 "prefetch_count": self.prefetch_count,
             },
-            is_consumer=True
+            is_consumer=True,
         )
         c.run()
 

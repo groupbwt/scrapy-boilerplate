@@ -1,14 +1,15 @@
-import logging
-import json
-import pika
 import functools
-from twisted.internet import reactor
-from scrapy.exceptions import DontCloseSpider, CloseSpider
-from scrapy import signals
-from rmq.connections import PikaSelectConnection
-from rmq.utils import RMQConstants, RMQDefaultOptions
-from rmq.items import RMQItem
+import json
+import logging
 
+import pika
+from scrapy import signals
+from scrapy.exceptions import CloseSpider, DontCloseSpider
+from twisted.internet import reactor
+
+from rmq.connections import PikaSelectConnection
+from rmq.items import RMQItem
+from rmq.utils import RMQConstants, RMQDefaultOptions
 
 logger = logging.getLogger(__name__)
 

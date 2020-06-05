@@ -1,9 +1,9 @@
 from scrapy import Request
+
 from rmq.utils import RMQConstants
 
 
 class TaskTossSpiderMiddleware:
-
     def process_spider_output(self, response, result, spider):
         delivery_tag_key = RMQConstants.DELIVERY_TAG_META_KEY.value
         for result_item in result:

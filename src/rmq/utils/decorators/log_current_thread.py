@@ -8,4 +8,5 @@ def log_current_thread(f):
     def wrapper(*args, **kwargs):
         logging.debug(f"Callable name: {f.__name__}\tCurrent thread: {threading.current_thread()}")
         return f(*args, **kwargs)
+
     return wrapper

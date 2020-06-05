@@ -1,6 +1,8 @@
-import scrapy
 import functools
 import inspect
+
+import scrapy
+
 from rmq.signals import callback_completed, item_scheduled
 from rmq.utils import RMQConstants
 
@@ -19,17 +21,21 @@ def rmq_callback(callback_method):
                         iter(callback_result)
                         for callback_result_item in callback_result:
                             if isinstance(callback_result_item, scrapy.Item):
-                                self.crawler.signals.send_catch_log(signal=item_scheduled,
-                                                                    response=response,
-                                                                    spider=self,
-                                                                    delivery_tag=delivery_tag)
+                                self.crawler.signals.send_catch_log(
+                                    signal=item_scheduled,
+                                    response=response,
+                                    spider=self,
+                                    delivery_tag=delivery_tag,
+                                )
                             yield callback_result_item
                     except TypeError:
                         pass
-                    self.crawler.signals.send_catch_log(signal=callback_completed,
-                                                        response=response,
-                                                        spider=self,
-                                                        delivery_tag=delivery_tag)
+                    self.crawler.signals.send_catch_log(
+                        signal=callback_completed,
+                        response=response,
+                        spider=self,
+                        delivery_tag=delivery_tag,
+                    )
             else:
                 try:
                     iter(callback_result)
@@ -46,5 +52,6 @@ def rmq_callback(callback_method):
                 yield from callback_result
             except TypeError:
                 pass
+
     wrapper.__decorator_name__ = inspect.currentframe().f_code.co_name
     return wrapper

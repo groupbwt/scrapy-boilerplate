@@ -1,6 +1,7 @@
 import functools
 import logging
 from datetime import datetime
+from typing import List
 
 import pika
 from pika.exceptions import ChannelWrongStateError, ConnectionWrongStateError
@@ -58,7 +59,7 @@ class PikaSelectConnection:
         self._current_graceful_stop_attempts_count = 0
 
         self._message_number = 0
-        self._deliveries = []
+        self._deliveries: List[int] = []
         self._acked = 0
         self._nacked = 0
 

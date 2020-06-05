@@ -52,8 +52,8 @@ ITEM_PIPELINES: Dict[str, int] = {}
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
-MYSQL_USER = os.getenv("MYSQL_USER", "root")
-MYSQL_PASS = os.getenv("MYSQL_PASS", "")
+MYSQL_USERNAME = os.getenv("MYSQL_USERNAME", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
 MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
 
 PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")

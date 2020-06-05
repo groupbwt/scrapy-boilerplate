@@ -130,7 +130,8 @@ class ItemProducerPipeline:
         """Sends message to rabbitmq"""
         if isinstance(self.rmq_connection.connection, pika.SelectConnection):
             item_as_dictionary = dict(item)
-            del item_as_dictionary[self.delivery_tag_meta_key]
+            if self.delivery_tag_meta_key in item_as_dictionary:
+                del item_as_dictionary[self.delivery_tag_meta_key]
             cb = functools.partial(
                 self.rmq_connection.publish_message, message=json.dumps(item_as_dictionary)
             )

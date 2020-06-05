@@ -125,8 +125,8 @@ class Producer(ScrapyCommand):
             port=int(self.project_settings.get("RABBITMQ_PORT")),
             virtual_host=self.project_settings.get("RABBITMQ_VHOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=self.project_settings.get("RABBITMQ_USERNAME"),
-                password=self.project_settings.get("RABBITMQ_PASSWORD"),
+                username=self.project_settings.get("RABBITMQ_USER"),
+                password=self.project_settings.get("RABBITMQ_PASS"),
             ),
             heartbeat=RMQDefaultOptions.CONNECTION_HEARTBEAT.value,
         )

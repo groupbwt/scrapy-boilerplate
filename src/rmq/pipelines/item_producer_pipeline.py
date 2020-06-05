@@ -59,8 +59,8 @@ class ItemProducerPipeline(object):
             port=int(self.__spider.settings.get("RABBITMQ_PORT")),
             virtual_host=self.__spider.settings.get("RABBITMQ_VHOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=self.__spider.settings.get("RABBITMQ_USERNAME"),
-                password=self.__spider.settings.get("RABBITMQ_PASSWORD"),
+                username=self.__spider.settings.get("RABBITMQ_USER"),
+                password=self.__spider.settings.get("RABBITMQ_PASS"),
             ),
             heartbeat=RMQDefaultOptions.CONNECTION_HEARTBEAT.value,
         )

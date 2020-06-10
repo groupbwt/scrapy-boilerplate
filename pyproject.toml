@@ -18,7 +18,7 @@ dotenv-linter = "^0.1.5"
 mysqlclient = "^1.4.6"
 
 [tool.poetry.dev-dependencies]
-scrapy-new = "^0.1.5"
+scrapy-new = "^0.2"
 black = "^19.10b0"
 pylint = "^2.4.4"
 pre-commit = "^2.0.1"

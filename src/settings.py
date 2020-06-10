@@ -50,10 +50,10 @@ LOG_FILE = os.getenv("LOG_FILE") if os.getenv("LOG_FILE", "") else None
 
 ITEM_PIPELINES: Dict[str, int] = {}
 
-MYSQL_USER = os.getenv("MYSQL_USER", "root")
-MYSQL_PASS = os.getenv("MYSQL_PASS", "")
 MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
+MYSQL_USERNAME = os.getenv("MYSQL_USERNAME", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
 MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
 
 PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")
@@ -61,9 +61,9 @@ logging.getLogger("pika").setLevel(PIKA_LOG_LEVEL)
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
 RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
-RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "guest")
-RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
-RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "/")
+RABBITMQ_USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
+RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
 
 try:
     HTTPCACHE_ENABLED = strtobool(os.getenv("HTTPCACHE_ENABLED", "False"))
@@ -73,3 +73,17 @@ except ValueError:
 HTTPCACHE_IGNORE_HTTP_CODES = list(
     map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s))
 )
+
+EXTENSIONS = {}
+
+# Send exceptions to Sentry
+IS_SENTRY_ENABLED = os.getenv("IS_SENTRY_ENABLED", "false").lower() == "true"
+if IS_SENTRY_ENABLED:
+    SENTRY_DSN = os.getenv("SENTRY_DSN", None)
+    # Optionally, additional configuration options can be provided
+    SENTRY_CLIENT_OPTIONS = {
+        # these correspond to the sentry_sdk.init kwargs
+        "release": os.getenv("RELEASE", "0.0.0")
+    }
+    # Load SentryLogging extension before others
+    EXTENSIONS["scrapy_sentry_sdk.extensions.SentryLogging"] = 1

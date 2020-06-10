@@ -14,6 +14,8 @@ class HttpProxyMiddleware:
             if "http" not in proxy:
                 proxy = "http://{}".format(proxy)
             request.meta["proxy"] = proxy
+        else:
+            raise RuntimeError("Proxy url is empty! Proxy is not working!")
         return request
 
     def process_request(self, request: Request, spider: Spider) -> None:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "YOUR_PROJECT_NAME"
-version = "2.1.1"
+version = "2.2.0"
 description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
 
@@ -16,9 +16,10 @@ w3lib = "^1.21.0"
 python-dotenv = "^0.10.5"
 dotenv-linter = "^0.1.5"
 mysqlclient = "^1.4.6"
+scrapy-sentry-sdk = "^0.3.0"
 
 [tool.poetry.dev-dependencies]
-scrapy-new = "^0.1.5"
+scrapy-new = "^0.2"
 black = "^19.10b0"
 pylint = "^2.4.4"
 pre-commit = "^2.0.1"

@@ -1,18 +1,19 @@
-import logging
-import json
-import pika
-import functools
 import datetime
+import functools
+import json
+import logging
 from enum import Enum
 from optparse import OptionValueError
-from scrapy.commands import ScrapyCommand
-from scrapy.utils.project import get_project_settings
-from scrapy.utils.log import configure_logging
-from twisted.internet import reactor
-from twisted.enterprise import adbapi
-from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
-from MySQLdb.cursors import DictCursor
+
+import pika
 from MySQLdb import OperationalError
+from MySQLdb.cursors import DictCursor
+from scrapy.commands import ScrapyCommand
+from scrapy.utils.log import configure_logging
+from scrapy.utils.project import get_project_settings
+from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
+from twisted.enterprise import adbapi
+from twisted.internet import reactor
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions, TaskStatusCodes
@@ -32,7 +33,10 @@ class Producer(ScrapyCommand):
         self.project_settings = get_project_settings()
         self.logger = logging.getLogger(Producer.__class__.__name__)
 
-        self.action_modes = [Producer.CommandModes.ACTION.value, Producer.CommandModes.WORKER.value]
+        self.action_modes = [
+            Producer.CommandModes.ACTION.value,
+            Producer.CommandModes.WORKER.value,
+        ]
         self.mode = Producer.CommandModes.DEFAULT.value
         self.chunk_size = Producer._DEFAULT_CHUNK_SIZE
 
@@ -57,31 +61,56 @@ class Producer(ScrapyCommand):
 
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
-        parser.add_option("-t", "--task_queue", type="str", dest="task_queue_name",
-                          help="Queue name to produce tasks",
-                          action="callback", callback=self.task_queue_option_callback)
-        parser.add_option("-r", "--reply_to_queue", type="str", dest="reply_to_queue_name",
-                          help="Queue name to return replies",
-                          action="callback", callback=self.reply_to_queue_option_callback)
-        parser.add_option("-m", "--mode", type="choice", choices=self.action_modes, default="action",
-                          dest="mode", help="Command run mode: action for one time execution and exit or worker")
-        parser.add_option("-c", "--chunk_size", type="int", default=Producer._DEFAULT_CHUNK_SIZE,
-                          dest="chunk_size", help="number of tasks to produce at one iteration")
+        parser.add_option(
+            "-t",
+            "--task_queue",
+            type="str",
+            dest="task_queue_name",
+            help="Queue name to produce tasks",
+            action="callback",
+            callback=self.task_queue_option_callback,
+        )
+        parser.add_option(
+            "-r",
+            "--reply_to_queue",
+            type="str",
+            dest="reply_to_queue_name",
+            help="Queue name to return replies",
+            action="callback",
+            callback=self.reply_to_queue_option_callback,
+        )
+        parser.add_option(
+            "-m",
+            "--mode",
+            type="choice",
+            choices=self.action_modes,
+            default="action",
+            dest="mode",
+            help="Command run mode: action for one time execution and exit or worker",
+        )
+        parser.add_option(
+            "-c",
+            "--chunk_size",
+            type="int",
+            default=Producer._DEFAULT_CHUNK_SIZE,
+            dest="chunk_size",
+            help="number of tasks to produce at one iteration",
+        )
 
     def task_queue_option_callback(self, _option, opt, value, parser):
         if value is not None and len(str(value).strip()):
             self.task_queue_name = value
-            setattr(parser.values, 'task_queue_name', value)
+            setattr(parser.values, "task_queue_name", value)
         else:
-            raise OptionValueError(f'Option {opt} has incorrect value provided')
+            raise OptionValueError(f"Option {opt} has incorrect value provided")
 
     def reply_to_queue_option_callback(self, _option, _opt, value, parser):
         if value is not None and len(str(value).strip()):
             self.reply_to_queue_name = value
-            setattr(parser.values, 'reply_to_queue_name', value)
+            setattr(parser.values, "reply_to_queue_name", value)
 
     def init_task_queue_name(self, opts):
-        task_queue_name = getattr(opts, 'task_queue_name', None)
+        task_queue_name = getattr(opts, "task_queue_name", None)
         if task_queue_name is None:
             task_queue_name = self.task_queue_name
         if task_queue_name is None:
@@ -92,7 +121,7 @@ class Producer(ScrapyCommand):
         return task_queue_name
 
     def init_replies_queue_name(self, opts):
-        reply_to_queue_name = getattr(opts, 'reply_to_queue_name', None)
+        reply_to_queue_name = getattr(opts, "reply_to_queue_name", None)
         if reply_to_queue_name is None:
             reply_to_queue_name = self.reply_to_queue_name
         self.reply_to_queue_name = reply_to_queue_name
@@ -109,7 +138,7 @@ class Producer(ScrapyCommand):
             db=self.project_settings.get("DB_DATABASE"),
             charset="utf8mb4",
             use_unicode=True,
-            cursorclass=DictCursor
+            cursorclass=DictCursor,
         )
 
     def execute(self, _args, opts):
@@ -141,9 +170,11 @@ class Producer(ScrapyCommand):
 
         """check current queue ready messages count (queue size)"""
         if is_message_count_validated is False:
-            cb = functools.partial(self.rmq_connection.get_ready_messages_count,
-                                   self.task_queue_name,
-                                   functools.partial(reactor.callFromThread, self.validate_queue_message_count))
+            cb = functools.partial(
+                self.rmq_connection.get_ready_messages_count,
+                self.task_queue_name,
+                functools.partial(reactor.callFromThread, self.validate_queue_message_count),
+            )
             self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
             return
 
@@ -163,7 +194,7 @@ class Producer(ScrapyCommand):
             5000 <= current_count < 15000: 15,
             15000 <= current_count < 30000: 300,
             300000 <= current_count < 100000: 3600,
-            100000 <= current_count: 43200
+            100000 <= current_count: 43200,
         }[True]
 
     def get_tasks_interaction(self, transaction, chunk_size=None):
@@ -185,13 +216,15 @@ class Producer(ScrapyCommand):
         return transaction.fetchall()
 
     def on_get_tasks_error(self, failure):
-        self.logger.error('failure: {}'.format(failure))
+        self.logger.error("failure: {}".format(failure))
         if failure.check(NotImplementedError):
             self.logger.critical("Required method is not implemented. Shutting down...")
             reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
         if failure.check(OperationalError):
-            if '1065' in failure.getErrorMessage():
-                self.logger.error("Got empty query to DB. Incorrect implementation. Shutting down...")
+            if "1065" in failure.getErrorMessage():
+                self.logger.error(
+                    "Got empty query to DB. Incorrect implementation. Shutting down..."
+                )
                 reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
         failure.trap(Exception)
 
@@ -234,7 +267,7 @@ class Producer(ScrapyCommand):
     def process_tasks(self, rows):
         if rows is None or not len(rows):
             delay = self._delay(None)
-            self.logger.info(f'DB is empty. waiting for {delay} seconds...')
+            self.logger.info(f"DB is empty. waiting for {delay} seconds...")
             reactor.callLater(delay, self.produce_tasks, True)
             return
         if self.chunk_size == 1 and not isinstance(rows, list):
@@ -243,9 +276,7 @@ class Producer(ScrapyCommand):
             msg_body = self.build_message_body(row)
             self._send_message(msg_body)
             self.db_connection_pool.runInteraction(
-                self.update_task_interaction,
-                row,
-                TaskStatusCodes.IN_QUEUE.value
+                self.update_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
             )
         if self.mode == Producer.CommandModes.ACTION.value:
             reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
@@ -263,10 +294,8 @@ class Producer(ScrapyCommand):
             message=json.dumps(msg_body),
             queue_name=self.task_queue_name,
             properties=pika.BasicProperties(
-                content_type='application/json',
-                delivery_mode=2,
-                reply_to=self.reply_to_queue_name
-            )
+                content_type="application/json", delivery_mode=2, reply_to=self.reply_to_queue_name
+            ),
         )
         self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
 
@@ -282,11 +311,8 @@ class Producer(ScrapyCommand):
             parameters,
             queue_name,
             owner=self,
-            options={
-                "enable_delivery_confirmations": True,
-                "prefetch_count": 1,
-            },
-            is_consumer=False
+            options={"enable_delivery_confirmations": True, "prefetch_count": 1,},
+            is_consumer=False,
         )
         c.run()
 

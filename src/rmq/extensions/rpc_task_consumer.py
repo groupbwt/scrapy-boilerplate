@@ -3,15 +3,18 @@ import json
 import logging
 from copy import deepcopy
 from enum import IntEnum
+from typing import Union
 
 import pika
 import scrapy
-from scrapy import signals
+from scrapy import signals, Request
 from scrapy.core.downloader.handlers.http11 import TunnelError
 from scrapy.exceptions import CloseSpider, DontCloseSpider
+from scrapy.http import Response
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet import reactor, task
 from twisted.internet.error import DNSLookupError, TCPTimedOutError, TimeoutError
+from twisted.python.failure import Failure
 
 # import rmq module specific
 from rmq.connections import PikaSelectConnection
@@ -192,9 +195,19 @@ class RPCTaskConsumer(object):
             spider.processing_tasks.handle_item_scheduled(delivery_tag)
         # self._check_is_completed(spider, delivery_tag)
 
-    def on_item_scraped(self, item, response, spider):
+    def on_item_scraped(self, item, response: Union[Response, Failure], spider):
         if response is not None and spider is not None:
-            delivery_tag = response.meta.get(self.delivery_tag_meta_key, None)
+            if isinstance(response, Response):
+                meta = response.meta
+            else:
+                if hasattr(response.value, 'response') and isinstance(response.value.response, Response):
+                    meta = response.value.meta
+                elif hasattr(response, 'request') and isinstance(response.request, Request):
+                    meta = response.request.meta
+                else:
+                    meta = {}
+
+            delivery_tag = meta.get(self.delivery_tag_meta_key, None)
             if delivery_tag is None and hasattr(item, self.delivery_tag_meta_key):
                 delivery_tag = getattr(item, self.delivery_tag_meta_key, None)
             if delivery_tag is not None:

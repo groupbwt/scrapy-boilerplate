@@ -46,7 +46,7 @@ def rmq_errback(errback_method):
                                 if isinstance(errback_result_item, scrapy.Item):
                                     self.crawler.signals.send_catch_log(
                                         signal=item_scheduled,
-                                        failure=response,
+                                        response=None,
                                         spider=self,
                                         delivery_tag=delivery_tag,
                                     )
@@ -69,6 +69,7 @@ def rmq_errback(errback_method):
                         ):
                             self.crawler.signals.send_catch_log(
                                 signal=item_scheduled,
+                                response=None,
                                 spider=self,
                                 delivery_tag=errback_result_item[delivery_tag_meta_key],
                             )
@@ -85,6 +86,8 @@ def rmq_errback(errback_method):
                     ):
                         self.crawler.signals.send_catch_log(
                             signal=item_scheduled,
+                            response=None,
+                            spider=self,
                             delivery_tag=errback_result_item[delivery_tag_meta_key],
                         )
             except TypeError:

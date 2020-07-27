@@ -10,13 +10,11 @@ from MySQLdb.cursors import DictCursor
 from scrapy.commands import ScrapyCommand
 from scrapy.utils.log import configure_logging
 from scrapy.utils.project import get_project_settings
-from sqlalchemy import select, update
 from sqlalchemy.dialects import mysql
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
 from twisted.enterprise import adbapi
 from twisted.internet import reactor
 
-from database.models.search import SearchEngineQuery
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions
 from rmq.utils.decorators import call_once

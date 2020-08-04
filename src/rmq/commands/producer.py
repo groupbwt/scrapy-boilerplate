@@ -278,6 +278,22 @@ class Producer(ScrapyCommand):
             self.db_connection_pool.runInteraction(
                 self.update_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
             )
+         deferreds = []
+        for row in rows:
+            msg_body = self.build_message_body(row)
+            self._send_message(msg_body)
+            deferred_update_row = self.db_connection_pool.runInteraction(
+                self.update_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
+            )
+            deferreds.append(deferred_update_row)
+        deferred_list = defer.DeferredList(deferreds, consumeErrors=True)
+        deferred_list.addCallback(self._mode_handler).addErrback(self._error_handler)
+
+    def _error_handler(self, failure):
+        self.logger.error("failure: {}".format(failure))
+        failure.trap(Exception)
+
+    def _mode_handler(self, result=None):
         if self.mode == Producer.CommandModes.ACTION.value:
             reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
         elif self.mode == Producer.CommandModes.WORKER.value:

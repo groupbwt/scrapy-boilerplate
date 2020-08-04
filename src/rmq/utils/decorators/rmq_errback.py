@@ -15,16 +15,16 @@ def rmq_errback(errback_method):
         errback_result = errback_method(self, *args, **kwargs)
         if isinstance(self, scrapy.Spider):
             if len(args) > 0:
-                response = args[0]
-                if isinstance(response, scrapy.http.Response):
-                    delivery_tag = response.meta.get(delivery_tag_meta_key, None)
+                response_or_failure = args[0]
+                if isinstance(response_or_failure, scrapy.http.Response):
+                    delivery_tag = response_or_failure.meta.get(delivery_tag_meta_key, None)
                     try:
                         iter(errback_result)
                         for errback_result_item in errback_result:
                             if isinstance(errback_result_item, scrapy.Item):
                                 self.crawler.signals.send_catch_log(
                                     signal=item_scheduled,
-                                    response=response,
+                                    response=response_or_failure,
                                     spider=self,
                                     delivery_tag=delivery_tag,
                                 )
@@ -33,20 +33,22 @@ def rmq_errback(errback_method):
                         pass
                     self.crawler.signals.send_catch_log(
                         signal=errback_completed,
-                        response=response,
+                        response=response_or_failure,
                         spider=self,
                         delivery_tag=delivery_tag,
                     )
-                if isinstance(response, Failure):
-                    if hasattr(response, "request"):
-                        delivery_tag = response.request.meta.get(delivery_tag_meta_key, None)
+                if isinstance(response_or_failure, Failure):
+                    if hasattr(response_or_failure, "request"):
+                        delivery_tag = response_or_failure.request.meta.get(
+                            delivery_tag_meta_key, None
+                        )
                         try:
                             iter(errback_result)
                             for errback_result_item in errback_result:
                                 if isinstance(errback_result_item, scrapy.Item):
                                     self.crawler.signals.send_catch_log(
                                         signal=item_scheduled,
-                                        response=None,
+                                        response=response_or_failure,
                                         spider=self,
                                         delivery_tag=delivery_tag,
                                     )
@@ -55,7 +57,7 @@ def rmq_errback(errback_method):
                             pass
                         self.crawler.signals.send_catch_log(
                             signal=errback_completed,
-                            failure=response,
+                            failure=response_or_failure,
                             spider=self,
                             delivery_tag=delivery_tag,
                         )

@@ -3,20 +3,24 @@ import json
 import logging
 from copy import deepcopy
 from enum import IntEnum
+from typing import Union
 
 import pika
 import scrapy
 from scrapy import signals
 from scrapy.core.downloader.handlers.http11 import TunnelError
 from scrapy.exceptions import CloseSpider, DontCloseSpider
+from scrapy.http import Response
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet import reactor, task
 from twisted.internet.error import DNSLookupError, TCPTimedOutError, TimeoutError
+from twisted.python.failure import Failure
 
 # import rmq module specific
 from rmq.connections import PikaSelectConnection
 from rmq.signals import callback_completed, errback_completed, item_scheduled
-from rmq.utils import RMQConstants, RMQDefaultOptions, Task, TaskObserver, TaskStatusCodes
+from rmq.utils import (RMQConstants, RMQDefaultOptions, Task, TaskObserver, TaskStatusCodes,
+                       extract_delivery_tag_from_failure)
 from rmq.utils.decorators import call_once, rmq_callback, rmq_errback
 
 logger = logging.getLogger(__name__)
@@ -175,28 +179,37 @@ class RPCTaskConsumer(object):
                 spider.processing_tasks.set_status(delivery_tag, TaskStatusCodes.ERROR)
             self._check_is_completed(spider, delivery_tag)
 
-    def on_item_scheduled(self, response, spider, delivery_tag):
+    def on_item_scheduled(self, response: Union[Response, Failure], spider, delivery_tag):
         if response is not None and spider is not None:
-            delivery_tag = (
-                response.meta.get(self.delivery_tag_meta_key, None)
-                if delivery_tag is None
-                else delivery_tag
-            )
-            current_task = spider.processing_tasks.get_task(delivery_tag)
-            if (
-                not current_task
-                and self.completion_strategy
-                == RPCTaskConsumer.CompletionStrategies.WEAK_ITEMS_BASED
-            ):
-                return
-            spider.processing_tasks.handle_item_scheduled(delivery_tag)
+            if not delivery_tag:
+                if isinstance(response, Failure):
+                    delivery_tag = extract_delivery_tag_from_failure(response)
+                else:
+                    delivery_tag = response.meta.get(self.delivery_tag_meta_key, None)
+
+            if delivery_tag is not None:
+                current_task = spider.processing_tasks.get_task(delivery_tag)
+                if (
+                    not current_task
+                    and self.completion_strategy
+                    == RPCTaskConsumer.CompletionStrategies.WEAK_ITEMS_BASED
+                ):
+                    return
+                spider.processing_tasks.handle_item_scheduled(delivery_tag)
+            else:
+                spider.logger.warning("Delivery tag not found [on_item_scheduled]")
         # self._check_is_completed(spider, delivery_tag)
 
-    def on_item_scraped(self, item, response, spider):
+    def on_item_scraped(self, item, response: Union[Response, Failure], spider):
         if response is not None and spider is not None:
-            delivery_tag = response.meta.get(self.delivery_tag_meta_key, None)
+            if isinstance(response, Failure):
+                delivery_tag = extract_delivery_tag_from_failure(response)
+            else:
+                delivery_tag = response.meta.get(self.delivery_tag_meta_key, None)
+
             if delivery_tag is None and hasattr(item, self.delivery_tag_meta_key):
                 delivery_tag = getattr(item, self.delivery_tag_meta_key, None)
+
             if delivery_tag is not None:
                 current_task = spider.processing_tasks.get_task(delivery_tag)
                 if (
@@ -206,6 +219,8 @@ class RPCTaskConsumer(object):
                 ):
                     return
                 spider.processing_tasks.handle_item_scraped(delivery_tag)
+            else:
+                spider.logger.warning("Delivery tag not found [on_item_scraped]")
 
     def on_item_dropped(self, item, response, exception, spider):
         if response is not None and spider is not None:

@@ -272,13 +272,7 @@ class Producer(ScrapyCommand):
             return
         if self.chunk_size == 1 and not isinstance(rows, list):
             rows = [rows]
-        for row in rows:
-            msg_body = self.build_message_body(row)
-            self._send_message(msg_body)
-            self.db_connection_pool.runInteraction(
-                self.update_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
-            )
-         deferreds = []
+        deferreds = []
         for row in rows:
             msg_body = self.build_message_body(row)
             self._send_message(msg_body)

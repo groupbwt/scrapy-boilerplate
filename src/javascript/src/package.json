@@ -6,8 +6,8 @@
   "scripts": {
     "start": "babel-node index.js --presets @babel/preset-env",
     "build": "babel . --out-dir build --ignore ./node_modules/*,./build/* --plugins=@babel/plugin-transform-runtime --presets=@babel/preset-env && cat .env > ./build/.env",
-    "fbuild": "rm -r build/* && rm -rf build/.env && babel . --out-dir build --ignore ./node_modules/*,./build/* --plugins=@babel/plugin-transform-runtime --presets=@babel/preset-env && cat .env > ./build/.env",
-    "clean": "rm -r build/*",
+    "fbuild": "rm -rf build/* && rm -rf build/.env && babel . --out-dir build --ignore ./node_modules/*,./build/* --plugins=@babel/plugin-transform-runtime --presets=@babel/preset-env && cat .env > ./build/.env",
+    "clean": "rm -rf build/*",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "me",

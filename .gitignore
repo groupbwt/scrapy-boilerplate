@@ -1,1 +1,6 @@
 .idea/
+.env
+/docker_persistent_data/*
+!/docker_persistent_data/.gitkeep
+/data/*
+!/data/.gitkeep

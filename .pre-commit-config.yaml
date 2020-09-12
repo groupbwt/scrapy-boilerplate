@@ -8,7 +8,7 @@ repos:
     rev: v1.9.1
     hooks:
       - id: seed-isort-config
-        args: [--application-directories=./src]
+        args: [--application-directories=./src/python/src]
   - repo: https://github.com/timothycrosley/isort
     rev: master
     hooks:

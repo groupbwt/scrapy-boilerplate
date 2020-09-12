@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import PM2SpiderManager from './PM2SpiderManager';
 
 
 async function getRMQConnectionURI() {
@@ -11,15 +10,7 @@ async function getRMQConnectionURI() {
 
 async function start() {
   const RMQConnectionURI = await getRMQConnectionURI();
-  const manager = new PM2SpiderManager({
-    rmqConnectionURL: RMQConnectionURI,
-    accountManageTasksQueue: process.env.RABBITMQ_FULL_VERSION_ACCOUNT_MANAGE_TASKS,
-    accountManageResultsQueue: process.env.RABBITMQ_FULL_VERSION_ACCOUNT_MANAGE_RESULTS,
-
-    sandbox: process.env.SANDBOX === 'true',
-    headless: process.env.HEADLESS === 'true',
-  });
-  await manager.runLoop();
+  // create spider instance and run as worker here
 }
 
 

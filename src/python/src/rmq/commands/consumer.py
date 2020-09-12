@@ -132,6 +132,7 @@ class Consumer(ScrapyCommand):
             charset="utf8mb4",
             use_unicode=True,
             cursorclass=DictCursor,
+            cp_reconnect=True,
         )
 
     def execute(self, _args, opts):

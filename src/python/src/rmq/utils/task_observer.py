@@ -68,3 +68,15 @@ class TaskObserver:
             self.__tasks[delivery_tag].status = status
         except KeyError:
             pass
+
+    def set_exception(self, delivery_tag, exception):
+        try:
+            self.__tasks[delivery_tag].exception = exception
+        except KeyError:
+            pass
+
+    def set_should_stop(self, delivery_tag, value):
+        try:
+            self.__tasks[delivery_tag].should_stop = value
+        except KeyError:
+            pass

@@ -102,7 +102,7 @@ class RPCTaskConsumer(object):
         parameters = pika.ConnectionParameters(
             host=self.__spider.settings.get("RABBITMQ_HOST"),
             port=int(self.__spider.settings.get("RABBITMQ_PORT")),
-            virtual_host=self.__spider.settings.get("RABBITMQ_VHOST"),
+            virtual_host=self.__spider.settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
                 username=self.__spider.settings.get("RABBITMQ_USERNAME"),
                 password=self.__spider.settings.get("RABBITMQ_PASSWORD"),
@@ -132,6 +132,7 @@ class RPCTaskConsumer(object):
         if (
             self.delivery_tag_meta_key in request.meta.keys()
             and request.meta.get("retry_times") is None
+            and request.meta.get("redirect_times") is None
         ):
             delivery_tag = request.meta.get(self.delivery_tag_meta_key)
             spider.processing_tasks.handle_request(delivery_tag)
@@ -314,7 +315,13 @@ class RPCTaskConsumer(object):
                             current_task.status = TaskStatusCodes.PARTIAL_SUCCESS
             if is_completed:
                 if current_task.reply_to is not None:
-                    payload = {**deepcopy(current_task.payload), **{"status": current_task.status}}
+                    payload = {
+                        **deepcopy(current_task.payload),
+                        **{
+                            "status": current_task.status,
+                            "exception": current_task.exception,
+                        }
+                    }
                     if isinstance(self.rmq_connection.connection, pika.SelectConnection):
                         cb = functools.partial(
                             self.rmq_connection.publish_message,
@@ -324,9 +331,10 @@ class RPCTaskConsumer(object):
                     self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
 
                 if self._can_interact and self.__spider is not None:
-                    # logger.critical('TASK MUST BE ACKED HERE ' * 4)
-                    current_task.ack()
-                    # pass
+                    if hasattr(self.__spider, 'rmq_test_mode') and self.__spider.rmq_test_mode is True:
+                        logger.critical('TASK MUST BE ACKED HERE ' * 4)
+                    else:
+                        current_task.ack()
                 else:
                     # Note: possible deprecated to store delivery tags internally and LoopingCall: _relieve is redundant
                     if delivery_tag not in self.pending_relieve["ack"]:

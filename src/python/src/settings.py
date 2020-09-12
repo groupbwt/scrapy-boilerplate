@@ -50,11 +50,11 @@ LOG_FILE = os.getenv("LOG_FILE") if os.getenv("LOG_FILE", "") else None
 
 ITEM_PIPELINES: Dict[str, int] = {}
 
-MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
-MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
-MYSQL_USERNAME = os.getenv("MYSQL_USERNAME", "root")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
-MYSQL_DB = os.getenv("MYSQL_DB", "db_name")
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
+DB_USERNAME = os.getenv("DB_USERNAME", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_DATABASE = os.getenv("DB_DATABASE", "db_name")
 
 PIKA_LOG_LEVEL = os.getenv("PIKA_LOG_LEVEL", "WARN")
 logging.getLogger("pika").setLevel(PIKA_LOG_LEVEL)
@@ -63,7 +63,7 @@ RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
 RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
 RABBITMQ_USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
 RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
-RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")
+RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "/")
 
 try:
     HTTPCACHE_ENABLED = strtobool(os.getenv("HTTPCACHE_ENABLED", "False"))

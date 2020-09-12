@@ -6,8 +6,14 @@ from w3lib.http import basic_auth_header
 class HttpProxyMiddleware:
     @staticmethod
     def update_request(request: Request, spider: Spider) -> Request:
-        proxy = spider.settings.get("PROXY")
-        proxy_auth = spider.settings.get("PROXY_AUTH")
+        if 'proxy' in request.meta.keys():
+            proxy = request.meta.get('proxy')
+        else:
+            proxy = spider.settings.get("PROXY")
+        if 'proxy_auth' in request.meta.keys():
+            proxy_auth = request.meta.get('proxy_auth')
+        else:
+            proxy_auth = spider.settings.get("PROXY_AUTH")
         if proxy:
             if proxy_auth:
                 request.headers["Proxy-Authorization"] = basic_auth_header(*proxy_auth.split(":"))

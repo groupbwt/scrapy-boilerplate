@@ -19,6 +19,7 @@ class Task:
         self.delivery_tag = self.__consumed_data.get("method").delivery_tag
         self.reply_to = self.__consumed_data.get("properties").reply_to
         self.status = 1
+        self.exception = None
 
         self.__ack_callback = (
             ack_callback
@@ -39,6 +40,8 @@ class Task:
         self.scraped_items = 0
         self.dropped_items = 0
         self.error_items = 0
+
+        self.should_stop = False
 
     def __empty_callback(self):
         pass

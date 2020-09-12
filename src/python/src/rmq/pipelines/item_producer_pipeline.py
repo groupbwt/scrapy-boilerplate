@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ItemProducerPipeline:
     """Pipeline for publishing items to rabbitmq.
-    
+
     Requires 'result_queue_name' attribute in spider class
     """
 
@@ -65,7 +65,7 @@ class ItemProducerPipeline:
         parameters = pika.ConnectionParameters(
             host=self.__spider.settings.get("RABBITMQ_HOST"),
             port=int(self.__spider.settings.get("RABBITMQ_PORT")),
-            virtual_host=self.__spider.settings.get("RABBITMQ_VHOST"),
+            virtual_host=self.__spider.settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
                 username=self.__spider.settings.get("RABBITMQ_USERNAME"),
                 password=self.__spider.settings.get("RABBITMQ_PASSWORD"),

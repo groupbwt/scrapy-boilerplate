@@ -144,7 +144,7 @@ class Consumer(ScrapyCommand):
         parameters = pika.ConnectionParameters(
             host=self.project_settings.get("RABBITMQ_HOST"),
             port=int(self.project_settings.get("RABBITMQ_PORT")),
-            virtual_host=self.project_settings.get("RABBITMQ_VHOST"),
+            virtual_host=self.project_settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
                 username=self.project_settings.get("RABBITMQ_USERNAME"),
                 password=self.project_settings.get("RABBITMQ_PASSWORD"),
@@ -221,6 +221,10 @@ class Consumer(ScrapyCommand):
         return stmt
         """
         raise NotImplementedError
+
+    @staticmethod
+    def _compile_and_stringify_statement(stmt):
+        return str(stmt.compile(compile_kwargs={"literal_binds": True}, dialect=mysql.dialect()))
 
     def on_message_processed(self, message_store_result, ack_callback=None, nack_callback=None):
         if message_store_result:

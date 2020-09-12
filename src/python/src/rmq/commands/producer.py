@@ -12,8 +12,9 @@ from scrapy.commands import ScrapyCommand
 from scrapy.utils.log import configure_logging
 from scrapy.utils.project import get_project_settings
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
+from sqlalchemy.dialects import mysql
 from twisted.enterprise import adbapi
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions, TaskStatusCodes
@@ -152,7 +153,7 @@ class Producer(ScrapyCommand):
         parameters = pika.ConnectionParameters(
             host=self.project_settings.get("RABBITMQ_HOST"),
             port=int(self.project_settings.get("RABBITMQ_PORT")),
-            virtual_host=self.project_settings.get("RABBITMQ_VHOST"),
+            virtual_host=self.project_settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
                 username=self.project_settings.get("RABBITMQ_USERNAME"),
                 password=self.project_settings.get("RABBITMQ_PASSWORD"),
@@ -188,7 +189,7 @@ class Producer(ScrapyCommand):
 
     def _delay(self, current_count=None) -> int:
         if current_count is None:
-            return 900
+            return 60
         return {
             0 <= current_count < 5000: 0,
             5000 <= current_count < 15000: 15,
@@ -206,7 +207,7 @@ class Producer(ScrapyCommand):
             chunk_size = self.chunk_size
         stmt = self.build_task_query_stmt(chunk_size)
         if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True})
+            stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True}, dialect=mysql.dialect())
             transaction.execute(str(stmt_compiled))
             # transaction.execute(str(stmt_compiled), stmt_compiled.params)
         else:
@@ -272,23 +273,31 @@ class Producer(ScrapyCommand):
             return
         if self.chunk_size == 1 and not isinstance(rows, list):
             rows = [rows]
+        deferred_interactions = []
         for row in rows:
             msg_body = self.build_message_body(row)
             self._send_message(msg_body)
-            self.db_connection_pool.runInteraction(
+            deferred_update_task_interaction = self.db_connection_pool.runInteraction(
                 self.update_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
             )
+            deferred_interactions.append(deferred_update_task_interaction)
+        deferred_list = defer.DeferredList(deferred_interactions, consumeErrors=True)
+        deferred_list.addCallback(self._on_task_update_completed).addErrback(self._on_task_update_error)
+
+    def _on_task_update_completed(self, _result=None):
         if self.mode == Producer.CommandModes.ACTION.value:
             reactor.callLater(0, self.crawler_process._graceful_stop_reactor)
         elif self.mode == Producer.CommandModes.WORKER.value:
             reactor.callLater(0, self.produce_tasks)
 
+    def _on_task_update_error(self, failure):
+        self.logger.error("failure: {}".format(failure))
+        failure.trap(Exception)
+
     def _send_message(self, msg_body):
         if not isinstance(msg_body, dict):
             raise ValueError("Built message body is not a dictionary")
-        for key, val in msg_body.items():
-            if isinstance(val, datetime.datetime):
-                msg_body[key] = int(val.timestamp())
+        msg_body = self._convert_unserializable_values(msg_body)
         cb = functools.partial(
             self.rmq_connection.publish_message,
             message=json.dumps(msg_body),
@@ -298,6 +307,16 @@ class Producer(ScrapyCommand):
             ),
         )
         self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
+
+    def _convert_unserializable_values(self, data):
+        for key, val in data.items():
+            if isinstance(val, dict):
+                data[key] = self._convert_unserializable_values(val)
+            elif isinstance(val, datetime.datetime):
+                data[key] = int(val.timestamp())
+            else:
+                data[key] = val
+        return data
 
     def set_connection_handle(self, connection):
         self.rmq_connection = connection

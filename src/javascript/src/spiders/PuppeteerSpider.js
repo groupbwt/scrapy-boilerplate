@@ -6,16 +6,12 @@ import PuppeteerExtraPluginStealth from "puppeteer-extra-plugin-stealth";
 import PuppeteerExtraPluginClickAndWait from "puppeteer-extra-plugin-click-and-wait";
 import PuppeteerExtraPluginBlockResources from "puppeteer-extra-plugin-block-resources";
 import RuCaptchaClient from "../utils/RuCaptchaClient";
-import pauseFor from "../utils/pause";
-
-const {puppeteer} = Apify.utils;
 
 
-class TwitterBaseSpider {
+class PuppeteerSpider {
   static get VIEWPORT_SETTINGS() {
     return {
       width: 1920,
-      // height: 6480,
       height: 1080,
       deviceScaleFactor: 1,
       isMobile: false,
@@ -79,7 +75,7 @@ class TwitterBaseSpider {
     this._browser = await Apify.launchPuppeteer(opt);
     this._page = await this._browser.newPage();
 
-    // await this._page.setViewport(LinkedInRegularSpider.VIEWPORT_SETTINGS);
+    await this._page.setViewport(PuppeteerSpider.VIEWPORT_SETTINGS);
     if (withProxy && this._proxy?.username && this._proxy?.password) {
       await this._page.authenticate(
         {
@@ -109,7 +105,6 @@ class TwitterBaseSpider {
           return
         } catch (e) {
           pageLoadTries += 1;
-          // console.log('pageLoadTries', pageLoadTries, url);
           lastError = e;
         }
       }
@@ -124,4 +119,4 @@ class TwitterBaseSpider {
   }
 }
 
-module.exports = TwitterBaseSpider;
+module.exports = PuppeteerSpider;

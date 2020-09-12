@@ -20,8 +20,8 @@ class POP3Client {
         password: this._password
       });
 
-      const threshold = 60 * 1000;
       console.log('startTS:', startTS);
+      const threshold = 60 * 1000;
       // const threshold = 2 * 60 * 60 * 1000;
 
       client.connect(() => {
@@ -37,19 +37,20 @@ class POP3Client {
               }
               console.log(message.date.getTime(), (startTS - threshold), message.date.getTime() >= (startTS - threshold));
               if (message.date.getTime() >= (startTS - threshold)) {
-                if (String(Array.from(message.from).shift().address).includes('verify@twitter')) {
-                  console.log('verify@twitter msg to check')
+                const emailSenderPattern = 'verify@'
+                if (String(Array.from(message.from).shift().address).includes(emailSenderPattern)) {
+                  console.log(`${emailSenderPattern} msg to check`);
                   const msgHTML = message.html;
-                  const twitterCodeRegex = /<strong>([A-Za-z0-9]+)<\/strong><\/td>/gms;
-                  const twitterRegexes = [twitterCodeRegex];
+                  const emailCodeRegex = /<strong>([A-Za-z0-9]+)<\/strong><\/td>/gms;
+                  const emailCodeRegexList = [emailCodeRegex];
 
-                  code = twitterRegexes.reduce((a, v) => {
+                  code = emailCodeRegexList.reduce((a, v) => {
                     if (a !== null) {
                       return a;
                     }
-                    let twitterCode = v.exec(msgHTML);
-                    if (twitterCode !== null && twitterCode.length > 1 && twitterCode[1] !== null) {
-                      return twitterCode[1].trim();
+                    let extractedCode = v.exec(msgHTML);
+                    if (extractedCode !== null && extractedCode.length > 1 && extractedCode[1] !== null) {
+                      return extractedCode[1].trim();
                     }
                     return null;
                   }, null);

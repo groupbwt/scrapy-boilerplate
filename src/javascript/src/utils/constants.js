@@ -1,8 +1,10 @@
 const Constants = {
-  ACCOUNT_MUST_START: 2,
-  ACCOUNT_MUST_STOP: 40,
-  ACCOUNT_HAS_BANNED: 14,
-  ACCOUNT_HAS_STARTED: 12
+  NOT_PROCESSED: 0,
+  IN_QUEUE: 1,
+  SUCCESS: 2,
+  PARTIAL_SUCCESS: 21,
+  ERROR: 4,
+  HARDWARE_ERROR: 4,
 };
 
 module.exports = Constants;

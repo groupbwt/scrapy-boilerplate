@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "YOUR_PROJECT_NAME"
+version = "2.2.0"
+description = ""
+authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+alembic = "^1.3.3"
+brotli = "^1.0.7"
+pika = "^1.1.0"
+requests = "^2.22.0"
+sqlalchemy = "^1.3.13"
+w3lib = "^1.21.0"
+python-dotenv = "^0.10.5"
+dotenv-linter = "^0.1.5"
+mysqlclient = "^1.4.6"
+scrapy-sentry-sdk = "^0.3.0"
+furl = "^2.1.0"
+scrapy = "2.2.1"
+dateparser = "^0.7.6"
+
+[tool.poetry.dev-dependencies]
+scrapy-new = "^0.2"
+black = "^19.10b0"
+pylint = "^2.4.4"
+pre-commit = "^2.0.1"
+isort = "^4.3.21"
+
+[tool.black]
+line-length = 99
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = '/(\.eggs|\.git|\.venv|\.scrapy)/'
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

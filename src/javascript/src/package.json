@@ -1,0 +1,53 @@
+{
+  "name": "your_project_name",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "babel-node index.js --presets @babel/preset-env",
+    "clean": "rm -rf build/* && rm -rf build/.env",
+    "build": "babel . --out-dir build --ignore ./node_modules/*,./build/* --plugins=@babel/plugin-transform-runtime --presets=@babel/preset-env && cat .env > ./build/.env",
+    "fbuild": "rm -rf build/* && rm -rf build/.env && babel . --out-dir build --ignore ./node_modules/*,./build/* --plugins=@babel/plugin-transform-runtime --presets=@babel/preset-env && cat .env > ./build/.env",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "me",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/runtime": "^7.8.7",
+    "@types/amqplib": "^0.5.13",
+    "amqplib": "^0.5.5",
+    "amqplib-as-promised": "^4.0.0",
+    "apify": "^0.20.2",
+    "clone-deep": "^4.0.1",
+    "dotenv": "^8.2.0",
+    "emailjs-imap-client": "git+https://github.com/vulreid/emailjs-imap-client.git",
+    "emailjs-tcp-socket": "git+https://github.com/vulreid/emailjs-tcp-socket.git",
+    "pm2": "^4.4.1",
+    "puppeteer-extra": "^3.1.9",
+    "puppeteer-extra-plugin-adblocker": "^2.11.3",
+    "puppeteer-extra-plugin-block-resources": "^2.2.4",
+    "puppeteer-extra-plugin-click-and-wait": "^2.2.4",
+    "puppeteer-extra-plugin-recaptcha": "^3.1.10",
+    "puppeteer-extra-plugin-stealth": "^2.4.9",
+    "request-promise-native": "^1.0.9",
+    "socks": "^2.4.2",
+    "uuid": "^8.3.0",
+    "yapople": "^0.4.0",
+    "yargs": "^15.4.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.7",
+    "@babel/node": "^7.8.7",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/plugin-proposal-decorators": "^7.8.3",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
+    "@babel/plugin-proposal-private-methods": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "^7.8.7",
+    "@babel/types": "^7.8.7",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-transform-optional-chaining": "^7.0.0-beta.3"
+  }
+}

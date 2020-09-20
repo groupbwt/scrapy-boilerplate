@@ -26,7 +26,7 @@ class Task:
             if ack_callback is not None and callable(ack_callback)
             else self.__empty_callback
         )
-        self.__nack__callback = (
+        self.__nack_callback = (
             nack_callback
             if nack_callback is not None and callable(nack_callback)
             else self.__empty_callback

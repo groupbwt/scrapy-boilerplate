@@ -13,7 +13,7 @@
     - scp -r "$current_dir" "$SSH_USER_NAME"@$HOST:"$SERVER_DIR"/releases/"$release_candidate_dir"
     - python deploy.py "$SSH_USER_NAME" "$HOST" "$SERVER_DIR" "$release_candidate_dir" "$PREFIX"
 
-deploy-current-branche:
+deploy-current-branch:
   image: python:3.8.5-slim
   script:
     - *base_autodeploy_script

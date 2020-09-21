@@ -1,0 +1,30 @@
+.base_autodeploy_script: &base_autodeploy_script
+    - echo "$SERVER_DIR"
+    - echo "$SSH_USER_NAME"
+    - pip install paramiko
+    - apt-get update && apt-get install -y openssh-client
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - current_dir=$(pwd)
+    - release_candidate_dir=$(date +'%m%d%Y%H%M%S')
+    - echo "$release_candidate_dir"
+    - scp -r "$current_dir" "$SSH_USER_NAME"@$HOST:"$SERVER_DIR"/releases/"$release_candidate_dir"
+    - python deploy.py "$SSH_USER_NAME" "$HOST" "$SERVER_DIR" "$release_candidate_dir" "$PREFIX"
+
+deploy-current-branch:
+  image: python:3.8.5-slim
+  script:
+    - *base_autodeploy_script
+  only:
+    refs:
+      - branches
+    variables:
+      - $CI_COMMIT_REF_NAME == $AUTO_DEPLOY_BRANCH
+
+manual-deploy:
+  image: python:3.8.5-slim
+  script:
+    - *base_autodeploy_script
+  when: manual

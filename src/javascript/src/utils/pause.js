@@ -1,4 +1,4 @@
-async function pauseFor(timeout) {
+export async function pauseFor(timeout) {
   return new Promise((resolve, reject) => {
     try {
       setTimeout(() => {
@@ -9,5 +9,3 @@ async function pauseFor(timeout) {
     }
   });
 }
-
-module.exports = pauseFor;

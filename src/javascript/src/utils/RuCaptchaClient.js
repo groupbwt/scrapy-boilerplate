@@ -1,6 +1,8 @@
 import rp from 'request-promise-native';
+import { logger } from '../logging'
 
-class RuCaptchaClient {
+
+export default class RuCaptchaClient {
   static get RU_CAPTCHA_SEND_ENDPOINT() {
     return 'http://rucaptcha.com/in.php';
   }
@@ -46,7 +48,6 @@ class RuCaptchaClient {
         proxytype: proxyType,
       },
     });
-    // console.log('ruCaptchaSendResponse', ruCaptchaSendResponse)
 
     const ruCaptchaRequestId = ruCaptchaSendResponse.request;
     if (ruCaptchaRequestId === 'ERROR_ZERO_BALANCE') {
@@ -69,12 +70,12 @@ class RuCaptchaClient {
             proxytype: proxyType,
           },
         });
-        console.log('tick', ticks, 'ruCaptchaSolutionResponse', ruCaptchaSolutionResponse);
+        logger.info("tick %s; ruCaptchaSolutionResponse: %s", ruCaptchaSolutionResponse);
         if (parseInt(ruCaptchaSolutionResponse.status, 10) === 1) {
           captchaToken = ruCaptchaSolutionResponse.request;
         }
       } catch (e) {
-        console.log(e.toString());
+        logger.warn(e.toString());
       }
     }
     if (captchaToken !== false) {
@@ -83,5 +84,3 @@ class RuCaptchaClient {
     return Promise.reject(new Error('CAPTCHA_SOLUTION_ERROR'));
   }
 }
-
-module.exports = RuCaptchaClient;

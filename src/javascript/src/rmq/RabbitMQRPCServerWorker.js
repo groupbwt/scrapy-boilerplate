@@ -1,7 +1,7 @@
 import { Connection } from 'amqplib-as-promised';
 
 
-class RabbitMQRPCServerWorker {
+export class RabbitMQRPCServerWorker {
   /**
    * @param uri
    * @param taskQueueName
@@ -90,5 +90,3 @@ class RabbitMQRPCServerWorker {
     this._initStatus = false;
   }
 }
-
-module.exports = RabbitMQRPCServerWorker;

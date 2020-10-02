@@ -1,31 +1,60 @@
-import Apify from "apify";
-import {LaunchPuppeteerOptions} from "apify";
-import vanillaPuppeteer from "puppeteer";
-import {addExtra} from "puppeteer-extra";
-import PuppeteerExtraPluginStealth from "puppeteer-extra-plugin-stealth";
-import PuppeteerExtraPluginClickAndWait from "puppeteer-extra-plugin-click-and-wait";
-import PuppeteerExtraPluginBlockResources from "puppeteer-extra-plugin-block-resources";
-import RuCaptchaClient from "../utils/RuCaptchaClient";
+import Apify from "apify"
+import { LaunchPuppeteerOptions } from "apify"
+import vanillaPuppeteer from "puppeteer"
+import { addExtra } from "puppeteer-extra"
+import PuppeteerExtraPluginBlockResources from "puppeteer-extra-plugin-block-resources"
+import PuppeteerExtraPluginClickAndWait from "puppeteer-extra-plugin-click-and-wait"
+import PuppeteerExtraPluginStealth from "puppeteer-extra-plugin-stealth"
+
+import { logger } from '../logging'
+import { minToMsec } from '../utils/time'
+import RuCaptchaClient from "../utils/RuCaptchaClient"
 
 
-class PuppeteerSpider {
-  static get VIEWPORT_SETTINGS() {
-    return {
+export default class PuppeteerSpider {
+  /**
+   * Returns spiger name.
+   */
+  static get name () { return 'puppeteer_spider' }
+
+  /**
+   * Returns viewport settings for page. Use `settings` param to override the defaults.
+   *
+   * @param {object} settings
+   * @returns {object}
+   */
+  viewport_settings (settings) {
+    return Object.assign({
       width: 1920,
       height: 1080,
       deviceScaleFactor: 1,
       isMobile: false,
       hasTouch: false,
-      isLandscape: false,
-    };
+      isLandscape: false
+    }, settings)
   }
 
-  constructor(headless = false, ruCaptchaKey = null, proxySettings = null) {
+  /**
+   * Returns default navigation timeout in milliseconds.
+   *
+   * @returns {number}
+   */
+  static get default_navigation_timeout () {
+    return minToMsec(5)
+  }
+
+  constructor(
+    settings,
+    ruCaptchaKey = null,
+    proxySettings = null
+  ) {
+    this.settings = settings
+    this.start_url = 'https://example.org'
+    this._page = undefined
     this._isInitCompleted = false;
-    this._headless = headless;
     this._ruCaptchaClient = new RuCaptchaClient(ruCaptchaKey);
     this._proxy = proxySettings;
-  };
+  }
 
   async __launchBrowser() {
     /**
@@ -42,19 +71,19 @@ class PuppeteerSpider {
       .use(
         PuppeteerExtraPluginBlockResources({
           blockedTypes: new Set([
+            'eventsource',
+            'fetch',
+            'font',
+            'image',
+            'manifest',
+            'media',
+            'other',
+            'texttrack',
+            'websocket',
             // 'document',
             // 'stylesheet',
-            'image',
-            'media',
-            'font',
             // 'script',
-            'texttrack',
             // 'xhr',
-            'fetch',
-            'eventsource',
-            'websocket',
-            'manifest',
-            'other',
           ])
         })
       )
@@ -69,13 +98,15 @@ class PuppeteerSpider {
      */
     const opt = {
       puppeteerModule: puppeteerInstance,
-      headless: this._headless,
+      headless: this.settings.puppeteer.headless,
       args: puppeteerArgs
     };
     this._browser = await Apify.launchPuppeteer(opt);
     this._page = await this._browser.newPage();
 
-    await this._page.setViewport(PuppeteerSpider.VIEWPORT_SETTINGS);
+    await this._page.setViewport(PuppeteerSpider.VIEWPORT_SETTINGS)
+    this.page.setDefaultNavigationTimeout(PuppeteerSpider.default_navigation_timeout)
+
     if (withProxy && this._proxy?.username && this._proxy?.password) {
       await this._page.authenticate(
         {
@@ -94,6 +125,13 @@ class PuppeteerSpider {
     }
   };
 
+  /**
+   * Navigates to a given url making multiple attempts.
+   *
+   * @param {string} url
+   * @param {number} retries
+   * @returns {Promise<void>}
+   */
   async goWithRetries(url, maxRetries = 3, waitUntil = 'networkidle2') {
     if (this._isInitCompleted) {
       let pageLoadTries = 0;
@@ -101,7 +139,7 @@ class PuppeteerSpider {
       while (pageLoadTries < maxRetries) {
         try {
           await this._page.goto(url, {waitUntil: waitUntil});
-          let currentURL = await this._page.url();
+          let currentURL = this._page.url();
           return
         } catch (e) {
           pageLoadTries += 1;
@@ -118,5 +156,3 @@ class PuppeteerSpider {
     await this._browser.close();
   }
 }
-
-module.exports = PuppeteerSpider;

@@ -6,4 +6,3 @@ class DirectExampleItem(DirectItem):
     id = Field()
     page = Field()
     title = Field()
-

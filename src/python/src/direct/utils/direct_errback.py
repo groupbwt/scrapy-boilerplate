@@ -23,9 +23,7 @@ def direct_errback(errback_method: Callable) -> Callable:
                     except TypeError:
                         pass
                     self.crawler.signals.send_catch_log(
-                        signal=errback_completed,
-                        response=response_or_failure,
-                        spider=self,
+                        signal=errback_completed, response=response_or_failure, spider=self,
                     )
                 if isinstance(response_or_failure, Failure):
                     if hasattr(response_or_failure, "request"):
@@ -36,9 +34,7 @@ def direct_errback(errback_method: Callable) -> Callable:
                         except TypeError:
                             pass
                         self.crawler.signals.send_catch_log(
-                            signal=errback_completed,
-                            failure=response_or_failure,
-                            spider=self,
+                            signal=errback_completed, failure=response_or_failure, spider=self,
                         )
             else:
                 self.crawler.signals.send_catch_log(signal=errback_completed)

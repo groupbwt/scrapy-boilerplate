@@ -7,11 +7,7 @@ T_DirectPipeline = TypeVar("T_DirectPipeline")
 
 
 class DirectPipeline(object):
-    custom_settings = {
-        "PIPELINES": {
-            "direct.DirectPipeline": 101,
-        }
-    }
+    custom_settings = {"PIPELINES": {"direct.DirectPipeline": 101,}}
 
     def __init__(self, crawler: Crawler) -> None:
         self.crawler = crawler

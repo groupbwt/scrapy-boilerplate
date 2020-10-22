@@ -6,14 +6,10 @@ from direct.utils.direct_errback import direct_errback
 
 
 class DirectExmapleSpider(DirectSpider):
-    name = "myspider"
+    name = "direct_exmaple_spider"
     fetch_chunk = 10
 
-    custom_settings = {
-        "EXTENSIONS": {
-            "extensions.DirectExampleExtension": 100,
-        }
-    }
+    custom_settings = {"EXTENSIONS": {"extensions.DirectExampleExtension": 100,}}
 
     def parse(self, response):
         item = DirectExampleItem()

@@ -3,4 +3,4 @@ from scrapy import Field
 
 
 class DirectItem(Item):
-    task_id = Field()
+    task_id: Field = Field()

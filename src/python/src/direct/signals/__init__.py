@@ -1,0 +1,1 @@
+from direct.signals.direct_signals import errback_completed

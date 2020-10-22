@@ -1,6 +1,6 @@
 from scrapy import signals
 import logging
-from twisted.internet import reactor, task, defer
+from twisted.internet import reactor, task
 from twisted.enterprise import adbapi
 from scrapy.utils.project import get_project_settings
 from MySQLdb.cursors import DictCursor
@@ -11,16 +11,27 @@ from scrapy.exceptions import DontCloseSpider
 from copy import deepcopy
 from scrapy import Request
 from rmq.utils.task_status_codes import TaskStatusCodes
+from direct.utils.direct_task import DirectTask
+from direct.signals.direct_signals import errback_completed
+from scrapy.crawler import Crawler
+from typing import TypeVar, Union, Any
+from scrapy import Spider
+from scrapy.http import Response
+from scrapy.settings import Settings
+from direct.items import DirectItem
+from direct.spiders import DirectSpider
+from twisted.python.failure import Failure
 
+T_DirectDBConnectionExtension = TypeVar("T_DirectDBConnectionExtension")
 logger = logging.getLogger(__name__)
 
 
 class DirectDBConnectionExtension:
-    _RELIEVE_DELAY = 3
+    _RELIEVE_DELAY = 1
     THRESHOLD_SIZE = 1500
 
     @classmethod
-    def from_crawler(cls, crawler):
+    def from_crawler(cls, crawler: Crawler) -> T_DirectDBConnectionExtension:
         o = cls(crawler)
         """Subscribe to signals which controls opening and shutdown hooks/behaviour"""
         crawler.signals.connect(o.spider_opened, signal=signals.spider_opened)
@@ -29,6 +40,7 @@ class DirectDBConnectionExtension:
 
         """Subscribe to signals which controls requests scheduling and responses or error retrieving"""
         crawler.signals.connect(o.on_spider_error, signal=signals.spider_error)
+        crawler.signals.connect(o.errback_completed, signal=errback_completed)
 
         """Subscribe to signals which controls item processing"""
         crawler.signals.connect(o.on_item_scraped, signal=signals.item_scraped)
@@ -37,29 +49,30 @@ class DirectDBConnectionExtension:
 
         return o
 
-    def spider_closed(self, spider, reason):
+    def spider_closed(self, spider: Spider, reason: str) -> None:
         spider.logger.info(reason)
 
-    def __init__(self, crawler):
+    def __init__(self, crawler: Crawler) -> None:
         super().__init__()
-        self.crawler = crawler
-        self.project_settings = get_project_settings()
-        self.db_connection_pool = None
-        self.can_interact = False
-        self.can_next_request = True
-        self.task_tag_meta_key = "task_id"
-        self.task_body_meta_key = "task_body"
+        self.crawler: Crawler = crawler
+        self.project_settings: Settings = get_project_settings()
+        self.db_connection_pool: Union[adbapi.ConnectionPool, None] = None
+        self.can_interact: bool = False
+        self.can_next_request: bool = True
+        self.task_tag_meta_key: str = "task_id"
+        self.task_body_meta_key: str = "task_body"
 
-    def spider_opened(self, spider):
+    def spider_opened(self, spider: Spider) -> None:
         self.__spider = spider
         self.logger = self.__spider.logger
         self.can_interact = False
         logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
+        self.fetch_chunk = self.__spider.fetch_chunk or 100
         self.db_connection_pool = self.init_db_connection_pool()
         self._relieve_task = task.LoopingCall(self._relieve)
         self._relieve_task.start(self._RELIEVE_DELAY)
 
-    def on_item_scraped(self, item, response, spider):
+    def on_item_scraped(self, item: DirectItem, response: Response, spider: Spider) -> None:
         if response is not None and spider is not None:
             task_id = self.extract_task_id(response, item)
             if task_id is not None:
@@ -68,11 +81,13 @@ class DirectDBConnectionExtension:
                 )
                 d.addCallback(self._on_success_save, spider, task_id).addErrback(self._on_error)
 
-    def _on_success_save(self, _result, spider, task_id):
-        spider.task.remove()
+    def _on_success_save(self, _result: Any, spider: DirectSpider, task_id: task) -> None:
+        spider.direct_tasks_queue.remove_task(task_id)
+        spider.direct_tasks_queue.inc_success()
+        spider.direct_tasks_queue.inc_total()
         self.logger.debug(f"Task completed success {task_id}. Task removed.")
 
-    def on_item_dropped(self, item, response, exception, spider):
+    def on_item_dropped(self, item: DirectItem, response: Response, exception: Exception, spider: Spider) -> None:
         task_id = self.extract_task_id(response, item)
         if task_id is not None:
             d = self.db_connection_pool.runInteraction(
@@ -80,11 +95,13 @@ class DirectDBConnectionExtension:
             )
             d.addCallback(self._on_dropped_save, spider, task_id).addErrback(self._on_error)
 
-    def _on_dropped_save(self, _result, spider, task_id):
-        spider.task.remove()
+    def _on_dropped_save(self, _result: Any, spider: DirectSpider, task_id: str) -> None:
+        spider.direct_tasks_queue.remove_task(task_id)
+        spider.direct_tasks_queue.inc_dropped()
+        spider.direct_tasks_queue.inc_total()
         self.logger.debug(f"Task dropped {task_id}. Task removed.")
 
-    def on_item_error(self, item, response, spider, failure):
+    def on_item_error(self, item: DirectItem, response: Response, spider: DirectSpider, failure: Failure) -> None:
         task_id = self.extract_task_id(response, item)
         if task_id is not None:
             d = self.db_connection_pool.runInteraction(
@@ -93,7 +110,7 @@ class DirectDBConnectionExtension:
             d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
             self.logger.debug(f"Task error {task_id}. ")
 
-    def on_spider_error(self, failure, response, spider):
+    def on_spider_error(self, failure: Failure, response: Response, spider: DirectSpider) -> None:
         meta = response.meta
         body = meta.get("body")
         if body:
@@ -105,21 +122,37 @@ class DirectDBConnectionExtension:
                 d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
                 self.logger.debug(f"Task error {task_id}. ")
 
-    def _on_error_save(self, _result, spider, task_id):
-        spider.task.remove()
+    def errback_completed(self, response: Union[Response, None] = None, spider: Union[DirectSpider, None] = None,
+                          failure: Union[Failure, None] = None, **kwargs: dict):
+        if spider is not None and failure is not None:
+            meta = failure.request.meta
+            body = meta.get("task_body")
+            if body:
+                task_id = meta.get("task_id")
+                if task_id:
+                    d = self.db_connection_pool.runInteraction(
+                        self.update_status_task_interaction, body, TaskStatusCodes.ERROR.value
+                    )
+                    d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
+                    self.logger.debug(f"Task error {task_id}.")
+
+    def _on_error_save(self, _result: Any, spider: DirectSpider, task_id: str) -> None:
+        spider.direct_tasks_queue.remove_task(task_id)
+        spider.direct_tasks_queue.inc_error()
+        spider.direct_tasks_queue.inc_total()
         self.logger.debug(f"Task error finished {task_id}. Task removed.")
 
-    def _on_error(self, failure):
+    def _on_error(self, failure: Failure) -> None:
         self.logger.error(f"failure: {failure}")
         failure.trap(Exception)
 
-    def extract_task_id(self, response, item):
+    def extract_task_id(self, response: Response, item: DirectItem) -> None:
         task_id = response.meta.get(self.task_tag_meta_key, None)
         if task_id is None and hasattr(item, self.task_tag_meta_key):
             task_id = getattr(item, self.task_tag_meta_key, None)
         return task_id
 
-    def save_task_interaction(self, transaction, item, status):
+    def save_task_interaction(self, transaction: adbapi.Transaction, item: DirectItem, status: int) -> Any:
         stmt = self.build_task_save_stmt(item, status)
         if isinstance(stmt, SQLAlchemyExecutable):
             stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True}, dialect=mysql.dialect())
@@ -128,10 +161,20 @@ class DirectDBConnectionExtension:
         else:
             transaction.execute(stmt)
 
-    def build_task_save_stmt(self, item, status):
+    def build_task_save_stmt(self, item: DirectItem, status: int) -> Union[str, SQLAlchemyExecutable]:
+        """
+            insert_item = insert(Test).values({
+            "id": item["id"],
+            "status": status,
+            "title": item["title"],
+            "page": item["page"]
+             })
+             return insert_item
+        """
         raise NotImplemented
 
-    def update_status_task_interaction(self, transaction, item, status):
+    def update_status_task_interaction(self, transaction: adbapi.Transaction, item: DirectItem, status: int) -> Union[
+        DirectItem, Any]:
         stmt = self.build_task_update_status_stmt(item, status)
         if isinstance(stmt, SQLAlchemyExecutable):
             stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True}, dialect=mysql.dialect())
@@ -139,20 +182,20 @@ class DirectDBConnectionExtension:
             # transaction.execute(str(stmt_compiled), stmt_compiled.params)
         else:
             transaction.execute(stmt)
+        return item
 
-    def build_task_update_status_stmt(self, item, status):
+    def build_task_update_status_stmt(self, item: DirectItem, status: int) -> Union[str, SQLAlchemyExecutable]:
         """
             update = Update(Table).values({"status":status}).where(Table.id == item["id"])
             return update
         """
         raise NotImplemented
 
-    def _relieve(self):
-        if not self.__spider.task.is_empty() and not self.__spider.task.in_process():
-            self.__spider.task.set_in_process()
-            relieve_task = self.__spider.task.get()
-            body = relieve_task["body"]
-            task_id = relieve_task["id"]
+    def _relieve(self) -> None:
+        if not self.__spider.tasks_queue.is_empty() and not self.__spider.tasks_queue.in_process():
+            relieve_task = self.__spider.tasks_queue.get_task()
+            body = relieve_task.body
+            task_id = relieve_task.id
             prepared_request = self.__spider.next_request(task_id, body)
             if isinstance(prepared_request, Request):
                 prepared_request_meta = deepcopy(prepared_request.meta)
@@ -169,7 +212,7 @@ class DirectDBConnectionExtension:
                     prepared_request = prepared_request.replace(dont_filter=True)
                 self.crawler.engine.crawl(prepared_request, spider=self.__spider)
 
-    def produce_tasks(self):
+    def produce_tasks(self) -> None:
         self.check_interact()
         if self.can_interact:
             d = self.db_connection_pool.runInteraction(self.process_message)
@@ -177,28 +220,34 @@ class DirectDBConnectionExtension:
         else:
             reactor.callLater(2, self.produce_tasks)
 
-    def check_interact(self):
+    def check_interact(self) -> None:
         if not self.db_connection_pool.running:
             self.can_interact = False
             logger.warning(f"DB connection pool not running.{self.__spider = }")
         elif not hasattr(self.__spider, "next_request"):
             raise Exception("Spider has no next_request method")
-        elif not self.__spider.task.is_empty():
+        elif not self.__spider.tasks_queue.is_empty():
             self.can_interact = False
         else:
             self.can_interact = True
 
-    def spider_idle(self, spider):
+    def spider_idle(self, spider: DirectSpider) -> None:
         reactor.callLater(2, self.produce_tasks)
         raise DontCloseSpider
 
-    def process_tasks(self, row):
-        if bool(row):
-            self.__spider.task.set(row)
+    def process_tasks(self, rows: Union[dict, list, None]) -> None:
+        for row in rows:
+            d = self.db_connection_pool.runInteraction(
+                self.update_status_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
+            )
+            d.addCallback(self._add_task).addErrback(self._on_error)
         reactor.callLater(1, self.produce_tasks)
 
-    def process_message(self, transaction):
-        stmt = self.build_message_store_stmt()
+    def _add_task(self, row: dict) -> None:
+        self.__spider.tasks_queue.add_task(DirectTask(row))
+
+    def process_message(self, transaction: adbapi.Transaction) -> Union[list, dict, None]:
+        stmt = self.build_message_store_stmt(self.fetch_chunk)
         if isinstance(stmt, SQLAlchemyExecutable):
             stmt_compiled = stmt.compile(
                 dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}
@@ -207,12 +256,16 @@ class DirectDBConnectionExtension:
             # transaction.execute(str(stmt_compiled), stmt_compiled.params)
         else:
             transaction.execute(stmt)
-        return transaction.fetchone()
+        return transaction.fetchall()
 
-    def build_message_store_stmt(self):
+    def build_message_store_stmt(self, fetch_chunk: int) -> Union[str, SQLAlchemyExecutable]:
+        """
+            select = Select([Test]).where(Test.status == TaskStatusCodes.NOT_PROCESSED.value).limit(fetch_chunk)
+            return select
+        """
         raise NotImplemented
 
-    def init_db_connection_pool(self):
+    def init_db_connection_pool(self) -> adbapi.ConnectionPool:
         """In case of using non mysql database or if pymysql is preferred this method must be overridden
         """
         db_connection_pool = adbapi.ConnectionPool(
@@ -229,7 +282,7 @@ class DirectDBConnectionExtension:
         )
         return db_connection_pool
 
-    def on_get_tasks_error(self, failure):
+    def on_get_tasks_error(self, failure: Failure) -> None:
         self.logger.error("failure: {}".format(failure))
         if failure.check(NotImplementedError):
             self.logger.critical("Required method is not implemented. Shutting down...")

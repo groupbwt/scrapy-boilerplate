@@ -10,7 +10,7 @@ from MySQLdb import OperationalError
 from scrapy.exceptions import DontCloseSpider
 from copy import deepcopy
 from scrapy import Request
-from rmq.utils.task_status_codes import TaskStatusCodes
+from direct.utils import DirectTaskStatusCodes
 from direct.utils.direct_task import DirectTask
 from direct.signals.direct_signals import errback_completed
 from scrapy.crawler import Crawler
@@ -77,7 +77,7 @@ class DirectDBConnectionExtension:
             task_id = self.extract_task_id(response, item)
             if task_id is not None:
                 d = self.db_connection_pool.runInteraction(
-                    self.save_task_interaction, item, TaskStatusCodes.SUCCESS.value
+                    self.save_task_interaction, item, DirectTaskStatusCodes.SUCCESS.value
                 )
                 d.addCallback(self._on_success_save, spider, task_id).addErrback(self._on_error)
 
@@ -91,7 +91,7 @@ class DirectDBConnectionExtension:
         task_id = self.extract_task_id(response, item)
         if task_id is not None:
             d = self.db_connection_pool.runInteraction(
-                self.update_status_task_interaction, item, TaskStatusCodes.DROPPED.value
+                self.update_status_task_interaction, item, DirectTaskStatusCodes.DROPPED.value
             )
             d.addCallback(self._on_dropped_save, spider, task_id).addErrback(self._on_error)
 
@@ -105,7 +105,7 @@ class DirectDBConnectionExtension:
         task_id = self.extract_task_id(response, item)
         if task_id is not None:
             d = self.db_connection_pool.runInteraction(
-                self.update_status_task_interaction, item, TaskStatusCodes.ERROR.value
+                self.update_status_task_interaction, item, DirectTaskStatusCodes.ERROR.value
             )
             d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
             self.logger.debug(f"Task error {task_id}. ")
@@ -117,7 +117,7 @@ class DirectDBConnectionExtension:
             task_id = meta.get("task_id")
             if task_id:
                 d = self.db_connection_pool.runInteraction(
-                    self.update_status_task_interaction, body, TaskStatusCodes.ERROR.value
+                    self.update_status_task_interaction, body, DirectTaskStatusCodes.ERROR.value
                 )
                 d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
                 self.logger.debug(f"Task error {task_id}. ")
@@ -131,7 +131,7 @@ class DirectDBConnectionExtension:
                 task_id = meta.get("task_id")
                 if task_id:
                     d = self.db_connection_pool.runInteraction(
-                        self.update_status_task_interaction, body, TaskStatusCodes.ERROR.value
+                        self.update_status_task_interaction, body, DirectTaskStatusCodes.ERROR.value
                     )
                     d.addCallback(self._on_error_save, spider, task_id).addErrback(self._on_error)
                     self.logger.debug(f"Task error {task_id}.")
@@ -238,7 +238,7 @@ class DirectDBConnectionExtension:
     def process_tasks(self, rows: Union[dict, list, None]) -> None:
         for row in rows:
             d = self.db_connection_pool.runInteraction(
-                self.update_status_task_interaction, row, TaskStatusCodes.IN_QUEUE.value
+                self.update_status_task_interaction, row, DirectTaskStatusCodes.IN_QUEUE.value
             )
             d.addCallback(self._add_task).addErrback(self._on_error)
         reactor.callLater(1, self.produce_tasks)
@@ -260,7 +260,7 @@ class DirectDBConnectionExtension:
 
     def build_message_store_stmt(self, fetch_chunk: int) -> Union[str, SQLAlchemyExecutable]:
         """
-            select = Select([Test]).where(Test.status == TaskStatusCodes.NOT_PROCESSED.value).limit(fetch_chunk)
+            select = Select([Test]).where(Test.status == DirectTaskStatusCodes.NOT_PROCESSED.value).limit(fetch_chunk)
             return select
         """
         raise NotImplemented

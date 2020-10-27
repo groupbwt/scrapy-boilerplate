@@ -8,8 +8,10 @@ from pika.exceptions import ChannelWrongStateError, ConnectionWrongStateError
 from twisted.internet import reactor, threads
 
 from rmq.utils.decorators import log_current_thread
+from scrapy.utils.project import get_project_settings
 
 logger = logging.getLogger(__name__)
+logger.setLevel(get_project_settings().get("LOG_LEVEL", "DEBUG"))
 
 
 class PikaSelectConnection:

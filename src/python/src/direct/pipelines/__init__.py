@@ -1,1 +1,2 @@
-from direct.pipelines.direct_pipeline import DirectPipeline
+from direct.pipelines.direct_pipeline import ItemDirectPipeline
+from direct.pipelines.direct_rmq_pipeline import ItemDirectProducerPipeline

@@ -21,6 +21,8 @@ from scrapy.settings import Settings
 from direct.items import DirectItem
 from direct.spiders import DirectSpider
 from twisted.python.failure import Failure
+from direct.utils import direct_errback
+from scrapy.exceptions import CloseSpider
 
 T_DirectDBConnectionExtension = TypeVar("T_DirectDBConnectionExtension")
 logger = logging.getLogger(__name__)
@@ -69,9 +71,30 @@ class DirectDBConnectionExtension:
         self.can_interact = False
         logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
         self.fetch_chunk = self.__spider.fetch_chunk or 100
+        if self._validate_spider_has_decorators() is False:
+            raise CloseSpider("Attached spider has no properly decorated callbacks or errbacks")
         self.db_connection_pool = self.init_db_connection_pool()
         self._relieve_task = task.LoopingCall(self._relieve)
         self._relieve_task.start(self._RELIEVE_DELAY)
+
+    def _validate_spider_has_decorators(self):
+        errback_decorated_funcs_count = 0
+        spider_method_list = [
+            func
+            for func in dir(self.__spider)
+            if callable(getattr(self.__spider, func)) and not func.startswith("__")
+        ]
+        for spider_method in spider_method_list:
+            spider_method_attr = getattr(self.__spider, spider_method)
+            if hasattr(spider_method_attr, "__wrapped__"):
+                if hasattr(spider_method_attr, "__decorator_name__"):
+                    decorator_name = getattr(spider_method_attr, "__decorator_name__")
+                    if decorator_name == direct_errback.__name__:
+                        errback_decorated_funcs_count += 1
+        logger.debug(f"errback_decorated_funcs_count: {errback_decorated_funcs_count}")
+        if errback_decorated_funcs_count == 0:
+            return False
+        return True
 
     def on_item_scraped(self, item: DirectItem, response: Response, spider: Spider) -> None:
         if response is not None and spider is not None:

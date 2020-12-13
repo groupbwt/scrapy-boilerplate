@@ -30,6 +30,13 @@ export class RabbitConnector {
         this.objectId = uuid4();
     }
 
+    public static async close() {
+        if (RabbitConnector.connection !== null) {
+            await RabbitConnector.connection.close();
+            RabbitConnector.connection = null;
+        }
+    }
+
     public async publish(queueName: string, text: string, options?: Options.Publish) {
         const channel = await this.getChannel(queueName);
         await channel.sendToQueue(queueName, Buffer.from(text), options);

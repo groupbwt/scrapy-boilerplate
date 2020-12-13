@@ -77,7 +77,7 @@ export default class Crawler {
             }
         } finally {
             await spider.spiderClosed();
-            await (new RabbitConnector(settings.rabbit)).close(true);
+            await RabbitConnector.close();
         }
     }
 

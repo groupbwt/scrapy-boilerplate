@@ -2,18 +2,19 @@ import Spider from "../core/spiders/spider";
 import RmqPipeline from "../pipelines/rmq-pipeline";
 import InputItem from "../items/input-item/input-item";
 import { Response } from "puppeteer";
-import OutputItem from "../items/output-item/output-item";
 import gotoWithRetries from "../utils/puppeteer/goto-with-retries";
 import ErrorItem from "../items/output-item/error-item";
-import TestSpiderProperties from "../interfaces/test-spider-properties";
-import Argv from "../interfaces/argv";
+import ExampleSpiderProperties from "../interfaces/example-spider-properties";
+import ProcessArguments from "../interfaces/argv";
+import ExampleInputItem from "../items/input-item/example-input-item";
+import ExampleOutputItem from "../items/output-item/example-output-item";
 
 
-export default class TestSpider extends Spider {
-    public static spiderName: string = 'test_spider';
-    public taskQueueName = this.settings.TEST_SPIDER_TASK_QUEUE;
+export default class ExampleSpider extends Spider {
+    public static spiderName: string = 'example_spider';
+    public taskQueueName = this.settings.EXAMPLE_SPIDER_TASK_QUEUE;
 
-    getCustomSettingsProperties(): TestSpiderProperties {
+    getCustomSettingsProperties(): ExampleSpiderProperties {
         return {
             pipelines: [
                 RmqPipeline,
@@ -21,14 +22,11 @@ export default class TestSpider extends Spider {
         };
     }
 
-    convertArgsToInputMessage(argv: Argv): InputItem {
-        return {
-            id: argv.id,
-            url: argv.url,
-        };
+    convertArgsToInputMessage(args: ProcessArguments | ExampleInputItem): ExampleInputItem {
+        return new ExampleInputItem(args.url);
     }
 
-    async* process(inputMessage: InputItem): AsyncIterableIterator<OutputItem> {
+    async* process(inputMessage: InputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
         let error = null;
         let response: Response | null = null;
         //@ts-ignore

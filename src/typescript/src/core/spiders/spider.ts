@@ -5,6 +5,7 @@ import OutputItem from "../../items/output-item/output-item";
 import Settings from "../../settings";
 import PuppeteerBrowserMaker from "../puppeteer-browser-maker";
 import SettingsProperties from "../../interfaces/settings-properties";
+import ProcessArguments from "../../interfaces/argv";
 
 
 export default abstract class Spider {
@@ -12,11 +13,11 @@ export default abstract class Spider {
 
     public settings: Settings;
     public logger = Logger.createLogger(this.constructor.name, levels.DEBUG);
+    public taskQueueName: string | null = null;
     protected blockedRequestList: Array<(request: Request) => boolean> = [];
     protected allowedRequestList: Array<(request: Request) => boolean> = [];
     protected browser: Browser | null = null;
     protected page: Page | null = null;
-    public taskQueueName: string | null = null;
 
     constructor() {
         this.settings = Settings.getInstance(this.getCustomSettingsProperties());
@@ -24,18 +25,18 @@ export default abstract class Spider {
 
     abstract getCustomSettingsProperties(): SettingsProperties;
 
-    abstract convertArgsToInputMessage(argv: unknown): InputItem;
+    abstract convertArgsToInputMessage(args: ProcessArguments | object): InputItem;
 
     //@ts-ignore
     abstract async* process(inputMessage: InputItem): AsyncIterableIterator<OutputItem>;
 
-    public async* run(args: unknown): AsyncIterableIterator<OutputItem> {
+    public async* run(args: ProcessArguments): AsyncIterableIterator<OutputItem> {
         for await (const item of this.process(this.convertArgsToInputMessage(args))) {
             yield item;
         }
     };
 
-    public async* consume(args: unknown): AsyncIterableIterator<OutputItem> {
+    public async* consume(args: object): AsyncIterableIterator<OutputItem> {
         for await (const item of this.process(this.convertArgsToInputMessage(args))) {
             yield item;
         }

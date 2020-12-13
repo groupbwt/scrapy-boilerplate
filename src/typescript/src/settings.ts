@@ -2,12 +2,12 @@ import dotenv from 'dotenv';
 import strToBool from "./utils/strtobool";
 import { millisecond } from "./types";
 import { LaunchOptions } from "puppeteer";
-import TestSpiderProperties from "./interfaces/test-spider-properties";
+import ExampleSpiderProperties from "./interfaces/example-spider-properties";
 import SettingsProperties from "./interfaces/settings-properties";
 import { ProxySettings } from "./interfaces/proxy-settings";
 import { RabbitSettings } from "./interfaces/rabbit-settings";
 
-export default class Settings implements SettingsProperties, TestSpiderProperties {
+export default class Settings implements SettingsProperties, ExampleSpiderProperties {
     protected static instance: Settings;
 
     public readonly proxyEnabled: boolean;
@@ -24,8 +24,8 @@ export default class Settings implements SettingsProperties, TestSpiderPropertie
 
     public readonly pipelines: any[] = [];
 
-    public readonly TEST_SPIDER_TASK_QUEUE: string;
-    public readonly TEST_SPIDER_ERROR_QUEUE: string;
+    public readonly EXAMPLE_SPIDER_TASK_QUEUE: string;
+    public readonly EXAMPLE_SPIDER_ERROR_QUEUE: string;
 
     public static getInstance(settingsProperties: SettingsProperties = {}): Settings {
         if (!this.instance) {
@@ -68,8 +68,8 @@ export default class Settings implements SettingsProperties, TestSpiderPropertie
         this.captchaSolverEnabled = strToBool(process.env.CAPTCHA_SOLVER_ENABLED);
         this.captchaSolverApiKey = process.env.CAPTCHA_SOLVER_API_KEY;
 
-        this.TEST_SPIDER_TASK_QUEUE = process.env.TEST_SPIDER_TASK_QUEUE ? process.env.TEST_SPIDER_TASK_QUEUE : 'test_spider_task_queue';
-        this.TEST_SPIDER_ERROR_QUEUE = process.env.TEST_SPIDER_ERROR_QUEUE ? process.env.TEST_SPIDER_ERROR_QUEUE : 'test_spider_error_queue';
+        this.EXAMPLE_SPIDER_TASK_QUEUE = process.env.EXAMPLE_SPIDER_TASK_QUEUE ? process.env.EXAMPLE_SPIDER_TASK_QUEUE : 'example_spider_task_queue';
+        this.EXAMPLE_SPIDER_ERROR_QUEUE = process.env.EXAMPLE_SPIDER_ERROR_QUEUE ? process.env.EXAMPLE_SPIDER_ERROR_QUEUE : 'example_spider_error_queue';
     }
 
     private static loadDotEnv() {

@@ -1,11 +1,11 @@
 import Spider from "../core/spiders/spider";
 import RmqPipeline from "../pipelines/rmq-pipeline";
-import InputItem from "../items/input-item/input-item";
 import { Response } from "puppeteer";
 import gotoWithRetries from "../utils/puppeteer/goto-with-retries";
-import ErrorItem from "../items/output-item/error-item";
-import ExampleSpiderProperties from "../interfaces/example-spider-properties";
 import ProcessArguments from "../interfaces/argv";
+
+import ExampleSpiderProperties from "../interfaces/example-spider-properties";
+import ErrorItem from "../items/output-item/error-item";
 import ExampleInputItem from "../items/input-item/example-input-item";
 import ExampleOutputItem from "../items/output-item/example-output-item";
 
@@ -26,7 +26,7 @@ export default class ExampleSpider extends Spider {
         return new ExampleInputItem(args.url);
     }
 
-    async* process(inputMessage: InputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
+    async* process(inputMessage: ExampleInputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
         let error = null;
         let response: Response | null = null;
         //@ts-ignore

@@ -1,6 +1,6 @@
 import yargs from 'yargs';
 import Crawler from "./core/crawler";
-import Argv from "./core/interfaces/argv";
+import Argv from "./interfaces/argv";
 
 yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
     yargs.positional('name', {

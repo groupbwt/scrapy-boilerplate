@@ -1,10 +1,10 @@
 import { Connection, Channel } from 'amqplib-as-promised';
-import { RabbitSettings } from "../core/interfaces/rabbit-settings";
 import { Message, Options } from 'amqplib';
 import { Logger as LoggerInterface } from "winston";
 import { levels, Logger } from "../utils/logger";
 import { v4 as uuid4 } from 'uuid';
-import { RmqChannelWrapper } from "../core/interfaces/rmq-channel-wrapper";
+import { RmqChannelWrapper } from "../interfaces/rmq-channel-wrapper";
+import { RabbitSettings } from "../interfaces/rabbit-settings";
 
 
 export class RabbitConnector {
@@ -85,7 +85,7 @@ export class RabbitConnector {
                 this.logger.debug(`closed channel for ${channelObject.queueName} queue`);
             }
 
-            if (RabbitConnector.channels.length === 0 && forceClose) {
+            if (RabbitConnector.channels.length === 0 || forceClose) {
                 await RabbitConnector.connection.close();
                 this.logger.debug(`closed connection on ${this.host}`);
                 RabbitConnector.connection = null;

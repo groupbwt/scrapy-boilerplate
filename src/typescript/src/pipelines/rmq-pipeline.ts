@@ -1,6 +1,6 @@
 import BasePipeline from "./base-pipeline";
 import { RabbitConnector } from "../rmq/rabbit-connector";
-import OutputItem from "../items/output-item/item";
+import OutputItem from "../items/output-item/output-item";
 
 export default class RmqPipeline extends BasePipeline {
     private connector: RabbitConnector | undefined;

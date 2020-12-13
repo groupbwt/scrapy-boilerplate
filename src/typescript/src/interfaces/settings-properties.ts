@@ -1,7 +1,7 @@
-import { millisecond } from "../../types";
 import { LaunchOptions } from "puppeteer";
 import { ProxySettings } from "./proxy-settings";
 import { RabbitSettings } from "./rabbit-settings";
+import { millisecond } from "../types";
 
 export default interface SettingsProperties {
     proxyEnabled?: boolean;

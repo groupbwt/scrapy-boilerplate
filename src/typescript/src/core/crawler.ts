@@ -2,11 +2,11 @@ import spiders from "../spiders";
 import { Logger as LoggerInterface } from "winston";
 import { levels, Logger } from "../utils/logger";
 import BasePipeline from "../pipelines/base-pipeline";
-import Argv from "./interfaces/argv";
 import { RabbitConnector } from "../rmq/rabbit-connector";
 import { Channel, Message } from "amqplib-as-promised/lib";
 import Settings from "../settings";
 import Spider from "./spiders/spider";
+import Argv from "../interfaces/argv";
 
 
 export default class Crawler {
@@ -43,11 +43,6 @@ export default class Crawler {
                 const connector = new RabbitConnector(settings.rabbit);
                 this.logger.debug(`start consuming from "${spider.taskQueueName}" queue`);
                 await connector.consume(spider.taskQueueName, async (channel: Channel, msg: Message): Promise<any> => {
-                    const defaultOptions = {
-                        persistent: true,
-                        contentType: 'application/json',
-                    };
-
                     try {
                         const messageJson = JSON.parse(msg.content.toString());
                         for await (const item of spider.consume(messageJson)) {
@@ -56,10 +51,12 @@ export default class Crawler {
                             }
                         }
                         if (msg.properties.replyTo) {
-                            await connector.publish(msg.properties.replyTo, msg.content.toString());
-                            this.logger.debug(`received message reply to ${msg.properties.replyTo} queue`);
-                            // await channel.assertQueue(msg.properties.replyTo);
-                            // await channel.sendToQueue(msg.properties.replyTo, messageJson);
+                            await connector.publish(
+                                msg.properties.replyTo,
+                                msg.content.toString(),
+                                { deliveryMode: 2, persistent: true, contentType: 'application/json' }
+                            );
+                            this.logger.debug(`task message reply to ${msg.properties.replyTo} queue`);
                         }
                         channel.ack(msg);
                         this.logger.debug(`ACK message with delivery tag ${msg.fields.deliveryTag}`);
@@ -80,6 +77,7 @@ export default class Crawler {
             }
         } finally {
             await spider.spiderClosed();
+            await (new RabbitConnector(settings.rabbit)).close(true);
         }
     }
 

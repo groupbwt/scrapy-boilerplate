@@ -1,12 +1,12 @@
 import Spider from "../core/spiders/spider";
 import RmqPipeline from "../pipelines/rmq-pipeline";
-import Argv from "../core/interfaces/argv";
 import InputItem from "../items/input-item/input-item";
 import { Response } from "puppeteer";
-import OutputItem from "../items/output-item/item";
+import OutputItem from "../items/output-item/output-item";
 import gotoWithRetries from "../utils/puppeteer/goto-with-retries";
 import ErrorItem from "../items/output-item/error-item";
-import TestSpiderProperties from "../core/interfaces/test-spider-properties";
+import TestSpiderProperties from "../interfaces/test-spider-properties";
+import Argv from "../interfaces/argv";
 
 
 export default class TestSpider extends Spider {

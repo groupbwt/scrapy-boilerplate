@@ -1,7 +1,7 @@
 import { levels, Logger } from "../utils/logger";
-import OutputItem from "../items/output-item/item";
+import OutputItem from "../items/output-item/output-item";
 import Settings from "../settings";
-import Argv from "../core/interfaces/argv";
+import Argv from "../interfaces/argv";
 
 export default abstract class BasePipeline {
     public logger = Logger.createLogger(this.constructor.name, levels.DEBUG);

@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 import strToBool from "./utils/strtobool";
-import SettingsProperties from "./core/interfaces/settings-properties";
 import { millisecond } from "./types";
 import { LaunchOptions } from "puppeteer";
-import { ProxySettings } from "./core/interfaces/proxy-settings";
-import { RabbitSettings } from "./core/interfaces/rabbit-settings";
-import TestSpiderProperties from "./core/interfaces/test-spider-properties";
+import TestSpiderProperties from "./interfaces/test-spider-properties";
+import SettingsProperties from "./interfaces/settings-properties";
+import { ProxySettings } from "./interfaces/proxy-settings";
+import { RabbitSettings } from "./interfaces/rabbit-settings";
 
 export default class Settings implements SettingsProperties, TestSpiderProperties {
     protected static instance: Settings;

@@ -1,10 +1,10 @@
 import { Browser, Page, Request } from "puppeteer";
 import { levels, Logger } from "../../utils/logger";
 import InputItem from "../../items/input-item/input-item";
-import OutputItem from "../../items/output-item/item";
+import OutputItem from "../../items/output-item/output-item";
 import Settings from "../../settings";
-import SettingsProperties from "../interfaces/settings-properties";
 import PuppeteerBrowserMaker from "../puppeteer-browser-maker";
+import SettingsProperties from "../../interfaces/settings-properties";
 
 
 export default abstract class Spider {

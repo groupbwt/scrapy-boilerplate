@@ -1,4 +1,4 @@
-import OutputItem from "./item";
+import OutputItem from "./output-item";
 import InputItem from "../input-item/input-item";
 
 export default class ErrorItem implements OutputItem {

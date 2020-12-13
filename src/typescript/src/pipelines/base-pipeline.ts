@@ -1,0 +1,21 @@
+import { levels, Logger } from "../utils/logger";
+import OutputItem from "../items/output-item/item";
+import Settings from "../settings";
+import Argv from "../core/interfaces/argv";
+
+export default abstract class BasePipeline {
+    public logger = Logger.createLogger(this.constructor.name, levels.DEBUG);
+
+    public constructor(
+        protected argv: Argv,
+        protected settings: Settings,
+    ) {
+        //
+    }
+
+    abstract init(): Promise<void>;
+
+    abstract process(item: OutputItem): Promise<OutputItem | null>;
+
+    abstract close(): Promise<void>;
+}

@@ -1,0 +1,46 @@
+{
+  "name": "scrapy_boilerplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf build/*",
+    "build": "tsc",
+    "build-watch": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib-as-promised": "^4.0.0",
+    "apify": "^0.20.2",
+    "clone-deep": "^4.0.1",
+    "dotenv": "^8.2.0",
+    "emailjs-imap-client": "git+https://github.com/vulreid/emailjs-imap-client.git",
+    "emailjs-tcp-socket": "git+https://github.com/vulreid/emailjs-tcp-socket.git",
+    "lodash": "^4.17.19",
+    "pm2": "^4.4.1",
+    "puppeteer": "^5.3.1",
+    "puppeteer-extra": "^3.1.15",
+    "puppeteer-extra-plugin-adblocker": "^2.11.3",
+    "puppeteer-extra-plugin-proxy": "^1.0.2",
+    "puppeteer-extra-plugin-recaptcha": "^3.1.10",
+    "puppeteer-extra-plugin-stealth": "^2.6.2",
+    "request-promise-native": "^1.0.9",
+    "socks": "^2.4.2",
+    "typescript": "^4.0.3",
+    "uuid": "^8.3.2",
+    "winston": "^3.3.3",
+    "yapople": "^0.4.0",
+    "yargs": "^16.1.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.3.0",
+    "@sentry/node": "^5.19.0",
+    "@types/amqplib": "^0.5.16",
+    "@types/request-promise-native": "^1.0.17",
+    "@types/yargs": "^15.0.8",
+    "puppeteer-extra-plugin-repl": "^2.2.7",
+    "standard": "^16.0.3"
+  }
+}

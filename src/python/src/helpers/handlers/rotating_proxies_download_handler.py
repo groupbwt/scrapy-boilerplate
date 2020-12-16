@@ -1,11 +1,29 @@
+import logging
+
+from scrapy import Spider, Request
 from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
-from scrapy.utils import reactor
-from twisted.web.client import HTTPConnectionPool
+
+
+# custom_settings = {
+#     "DOWNLOAD_HANDLERS": {
+#         'http': 'website_monitoring.handlers.RotatingProxiesDownloadHandler',
+#         'https': 'website_monitoring.handlers.RotatingProxiesDownloadHandler'
+#     },
+#     'ROTATING_PROXIES_DOWNLOADER_HANDLER_AUTO_CLOSE_CACHED_CONNECTIONS_ENABLED': False,
+# }
 
 
 class RotatingProxiesDownloadHandler(HTTPDownloadHandler):
-    def __init__(self, settings, crawler=None):
-        super(RotatingProxiesDownloadHandler, self).__init__(settings, crawler)
-        self._pool = HTTPConnectionPool(reactor, persistent=False)
-        self._pool.maxPersistentPerHost = settings.getint("CONCURRENT_REQUESTS_PER_DOMAIN")
-        self._pool._factory.noisy = False
+    logger = logging.getLogger(name=__name__)
+
+    def download_request(self, request: Request, spider: Spider):
+        """Return a deferred for the HTTP download"""
+        if (
+            spider.settings.get('ROTATING_PROXIES_DOWNLOADER_HANDLER_AUTO_CLOSE_CACHED_CONNECTIONS_ENABLED') or
+            request.meta.get('close_cached_connections')
+        ):
+            if request.meta.get('close_cached_connections'):
+                self.logger.debug('close cached connections')
+            self._pool.closeCachedConnections()
+
+        return super().download_request(request, spider)

@@ -19,8 +19,7 @@ PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
 USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/73.0.3683.103 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 )
 
 CONCURRENT_REQUESTS = int(os.getenv("CONCURRENT_REQUESTS", "16"))
@@ -39,6 +38,8 @@ DEFAULT_REQUEST_HEADERS = {
     "Accept-Language": "en-US,en;q=0.5",
     "Cache-Control": "max-age=0",
 }
+
+ROTATING_PROXIES_DOWNLOADER_HANDLER_AUTO_CLOSE_CACHED_CONNECTIONS_ENABLED: bool = True
 
 DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": None,

@@ -29,7 +29,6 @@ export default class ExampleSpider extends Spider {
     async* process(inputMessage: ExampleInputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
         let error = null;
         let response: Response | null = null;
-        //@ts-ignore
         let url = inputMessage.url;
 
         for (let attempt = 0; attempt < 5; attempt++) {

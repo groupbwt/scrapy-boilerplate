@@ -30,45 +30,9 @@ export default class Crawler {
         try {
             await spider.spiderOpened();
             if (argv.type === 'parser') {
-                for await (const item of spider.run(argv)) {
-                    for (const pipeline of pipelines) {
-                        await pipeline.process(item);
-                    }
-                }
+                await this.processParser(argv, spider, settings, pipelines);
             } else if (argv.type === 'worker') {
-                if (!spider.taskQueueName) {
-                    throw new Error("No task queue name in spider");
-                }
-
-                const connector = new RabbitConnector(settings.rabbit);
-                this.logger.debug(`start consuming from "${spider.taskQueueName}" queue`);
-                await connector.consume(spider.taskQueueName, async (channel: Channel, msg: Message): Promise<any> => {
-                    try {
-                        const messageJson = JSON.parse(msg.content.toString());
-                        for await (const item of spider.consume(messageJson)) {
-                            for (const pipeline of pipelines) {
-                                await pipeline.process(item);
-                            }
-                        }
-                        if (msg.properties.replyTo) {
-                            await connector.publish(
-                                msg.properties.replyTo,
-                                msg.content.toString(),
-                                { deliveryMode: 2, persistent: true, contentType: 'application/json' }
-                            );
-                            this.logger.debug(`task message reply to ${msg.properties.replyTo} queue`);
-                        }
-                        channel.ack(msg);
-                        this.logger.debug(`ACK message with delivery tag ${msg.fields.deliveryTag}`);
-                    } catch (e) {
-                        this.logger.error(e);
-                        channel.ack(msg);
-                        this.logger.debug(`${"*".repeat(35)} ACK message (ERROR) with delivery tag ${msg.fields.deliveryTag} ${"*".repeat(35)}`);
-                        const messageJson = JSON.parse(msg.content.toString());
-                        this.logger.debug(`${messageJson}`);
-                        this.logger.debug(`${"*".repeat(70)}`);
-                    }
-                });
+                await this.processWorker(argv, spider, settings, pipelines);
             } else {
                 throw Error('Missing required field argv.type');
             }
@@ -90,5 +54,61 @@ export default class Crawler {
             Crawler.logger.error(message);
             throw Error(message);
         }
+    }
+
+    private static async processParser(
+        argv: Argv,
+        spider: Spider,
+        settings: Settings,
+        pipelines: BasePipeline[]
+    ): Promise<void> {
+        for await (const item of spider.run(argv)) {
+            for (const pipeline of pipelines) {
+                await pipeline.process(item);
+            }
+        }
+    }
+
+    private static async processWorker(
+        argv: Argv,
+        spider: Spider,
+        settings: Settings,
+        pipelines: BasePipeline[]
+    ): Promise<void> {
+        if (!spider.taskQueueName) {
+            throw new Error("Spider.taskQueueName is empty");
+        }
+
+        const connector = new RabbitConnector(settings.rabbit);
+        this.logger.debug(`start consuming from "${spider.taskQueueName}" queue`);
+        await connector.consume(spider.taskQueueName, async (channel: Channel, msg: Message): Promise<any> => {
+            try {
+                const messageJson = JSON.parse(msg.content.toString());
+                for await (const item of spider.consume(messageJson)) {
+                    for (const pipeline of pipelines) {
+                        await pipeline.process(item);
+                    }
+                }
+
+                if (msg.properties.replyTo) {
+                    await connector.publish(
+                        msg.properties.replyTo,
+                        msg.content.toString(),
+                        { deliveryMode: 2, persistent: true, contentType: 'application/json' }
+                    );
+                    this.logger.debug(`task message reply to ${msg.properties.replyTo} queue`);
+                }
+
+                channel.ack(msg);
+                this.logger.debug(`ACK message with delivery tag ${msg.fields.deliveryTag}`);
+            } catch (e) {
+                this.logger.error(e);
+                channel.ack(msg);
+                this.logger.debug(`${"*".repeat(35)} ACK message (ERROR) with delivery tag ${msg.fields.deliveryTag} ${"*".repeat(35)}`);
+                const messageJson = JSON.parse(msg.content.toString());
+                this.logger.debug(`${messageJson}`);
+                this.logger.debug(`${"*".repeat(70)}`);
+            }
+        });
     }
 }

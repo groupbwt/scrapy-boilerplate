@@ -93,5 +93,5 @@ if IS_SENTRY_ENABLED:
     EXTENSIONS["scrapy_sentry_sdk.extensions.SentryLogging"] = 1
 
 configure_logging()
-if datetime(*[int(number) for number in USER_AGENT_RELEASE_DATE.split('-')]) + timedelta(days=1) < datetime.now():
+if datetime(*[int(number) for number in USER_AGENT_RELEASE_DATE.split('-')]) + timedelta(days=180) < datetime.now():
     logging.warning('USER_AGENT is outdated')

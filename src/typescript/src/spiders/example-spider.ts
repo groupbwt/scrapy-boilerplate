@@ -11,7 +11,7 @@ import ExampleOutputItem from "../items/output-item/example-output-item";
 
 
 export default class ExampleSpider extends Spider {
-    public static spiderName: string = 'example_spider';
+    public static spiderName: string = 'example';
     public taskQueueName = this.settings.EXAMPLE_SPIDER_TASK_QUEUE;
 
     getCustomSettingsProperties(): ExampleSpiderProperties {

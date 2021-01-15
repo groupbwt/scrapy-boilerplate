@@ -2,6 +2,7 @@ import { addExtra, PuppeteerExtra, PuppeteerExtraPlugin } from 'puppeteer-extra'
 import vanillaPuppeteer, { Browser, Page } from "puppeteer";
 import { levels, Logger as LoggerMaker } from "../utils/logger";
 import Settings from '../settings';
+import { Logger as LoggerInterface } from "winston";
 
 
 // TODO: add .d.ts file or ignore this syntax
@@ -10,9 +11,13 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const RecaptchaPlugin = require('puppeteer-extra-plugin-recaptcha');
 
 export default class PuppeteerBrowserMaker {
-    private static logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name, levels.DEBUG);
+    private static logger: LoggerInterface;
 
     public static async getContext(): Promise<{ browser: Browser, page: Page }> {
+        if (!this.logger) {
+            this.logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name, levels.DEBUG);
+        }
+
         const settings = Settings.getInstance();
 
         const puppeteerInstance: PuppeteerExtra = addExtra(vanillaPuppeteer);

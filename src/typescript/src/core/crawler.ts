@@ -10,9 +10,11 @@ import Argv from "../interfaces/argv";
 
 
 export default class Crawler {
-    protected static logger: LoggerInterface = Logger.createLogger(Crawler.constructor.name, levels.DEBUG);
+    protected static logger: LoggerInterface;
 
     public static async run(argv: Argv) {
+        this.logger = Logger.createLogger(Crawler.constructor.name, levels.DEBUG);
+
         const spiderClass = Crawler.getSpider(argv);
         //@ts-ignore TODO
         const spider: Spider = new spiderClass(argv);

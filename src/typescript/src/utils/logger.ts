@@ -13,28 +13,34 @@ export enum levels {
 }
 
 export class Logger {
+    private static logger: LoggerInterface;
+
     public static createLogger(name: string, level: levels): LoggerInterface {
         const stringLevel = levels[level].toLowerCase();
 
         const transportAttributes: FileTransportOptions = {
-            filename: 'log.log',
+            filename: process.env.LOG_FILE,
             level: stringLevel,
             format: winston.format.combine(
                 winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
                 this.getScrapyLogFormat()
-            )
+            ),
+            handleExceptions: true, // TODO: NOT WORKING
         };
 
         const transport = !!process.env.LOG_FILE && process.env.LOG_FILE.length
             ? new winston.transports.File(transportAttributes)
             : new winston.transports.Console(transportAttributes);
 
-        const logger = winston.createLogger({
-            level: stringLevel,
-            transports: [transport],
-        });
+        if (!this.logger) {
+            this.logger = winston.createLogger({
+                level: stringLevel,
+                transports: [transport],
+                handleExceptions: true, // TODO: NOT WORKING
+            });
+        }
 
-        return logger.child({
+        return this.logger.child({
             label: name
         });
     }

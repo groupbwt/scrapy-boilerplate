@@ -1,6 +1,6 @@
 import winston from "winston";
-import { Logger as LoggerInterface, format, level } from "winston";
-import { ConsoleTransportOptions, FileTransportOptions } from "winston/lib/winston/transports";
+import { Logger as LoggerInterface, format } from "winston";
+import { FileTransportOptions } from "winston/lib/winston/transports";
 
 export enum levels {
     ERROR = 0,
@@ -21,7 +21,7 @@ export class Logger {
             level: stringLevel,
             format: winston.format.combine(
                 winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-                this.scrapyLogFormat()
+                this.getScrapyLogFormat()
             )
         };
 
@@ -39,14 +39,7 @@ export class Logger {
         });
     }
 
-    private static getFormat() {
-        return winston.format.printf(({ level, message, label, timestamp }) => {
-            message = typeof message === "object" ? JSON.stringify(message, null, 4) : message;
-            return `${timestamp} ${label ? `[${label}]` : ""} ${level.toUpperCase()}: ${message}`;
-        });
-    }
-
-    private static scrapyLogFormat() {
+    private static getScrapyLogFormat() {
         return format.printf(({ level, message, label, timestamp }) => {
             return `${timestamp} [${label}] ${level.trim().toUpperCase()}: ${message}`;
         });

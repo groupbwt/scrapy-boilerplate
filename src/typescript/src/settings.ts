@@ -37,16 +37,16 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
     }
 
     protected constructor() {
-        Settings.loadDotEnv();
+        this.proxyEnabled = strToBool(process.env.PROXY_ENABLED);
 
-        this.proxyEnabled = strToBool(process.env.PUPPETEER_PROXY_ENABLED);
-
-        if (this.proxyEnabled) {
+        if (strToBool(process.env.PUPPETEER_PROXY_ENABLED)) {
             const [host, port] = process.env.PUPPETEER_PROXY ? process.env.PUPPETEER_PROXY.split(':') : ['', ''];
-            const [username, password] = process.env.PUPPETEER_PROXY_AUTH ? process.env.PUPPETEER_PROXY_AUTH.split(':') : ['', ''];
-            this.proxy = {host, port, username, password};
+            const [username, password] = process.env.PROXY_AUTH ? process.env.PROXY_AUTH.split(':') : ['', ''];
+            this.proxy = { host, port, username, password };
         } else {
-            this.proxy = {host: '', port: '', username: '', password: ''};
+            const [host, port] = process.env.PROXY ? process.env.PROXY.split(':') : ['', ''];
+            const [username, password] = process.env.PUPPETEER_PROXY_AUTH ? process.env.PUPPETEER_PROXY_AUTH.split(':') : ['', ''];
+            this.proxy = { host, port, username, password };
         }
 
         this.rabbit = {
@@ -68,28 +68,5 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
 
         this.EXAMPLE_SPIDER_TASK_QUEUE = process.env.EXAMPLE_SPIDER_TASK_QUEUE ? process.env.EXAMPLE_SPIDER_TASK_QUEUE : 'example_spider_task_queue';
         this.EXAMPLE_SPIDER_ERROR_QUEUE = process.env.EXAMPLE_SPIDER_ERROR_QUEUE ? process.env.EXAMPLE_SPIDER_ERROR_QUEUE : 'example_spider_error_queue';
-    }
-
-    private static loadDotEnv() {
-        let searchValue;
-        let replaceValue;
-
-        if (process.cwd().includes('/var/app')) {
-            searchValue = /(.*)\/build/gi;
-            replaceValue = '$1\\.env';
-        } else if (process.platform === "win32") {
-            searchValue = /(.*)\\src\\typescript.*/gi;
-            replaceValue = '$1\\.env';
-        } else {
-            searchValue = /(.*)\/src\/typescript.*/gi;
-            replaceValue = '$1\/.env';
-        }
-
-        const pathToEnvFile = process.cwd().replace(searchValue, replaceValue);
-        const result = dotenv.config({ path: pathToEnvFile });
-
-        if (result.error) {
-            throw result.error;
-        }
     }
 }

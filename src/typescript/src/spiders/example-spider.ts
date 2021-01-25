@@ -11,7 +11,7 @@ import ExampleOutputItem from "../items/output-item/example-output-item";
 
 
 export default class ExampleSpider extends Spider {
-    public static spiderName: string = 'example_spider';
+    public static spiderName: string = 'example';
     public taskQueueName = this.settings.EXAMPLE_SPIDER_TASK_QUEUE;
 
     getCustomSettingsProperties(): ExampleSpiderProperties {
@@ -29,7 +29,6 @@ export default class ExampleSpider extends Spider {
     async* process(inputMessage: ExampleInputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
         let error = null;
         let response: Response | null = null;
-        //@ts-ignore
         let url = inputMessage.url;
 
         for (let attempt = 0; attempt < 5; attempt++) {

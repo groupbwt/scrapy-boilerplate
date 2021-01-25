@@ -1,6 +1,5 @@
 //@ts-ignore
 import { Client } from 'yapople';
-
 import { levels, Logger } from './logger';
 import { Logger as LoggerInterface } from "winston";
 import sleep from "./sleep";
@@ -110,9 +109,9 @@ export default class POP3Client {
 
                         client.quit();
                         return resolve(emailCode);
-                    })
+                    });
                 });
             });
-        })
+        });
     };
 }

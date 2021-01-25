@@ -195,7 +195,7 @@ class Producer(ScrapyCommand):
             0 <= current_count < 5000: 0,
             5000 <= current_count < 15000: 15,
             15000 <= current_count < 30000: 300,
-            300000 <= current_count < 100000: 3600,
+            30000 <= current_count < 100000: 3600,
             100000 <= current_count: 43200,
         }[True]
 

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+from datetime import datetime, timedelta
 from distutils.util import strtobool
 from typing import Dict
 
+from scrapy.utils.log import configure_logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,9 +20,9 @@ PROXY = os.getenv("PROXY", "")
 PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
+USER_AGENT_RELEASE_DATE = '2020-11-17'
 USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/73.0.3683.103 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 )
 
 CONCURRENT_REQUESTS = int(os.getenv("CONCURRENT_REQUESTS", "16"))
@@ -39,6 +41,8 @@ DEFAULT_REQUEST_HEADERS = {
     "Accept-Language": "en-US,en;q=0.5",
     "Cache-Control": "max-age=0",
 }
+
+ROTATING_PROXIES_DOWNLOADER_HANDLER_AUTO_CLOSE_CACHED_CONNECTIONS_ENABLED: bool = True
 
 DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": None,
@@ -87,3 +91,7 @@ if IS_SENTRY_ENABLED:
     }
     # Load SentryLogging extension before others
     EXTENSIONS["scrapy_sentry_sdk.extensions.SentryLogging"] = 1
+
+configure_logging()
+if datetime(*[int(number) for number in USER_AGENT_RELEASE_DATE.split('-')]) + timedelta(days=180) < datetime.now():
+    logging.warning('USER_AGENT is outdated')

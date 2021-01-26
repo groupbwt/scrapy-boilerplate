@@ -37,16 +37,14 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
     }
 
     protected constructor() {
-        this.proxyEnabled = strToBool(process.env.PROXY_ENABLED);
+        this.proxyEnabled = strToBool(process.env.PUPPETEER_PROXY_ENABLED);
 
-        if (strToBool(process.env.PUPPETEER_PROXY_ENABLED)) {
+        if (this.proxyEnabled) {
             const [host, port] = process.env.PUPPETEER_PROXY ? process.env.PUPPETEER_PROXY.split(':') : ['', ''];
-            const [username, password] = process.env.PROXY_AUTH ? process.env.PROXY_AUTH.split(':') : ['', ''];
-            this.proxy = { host, port, username, password };
-        } else {
-            const [host, port] = process.env.PROXY ? process.env.PROXY.split(':') : ['', ''];
             const [username, password] = process.env.PUPPETEER_PROXY_AUTH ? process.env.PUPPETEER_PROXY_AUTH.split(':') : ['', ''];
             this.proxy = { host, port, username, password };
+        } else {
+            this.proxy = { host: '', port: '', username: '', password: '' };
         }
 
         this.rabbit = {

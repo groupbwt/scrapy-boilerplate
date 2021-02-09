@@ -1,0 +1,74 @@
+version: '3'
+networks:
+  general:
+    driver: bridge
+volumes:
+  mysql:
+    driver: local
+services:
+  python:
+    build:
+      context: ./docker/python
+      args:
+        - 'PYTHON_VERSION=${PYTHON_VERSION}'
+    volumes:
+      - './src/python:/var/app/python'
+      - './data:/var/app/python/src/data'
+      - '.env:/var/app/python/src/.env'
+      - '/var/app/python/src/.venv/'
+    extra_hosts:
+      - 'dockerhost:${DOCKER_HOST_IP}'
+    tty: true
+    networks:
+      - general
+  node:
+    build:
+      context: ./docker/node
+      args:
+        - 'NODE_VERSION=${NODE_VERSION}'
+    volumes:
+      - './src/javascript:/var/app/javascript'
+      - '.env:/var/app/javascript/src/.env'
+      - '/var/app/javascript/src/node_modules/'
+    extra_hosts:
+      - 'dockerhost:${DOCKER_HOST_IP}'
+    tty: true
+    networks:
+      - general
+  mysql:
+    build:
+      context: ./docker/mysql
+      args:
+        - 'MYSQL_VERSION=${MYSQL_VERSION}'
+    environment:
+      - 'MYSQL_DATABASE=${MYSQL_DATABASE}'
+      - 'MYSQL_USER=${MYSQL_USER}'
+      - 'MYSQL_PASSWORD=${MYSQL_PASSWORD}'
+      - 'MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}'
+      - 'TZ=UTC'
+    hostname: mysql
+    volumes:
+      - '${DATA_PATH_HOST}/mysql:/var/lib/mysql'
+      - '${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d'
+    ports:
+      - '${MYSQL_PORT}:3306'
+    networks:
+      - general
+  rabbitmq:
+    build: ./docker/rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+      - '15671:15671'
+    privileged: true
+    environment:
+      - 'RABBITMQ_DEFAULT_USER=guest'
+      - 'RABBITMQ_DEFAULT_PASS=guest'
+      - 'RABBITMQ_USERNAME=${RABBITMQ_USERNAME}'
+      - 'RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}'
+      - 'RABBITMQ_VIRTUAL_HOST=${RABBITMQ_VIRTUAL_HOST}'
+    hostname: rabbitmq
+    volumes:
+      - '${DATA_PATH_HOST}/rabbitmq:/var/lib/rabbitmq/mnesia'
+    networks:
+      - general

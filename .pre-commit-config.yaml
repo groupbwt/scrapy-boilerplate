@@ -1,6 +1,25 @@
 repos:
--   repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black
     rev: stable
     hooks:
-    - id: black
-      language_version: python3.6
+      - id: black
+        language_version: python3
+  - repo: https://github.com/asottile/seed-isort-config
+    rev: v1.9.1
+    hooks:
+      - id: seed-isort-config
+        args: [--application-directories=./src/python/src]
+  - repo: https://github.com/timothycrosley/isort
+    rev: master
+    hooks:
+      - id: isort
+        language_version: python3
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: master
+    hooks:
+      - id: mypy
+        additional_dependencies: [tokenize-rt]
+  - repo: https://github.com/wemake-services/dotenv-linter
+    rev: master
+    hooks:
+      - id: dotenv-linter

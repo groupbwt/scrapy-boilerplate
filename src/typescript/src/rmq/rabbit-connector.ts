@@ -1,7 +1,7 @@
 import { Connection, Channel } from 'amqplib-as-promised';
 import { Message, Options } from 'amqplib';
 import { Logger as LoggerInterface } from "winston";
-import { levels, Logger } from "../utils/logger";
+import { LoggingLevel, Logger } from "../utils/logger";
 import { v4 as uuid4 } from 'uuid';
 import { RmqChannelWrapper } from "../interfaces/rmq-channel-wrapper";
 import { RabbitSettings } from "../interfaces/rabbit-settings";
@@ -13,7 +13,7 @@ export class RabbitConnector {
     private readonly username: string;
     private readonly password: string;
     private readonly vhost: string;
-    private readonly logger: LoggerInterface = Logger.createLogger(RabbitConnector.constructor.name, levels.DEBUG);
+    private readonly logger: LoggerInterface = Logger.createLogger(RabbitConnector.constructor.name, LoggingLevel.DEBUG);
     private readonly objectId: string;
 
     private static connection: Connection | null = null;

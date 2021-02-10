@@ -1,6 +1,6 @@
 import spiders from "../spiders";
 import { Logger as LoggerInterface } from "winston";
-import { levels, Logger } from "../utils/logger";
+import { LoggingLevel, Logger } from "../utils/logger";
 import BasePipeline from "../pipelines/base-pipeline";
 import { RabbitConnector } from "../rmq/rabbit-connector";
 import { Channel, Message } from "amqplib-as-promised/lib";
@@ -13,7 +13,7 @@ export default class Crawler {
     protected static logger: LoggerInterface;
 
     public static async run(argv: Argv) {
-        this.logger = Logger.createLogger(Crawler.constructor.name, levels.DEBUG);
+        this.logger = Logger.createLogger(Crawler.constructor.name, LoggingLevel.DEBUG);
 
         const spiderClass = Crawler.getSpider(argv);
         //@ts-ignore TODO

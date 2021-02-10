@@ -2,7 +2,7 @@ import winston from "winston";
 import { Logger as LoggerInterface, format } from "winston";
 import { FileTransportOptions } from "winston/lib/winston/transports";
 
-export enum levels {
+export enum LoggingLevel {
     ERROR = 0,
     WARN = 1,
     INFO = 2,
@@ -15,8 +15,23 @@ export enum levels {
 export class Logger {
     private static logger: LoggerInterface;
 
-    public static createLogger(name: string, level: levels): LoggerInterface {
-        const stringLevel = levels[level].toLowerCase();
+    public static createLogger(name: string, level: LoggingLevel | null = null): LoggerInterface {
+        if (level === null) {
+            if (process.env.LOG_FILE) {
+                const textLevel: string = process.env.LOG_FILE.toUpperCase();
+                //@ts-ignore
+                if (LoggingLevel[textLevel] !== undefined) {
+                    //@ts-ignore
+                    level: number = LoggingLevel[textLevel];
+                }
+            }
+        }
+
+        if (level === null) {
+            level = LoggingLevel.DEBUG;
+        }
+
+        const stringLevel = LoggingLevel[level!].toLowerCase();
 
         const transportAttributes: FileTransportOptions = {
             filename: process.env.LOG_FILE,

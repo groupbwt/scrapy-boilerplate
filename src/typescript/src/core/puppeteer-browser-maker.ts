@@ -1,6 +1,6 @@
 import { addExtra, PuppeteerExtra, PuppeteerExtraPlugin } from 'puppeteer-extra';
 import vanillaPuppeteer, { Browser, Page } from "puppeteer";
-import { levels, Logger as LoggerMaker } from "../utils/logger";
+import { LoggingLevel, Logger as LoggerMaker } from "../utils/logger";
 import Settings from '../settings';
 import { Logger as LoggerInterface } from "winston";
 
@@ -15,7 +15,7 @@ export default class PuppeteerBrowserMaker {
 
     public static async getContext(): Promise<{ browser: Browser, page: Page }> {
         if (!this.logger) {
-            this.logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name, levels.DEBUG);
+            this.logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name, LoggingLevel.DEBUG);
         }
 
         const settings = Settings.getInstance();

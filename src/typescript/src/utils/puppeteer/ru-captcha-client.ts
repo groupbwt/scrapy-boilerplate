@@ -1,5 +1,5 @@
 import rp from 'request-promise-native';
-import { levels, Logger } from '../logger';
+import { LoggingLevel, Logger } from '../logger';
 import { Logger as LoggerInterface } from "winston";
 import pauseFor from "../sleep";
 
@@ -26,7 +26,7 @@ export default class RuCaptchaClient {
     constructor(
         private apiKey: string
     ) {
-        this.logger = Logger.createLogger(this.constructor.name, levels.DEBUG);
+        this.logger = Logger.createLogger(this.constructor.name, LoggingLevel.DEBUG);
         // pass
     }
 

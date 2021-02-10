@@ -1,5 +1,5 @@
 import { Browser, Page, Request } from "puppeteer";
-import { levels, Logger } from "../../utils/logger";
+import { LoggingLevel, Logger } from "../../utils/logger";
 import InputItem from "../../items/input-item/input-item";
 import OutputItem from "../../items/output-item/output-item";
 import Settings from "../../settings";
@@ -12,7 +12,7 @@ export default abstract class Spider {
     public static spiderName: string = 'base';
 
     public settings: Settings;
-    public logger = Logger.createLogger(this.constructor.name, levels.DEBUG);
+    public logger = Logger.createLogger(this.constructor.name, LoggingLevel.DEBUG);
     public taskQueueName: string | null = null;
     protected blockedRequestList: Array<(request: Request) => boolean> = [];
     protected allowedRequestList: Array<(request: Request) => boolean> = [];

@@ -2,7 +2,7 @@ import yargs from 'yargs';
 import Crawler from "./core/crawler";
 import Argv from "./interfaces/argv";
 import { loadDotEnv } from "./utils/laod-dot-env";
-import { levels, Logger } from "./utils/logger";
+import { LoggingLevel, Logger } from "./utils/logger";
 
 yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
     yargs.positional('name', {
@@ -35,7 +35,7 @@ yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
 async function main(argv: Argv) {
     loadDotEnv();
     await Crawler.run(argv).catch(async (err: Error) => {
-        const logger = Logger.createLogger(Crawler.constructor.name, levels.DEBUG);
+        const logger = Logger.createLogger(Crawler.constructor.name, LoggingLevel.DEBUG);
         logger.error(err.stack ? err.stack : err);
     });
 }

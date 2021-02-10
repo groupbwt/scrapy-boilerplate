@@ -12,7 +12,7 @@ export default abstract class Spider {
     public static spiderName: string = 'base';
 
     public settings: Settings;
-    public logger = Logger.createLogger(this.constructor.name, LoggingLevel.DEBUG);
+    public logger = Logger.createLogger(this.constructor.name);
     public taskQueueName: string | null = null;
     protected blockedRequestList: Array<(request: Request) => boolean> = [];
     protected allowedRequestList: Array<(request: Request) => boolean> = [];

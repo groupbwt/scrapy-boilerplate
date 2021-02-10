@@ -13,7 +13,7 @@ export default class Crawler {
     protected static logger: LoggerInterface;
 
     public static async run(argv: Argv) {
-        this.logger = Logger.createLogger(Crawler.constructor.name, LoggingLevel.DEBUG);
+        this.logger = Logger.createLogger(Crawler.constructor.name);
 
         const spiderClass = Crawler.getSpider(argv);
         //@ts-ignore TODO

@@ -26,7 +26,7 @@ export default class RuCaptchaClient {
     constructor(
         private apiKey: string
     ) {
-        this.logger = Logger.createLogger(this.constructor.name, LoggingLevel.DEBUG);
+        this.logger = Logger.createLogger(this.constructor.name);
         // pass
     }
 

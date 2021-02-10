@@ -4,7 +4,7 @@ import Settings from "../settings";
 import Argv from "../interfaces/argv";
 
 export default abstract class BasePipeline {
-    public logger = Logger.createLogger(this.constructor.name, LoggingLevel.DEBUG);
+    public logger = Logger.createLogger(this.constructor.name);
 
     public constructor(
         protected argv: Argv,

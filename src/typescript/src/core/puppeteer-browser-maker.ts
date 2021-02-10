@@ -15,7 +15,7 @@ export default class PuppeteerBrowserMaker {
 
     public static async getContext(): Promise<{ browser: Browser, page: Page }> {
         if (!this.logger) {
-            this.logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name, LoggingLevel.DEBUG);
+            this.logger = LoggerMaker.createLogger(PuppeteerBrowserMaker.name);
         }
 
         const settings = Settings.getInstance();

@@ -13,7 +13,7 @@ export class RabbitConnector {
     private readonly username: string;
     private readonly password: string;
     private readonly vhost: string;
-    private readonly logger: LoggerInterface = Logger.createLogger(RabbitConnector.constructor.name, LoggingLevel.DEBUG);
+    private readonly logger: LoggerInterface = Logger.createLogger(RabbitConnector.constructor.name);
     private readonly objectId: string;
 
     private static connection: Connection | null = null;

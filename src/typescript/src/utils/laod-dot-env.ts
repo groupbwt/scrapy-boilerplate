@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 
-export function loadDotEnv() {
+export function loadDotEnv(): string {
     let searchValue;
     let replaceValue;
 
     if (process.cwd().includes('/var/app')) {
         searchValue = /(.*)\/build/gi;
-        replaceValue = '$1\\.env';
+        replaceValue = '$1/.env';
     } else if (process.platform === "win32") {
         searchValue = /(.*)\\src\\typescript.*/gi;
         replaceValue = '$1\\.env';
@@ -25,4 +25,6 @@ export function loadDotEnv() {
     if (!!process.env.LOG_LEVEL && process.env.LOG_LEVEL.toUpperCase() == 'WARNING') {
         process.env.LOG_LEVEL = 'WARN';
     }
+
+    return pathToEnvFile;
 }

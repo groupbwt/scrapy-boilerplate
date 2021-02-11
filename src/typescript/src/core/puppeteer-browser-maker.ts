@@ -39,8 +39,9 @@ export default class PuppeteerBrowserMaker {
         settings.browserOptions.args.push('--disable-features=IsolateOrigins,site-per-process');
 
         if (!(process.platform === "win32")) {
-            settings.browserOptions.args.push('--no-sandbox');
+            this.logger.warn('DISABLE SANDBOX');
             settings.browserOptions.args.push('--disable-setuid-sandbox');
+            settings.browserOptions.args.push('--no-sandbox');
         }
 
         const browser = await puppeteerInstance.launch(settings.browserOptions);

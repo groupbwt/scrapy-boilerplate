@@ -56,7 +56,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
         };
 
         this.browserOptions = {
-            headless: strToBool(process.env.HEADLESS),
+            headless: strToBool(process.env.HEADLESS, true),
             devtools: strToBool(process.env.DEVTOOLS, false),
             args: []
         };

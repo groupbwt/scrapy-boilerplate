@@ -16,22 +16,19 @@ export class Logger {
     private static logger: LoggerInterface;
 
     public static createLogger(name: string, level: LoggingLevel | null = null): LoggerInterface {
+        let levelIndex = LoggingLevel.DEBUG;
         if (level === null) {
-            if (process.env.LOG_FILE) {
-                const textLevel: string = process.env.LOG_FILE.toUpperCase();
+            if (process.env.LOG_LEVEL) {
+                const textLevel: string = process.env.LOG_LEVEL.toUpperCase();
                 //@ts-ignore
                 if (LoggingLevel[textLevel] !== undefined) {
                     //@ts-ignore
-                    level: number = LoggingLevel[textLevel];
+                    levelIndex = LoggingLevel[textLevel];
                 }
             }
         }
 
-        if (level === null) {
-            level = LoggingLevel.DEBUG;
-        }
-
-        const stringLevel = LoggingLevel[level!].toLowerCase();
+        const stringLevel = LoggingLevel[levelIndex].toLowerCase();
 
         const transportAttributes: FileTransportOptions = {
             filename: process.env.LOG_FILE,

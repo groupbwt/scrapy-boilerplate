@@ -40,7 +40,7 @@ export default class ExampleSpider extends Spider {
                     this.logger.debug(`Crawled ${url} (null)`);
                 }
 
-                if (!!response && response.url().includes('google.com')) {
+                if (this.isErrorResponseStatusCode(response)) {
                     throw new Error(`captcha received (attempt ${attempt})`);
                 }
 
@@ -65,5 +65,13 @@ export default class ExampleSpider extends Spider {
                 inputMessage,
             );
         }
+    }
+
+    async isErrorResponseStatusCode(response: Response | null): Promise<boolean> {
+        if (!!response) {
+            const status = response.status();
+            return status >= 400;
+        }
+        return false;
     }
 }

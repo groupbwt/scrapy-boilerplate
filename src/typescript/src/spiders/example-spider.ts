@@ -40,8 +40,9 @@ export default class ExampleSpider extends Spider {
                     this.logger.debug(`Crawled ${url} (null)`);
                 }
 
-                if (this.isErrorResponseStatusCode(response)) {
-                    throw new Error(`captcha received (attempt ${attempt})`);
+                if (await this.isErrorResponseStatusCode(response)) {
+                    const status = response ? response.status() : 'unknown';
+                    throw new Error(`received response with status code "${status}"`);
                 }
 
                 // extractData

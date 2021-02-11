@@ -20,17 +20,17 @@ ln -s "$1/.env" .env
 # python required (comment if redundant)
 ln -s "$1/.env" src/python/src/.env
 ln -s "$1/logs" src/python/src
-# javascript required (comment if redundant)
-ln -s "$1/.env" src/javascript/src/.env
-ln -s "$1/logs" src/javascript/src
+# typescript required (comment if redundant)
+ln -s "$1/.env" src/typescript/src/.env
+ln -s "$1/logs" src/typescript/src
 
 # install dependencies
 # python
 cd "$release_dir/src/python/src"
 python3.8 -m poetry install
 python3.8 -m poetry run alembic upgrade head
-# javascript
-cd "$release_dir/src/javascript/src"
+# typescript
+cd "$release_dir/src/typescript/src"
 npm install
 npm run fbuild
 
@@ -46,8 +46,8 @@ pm2 stop "/$3_/" && pm2 delete "/$3_/"
 cd "$release_dir/src/python/src"
 pm2 start pm2.config.js
 pm2 save
-# javascript (comment if redundant)
-cd "$release_dir/src/javascript/src"
+# typescript (comment if redundant)
+cd "$release_dir/src/typescript/src"
 pm2 start pm2.config.js
 pm2 save
 

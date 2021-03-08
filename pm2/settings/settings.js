@@ -21,7 +21,6 @@ if (typescriptEnabled && !fs.lstatSync(TYPESCRIPT_CWD).isDirectory()) {
 
 let PYTHON_INTERPRETER = null;
 let SCRAPY_SCRIPT = null;
-let JAVASCRIPT_SCRIPT = null;
 let NODEJS_SCRIPT = 'node';
 if (process.platform === 'win32') {
   PYTHON_INTERPRETER = path.join(PYTHON_CWD, '.venv', 'Scripts', 'python.exe');

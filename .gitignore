@@ -7,5 +7,5 @@
 node_modules/
 .env
 ecosystem.json
-logs/
+logs/*.log
 build/

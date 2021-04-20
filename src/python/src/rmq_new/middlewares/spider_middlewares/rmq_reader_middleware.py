@@ -12,8 +12,8 @@ from twisted.python.failure import Failure
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQDefaultOptions
-from rmq_new.schemas.messages.base_rmq_message import BaseRmqMessage
 from rmq_new.rmq_spider import RmqSpider
+from rmq_new.schemas.messages.base_rmq_message import BaseRmqMessage
 
 DeliveryTagInteger = int
 CountRequestInteger = int
@@ -162,6 +162,7 @@ class RmqReaderMiddleware(object):
             basic_properties=dict_message['properties'],
             body=dict_message['body'],
             _rmq_connection=self.rmq_connection,
+            _crawler=self.crawler,
         )
         request = self.__spider.next_request(message)
         request.meta[self.message_meta_name] = message

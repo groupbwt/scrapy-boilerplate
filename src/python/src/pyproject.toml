@@ -21,6 +21,7 @@ scrapy = "2.4.1"
 dateparser = "^0.7.6"
 paramiko = "^2.7.2"
 pydantic = "^1.8.1"
+pytest = "^6.2.3"
 
 [tool.poetry.dev-dependencies]
 scrapy-new = "^0.2"

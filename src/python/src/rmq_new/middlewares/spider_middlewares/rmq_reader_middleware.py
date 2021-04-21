@@ -12,7 +12,7 @@ from twisted.python.failure import Failure
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQDefaultOptions
-from rmq_new.rmq_spider import RmqSpider
+from rmq_new.base_rmq_spider import BaseRmqSpider
 from rmq_new.schemas.messages.base_rmq_message import BaseRmqMessage
 
 DeliveryTagInteger = int
@@ -24,8 +24,8 @@ class RmqReaderMiddleware(object):
 
     @classmethod
     def from_crawler(cls, crawler):
-        if not isinstance(crawler.spider, RmqSpider):
-            raise CloseSpider(f"spider must have the {RmqSpider.__name__} class as its parent")
+        if not isinstance(crawler.spider, BaseRmqSpider):
+            raise CloseSpider(f"spider must have the {BaseRmqSpider.__name__} class as its parent")
 
         o = cls(crawler)
         """Subscribe to signals which controls opening and shutdown hooks/behaviour"""
@@ -44,7 +44,7 @@ class RmqReaderMiddleware(object):
     def __init__(self, crawler: Crawler):
         super().__init__()
         self.crawler = crawler
-        self.__spider: RmqSpider = crawler.spider
+        self.__spider: BaseRmqSpider = crawler.spider
 
         self.failed_response_deque = deque([], maxlen=crawler.settings.get('CONCURRENT_REQUESTS'))
 
@@ -87,13 +87,13 @@ class RmqReaderMiddleware(object):
     def set_connection_handle(self, connection):
         self.rmq_connection = connection
 
-    def spider_idle(self, spider: RmqSpider):
+    def spider_idle(self, spider: BaseRmqSpider):
         if not self.rmq_connection:
             task_queue_name = self.__spider.task_queue_name
             reactor.callInThread(self.connect, self.parameters, task_queue_name)
         raise DontCloseSpider
 
-    def spider_closed(self, spider: RmqSpider):
+    def spider_closed(self, spider: BaseRmqSpider):
         if self.rmq_connection is not None and isinstance(self.rmq_connection, PikaSelectConnection):
             if isinstance(self.rmq_connection.connection, pika.SelectConnection):
                 self.rmq_connection.connection.ioloop.add_callback_threadsafe(
@@ -108,17 +108,17 @@ class RmqReaderMiddleware(object):
         self.crawler.engine.close_spider(self.__spider)
 
     # SPIDER MIDDLEWARE METHOD
-    def process_start_requests(self, start_requests, spider: RmqSpider) -> Iterator[Request]:
+    def process_start_requests(self, start_requests, spider: BaseRmqSpider) -> Iterator[Request]:
         for request in start_requests:
             request.meta[self.init_request_meta_name] = True
             yield request
 
     # SPIDER MIDDLEWARE METHOD
-    def process_spider_input(self, response, spider: RmqSpider) -> None:
+    def process_spider_input(self, response, spider: BaseRmqSpider) -> None:
         pass  # raise Exception('process_spider_input exception')
 
     # SPIDER MIDDLEWARE METHOD
-    def process_spider_output(self, response, result, spider: RmqSpider) -> Iterator[Union[Request, dict]]:
+    def process_spider_output(self, response, result, spider: BaseRmqSpider) -> Iterator[Union[Request, dict]]:
         if self.message_meta_name in response.request.meta:
             rmq_message: BaseRmqMessage = response.request.meta[self.message_meta_name]
             delivery_tag = rmq_message.deliver.delivery_tag
@@ -169,26 +169,28 @@ class RmqReaderMiddleware(object):
         self.request_counter[message.deliver.delivery_tag] = 1
         if request.errback is None:
             request.errback = self.default_errback
-        self.crawler.engine.crawl(request, spider=self.__spider)
 
-    def on_spider_error(self, failure, response, spider: RmqSpider, *args, **kwargs):
+        if self.crawler.crawling:
+            self.crawler.engine.crawl(request, spider=self.__spider)
+
+    def on_spider_error(self, failure, response, spider: BaseRmqSpider, *args, **kwargs):
         print('on_spider_error')
         if self.message_meta_name in response.meta:
             self.failed_response_deque.append(response)
             rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
             self.nack(rmq_message)
 
-    def on_item_dropped(self, item, response, exception, spider: RmqSpider):
+    def on_item_dropped(self, item, response, exception, spider: BaseRmqSpider):
         if self.message_meta_name in response.meta:
             rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
             self.nack(rmq_message)
 
-    def on_item_error(self, item, response, spider: RmqSpider, failure):
+    def on_item_error(self, item, response, spider: BaseRmqSpider, failure):
         if self.message_meta_name in response.meta:
             rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
             self.nack(rmq_message)
 
-    def on_request_dropped(self, request, spider: RmqSpider):
+    def on_request_dropped(self, request, spider: BaseRmqSpider):
         """
         called when the request is filtered
         """
@@ -206,6 +208,7 @@ class RmqReaderMiddleware(object):
         self.request_counter[delivery_tag] -= 1
 
     def try_to_acknowledge_message(self, rmq_message: BaseRmqMessage):
+        self.logger.warning('try for acknowledge - {}'.format(self.request_counter[rmq_message.deliver.delivery_tag]))
         if self.request_counter[rmq_message.deliver.delivery_tag] == 0:
             rmq_message.ack()
 

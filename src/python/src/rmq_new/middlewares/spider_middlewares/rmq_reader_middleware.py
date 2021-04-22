@@ -7,6 +7,7 @@ import scrapy
 from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DontCloseSpider
+from scrapy.http import Response
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
@@ -144,7 +145,6 @@ class RmqReaderMiddleware(object):
 
     # SPIDER MIDDLEWARE METHOD
     def process_spider_exception(self, response, exception, spider):
-        print('process_spider_exception')
         self.crawler.signals.send_catch_log(
             signal=signals.spider_error,
             spider=self,
@@ -173,11 +173,16 @@ class RmqReaderMiddleware(object):
         if self.crawler.crawling:
             self.crawler.engine.crawl(request, spider=self.__spider)
 
-    def on_spider_error(self, failure, response, spider: BaseRmqSpider, *args, **kwargs):
-        print('on_spider_error')
-        if self.message_meta_name in response.meta:
+    def on_spider_error(self, failure, response: Response, spider: BaseRmqSpider, *args, **kwargs):
+        if isinstance(response, Response):
+            meta = response.meta
+        else:
+            meta = failure.request.meta
+
+        if self.message_meta_name in meta:
+            # TODO: What was I trying to do?
             self.failed_response_deque.append(response)
-            rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
+            rmq_message: BaseRmqMessage = meta[self.message_meta_name]
             self.nack(rmq_message)
 
     def on_item_dropped(self, item, response, exception, spider: BaseRmqSpider):

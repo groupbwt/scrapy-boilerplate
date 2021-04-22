@@ -14,8 +14,8 @@ from tests.rmq_new_tests.constant import QUEUE_NAME
 
 
 class CustomSpiderMiddleware:
-    def process_spider_input(self, response, spider):
-        raise Exception('CustomSpiderMiddleware.process_spider_input exception')
+    def process_spider_output(self, response, result, spider):
+        raise Exception('CustomSpiderMiddleware.process_spider_output exception')
 
 
 class MySpider(RmqSpider):
@@ -25,7 +25,7 @@ class MySpider(RmqSpider):
 
     custom_settings = {
         "SPIDER_MIDDLEWARES": {
-            get_import_full_name(CustomSpiderMiddleware): 1,
+            get_import_full_name(CustomSpiderMiddleware): 999,
         }
     }
 

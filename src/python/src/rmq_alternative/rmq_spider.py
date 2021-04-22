@@ -1,8 +1,8 @@
 from abc import ABC
 
-import rmq_new.middlewares.spider_middlewares.rmq_reader_middleware as rmq_reader_middleware
+import rmq_alternative.middlewares.spider_middlewares.rmq_reader_middleware as rmq_reader_middleware
 from rmq.utils import get_import_full_name
-from rmq_new.base_rmq_spider import BaseRmqSpider
+from rmq_alternative.base_rmq_spider import BaseRmqSpider
 
 
 class RmqSpider(BaseRmqSpider, ABC):

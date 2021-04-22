@@ -1,7 +1,7 @@
 import pika
 from scrapy.utils.project import get_project_settings
 
-from rmq_new.utils.pika_connection_parameters import pika_connection_parameters
+from rmq_alternative.utils.pika_connection_parameters import pika_connection_parameters
 
 
 class PikaBlockingConnection(object):

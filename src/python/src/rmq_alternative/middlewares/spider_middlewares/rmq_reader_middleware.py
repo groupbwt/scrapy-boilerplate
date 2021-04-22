@@ -13,8 +13,8 @@ from twisted.python.failure import Failure
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQDefaultOptions
-from rmq_new.base_rmq_spider import BaseRmqSpider
-from rmq_new.schemas.messages.base_rmq_message import BaseRmqMessage
+from rmq_alternative.base_rmq_spider import BaseRmqSpider
+from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
 
 DeliveryTagInteger = int
 CountRequestInteger = int

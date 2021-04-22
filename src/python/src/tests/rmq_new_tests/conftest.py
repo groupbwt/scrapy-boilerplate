@@ -8,7 +8,7 @@ from scrapy.http import HtmlResponse
 from scrapy.utils.project import get_project_settings
 
 from rmq.utils import get_import_full_name
-from rmq_new.utils.pika_blocking_connection import PikaBlockingConnection
+from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
 from tests.rmq_new_tests.constant import QUEUE_NAME
 
 

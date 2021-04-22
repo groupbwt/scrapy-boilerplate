@@ -4,10 +4,17 @@ import logging
 import pika
 import pytest
 from scrapy.crawler import CrawlerProcess
+from scrapy.http import HtmlResponse
 from scrapy.utils.project import get_project_settings
 
+from rmq.utils import get_import_full_name
 from rmq_new.utils.pika_blocking_connection import PikaBlockingConnection
 from tests.rmq_new_tests.constant import QUEUE_NAME
+
+
+class Response200DownloaderMiddleware:
+    def process_request(self, request, spider):
+        return HtmlResponse(url='https://httpstat.us/200', status=200, body=b'{"status": "200"}')
 
 
 @pytest.fixture
@@ -35,6 +42,9 @@ def rabbit_setup():
 def crawler():
     settings = get_project_settings()
     custom_settings = {
+        "DOWNLOADER_MIDDLEWARES": {
+            get_import_full_name(Response200DownloaderMiddleware): 1,
+        },
         'CONCURRENT_REQUESTS': 1,
         'LOG_FILE': None,
         'LOG_LEVEL': 'DEBUG',

@@ -16,9 +16,11 @@ from rmq_new.utils.pika_blocking_connection import PikaBlockingConnection
 from tests.rmq_new_tests.constant import QUEUE_NAME
 
 
-class ResponseDownloaderMiddleware:
+class Response301DownloaderMiddleware:
     def process_request(self, request, spider):
-        return TextResponse(url='https://httpstat.us/301', status=301, body=b'', headers={b'Location': [b'https://httpstat.us/301']})
+        return TextResponse(
+            url='https://httpstat.us/301', status=301, body=b'', headers={b'Location': [b'https://httpstat.us/301']}
+        )
 
 
 @pytest.fixture
@@ -26,7 +28,7 @@ def crawler():
     settings = get_project_settings()
     custom_settings = {
         "DOWNLOADER_MIDDLEWARES": {
-            get_import_full_name(ResponseDownloaderMiddleware): 1,
+            get_import_full_name(Response301DownloaderMiddleware): 1,
         },
         'CONCURRENT_REQUESTS': 1,
         'LOG_FILE': None,
@@ -35,6 +37,7 @@ def crawler():
 
     settings.setdict(custom_settings or {}, priority='spider')
     yield CrawlerProcess(settings=settings)
+
 
 class MySpider(RmqSpider):
     name = 'myspider'

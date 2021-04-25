@@ -14,7 +14,7 @@ from tests.rmq_new_tests.constant import QUEUE_NAME
 
 class Response200DownloaderMiddleware:
     def process_request(self, request, spider):
-        return HtmlResponse(url='https://httpstat.us/200', status=200, body=b'{"status": "200"}')
+        return HtmlResponse(url=request.url, status=200, body=b'{"status": "200"}')
 
 
 @pytest.fixture

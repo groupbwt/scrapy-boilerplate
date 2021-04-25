@@ -219,7 +219,7 @@ class RmqReaderMiddleware(object):
 
     def nack(self, rmq_message: BaseRmqMessage) -> None:
         rmq_message.nack()
-        self.request_counter.pop(rmq_message.deliver.delivery_tag)
+        self.request_counter.pop(rmq_message.deliver.delivery_tag, None)
 
     def is_active_message(self, delivery_tag: int) -> bool:
         return delivery_tag in self.request_counter

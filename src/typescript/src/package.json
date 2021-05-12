@@ -19,7 +19,7 @@
     "dotenv": "^8.2.0",
     "emailjs-imap-client": "git+https://github.com/vulreid/emailjs-imap-client.git",
     "emailjs-tcp-socket": "git+https://github.com/vulreid/emailjs-tcp-socket.git",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "pm2": "^4.5.1",
     "puppeteer": "^5.5.0",
     "puppeteer-extra": "^3.1.16",

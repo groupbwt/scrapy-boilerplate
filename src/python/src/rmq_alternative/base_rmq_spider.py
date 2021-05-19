@@ -3,10 +3,10 @@ from typing import Type
 
 from scrapy import Spider, Request
 
-from rmq_new.schemas.messages.base_rmq_message import BaseRmqMessage
+from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
 
 
-class RmqSpider(ABC, Spider):
+class BaseRmqSpider(Spider, ABC):
     @property
     @abstractmethod
     def task_queue_name(self) -> str:

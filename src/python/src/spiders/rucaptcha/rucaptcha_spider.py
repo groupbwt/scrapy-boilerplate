@@ -22,44 +22,43 @@ class RucaptchaSpider(Spider):
         pass
 
     def parse_captcha(self, response):
-        if response.meta.get("solve_captcha", False):
-            project_settings = get_project_settings()
-            rucaptcha_key = project_settings.get("RUCAPTCHA_KEY")
-            rucaptcha_action = project_settings.get("RUCAPTCHA_ACTION")
-            rucaptcha_score = project_settings.get("RUCAPTCHA_SCORE")
+        project_settings = get_project_settings()
+        rucaptcha_key = project_settings.get("RUCAPTCHA_KEY")
+        rucaptcha_action = project_settings.get("RUCAPTCHA_ACTION")
+        rucaptcha_score = project_settings.get("RUCAPTCHA_SCORE")
 
-            if not rucaptcha_key:
-                raise Exception("RUCAPTCHA_KEY is not provided")
+        if not rucaptcha_key:
+            raise Exception("RUCAPTCHA_KEY is not provided")
 
-            pageurl = response.url
-            sitekey = response.meta.get("sitekey")
+        pageurl = response.url
+        sitekey = response.meta.get("sitekey")
 
-            params = urlencode(
-                {
-                    "method": "userrecaptcha",
-                    "pageurl": pageurl,
-                    "invisible": 1,
-                    "json": 1,
-                    "key": rucaptcha_key,
-                    "action": rucaptcha_action,
-                    "min_score": rucaptcha_score,
-                    "googlekey": sitekey,
-                }
-            )
-            rucaptcha_url = f"http://rucaptcha.com/in.php?{params}"
+        params = urlencode(
+            {
+                "method": "userrecaptcha",
+                "pageurl": pageurl,
+                "invisible": 1,
+                "json": 1,
+                "key": rucaptcha_key,
+                "action": rucaptcha_action,
+                "min_score": rucaptcha_score,
+                "googlekey": sitekey,
+            }
+        )
+        rucaptcha_url = f"http://rucaptcha.com/in.php?{params}"
 
-            yield Request(
-                url=rucaptcha_url,
-                method="POST",
-                callback=self.__captcha_request,
-                meta={
-                    "start_url": response.meta.get("start_url"),
-                    "return_callback": response.meta.get("return_callback"),
-                    "old_meta": response.meta.get("old_meta"),
-                    "rucaptcha_key": rucaptcha_key,
-                },
-                dont_filter=True,
-            )
+        yield Request(
+            url=rucaptcha_url,
+            method="POST",
+            callback=self.__captcha_request,
+            meta={
+                "start_url": response.meta.get("start_url"),
+                "return_callback": response.meta.get("return_callback"),
+                "old_meta": response.meta.get("old_meta"),
+                "rucaptcha_key": rucaptcha_key,
+            },
+            dont_filter=True,
+        )
 
     def __captcha_request(self, response):
         data = response.json()

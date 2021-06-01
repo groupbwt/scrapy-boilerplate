@@ -47,11 +47,11 @@ class TestCaptchaSpider(RucaptchaSpider):
         if recaptcha_js and recaptcha_sitekey and solve_captcha:
             yield Request(
                 response.url,
-                callback=self.parse_captcha,
+                callback=self._parse_captcha,
                 meta={
                     "start_url": response.url,
-                    "return_callback": inspect.currentframe().f_code.co_name,
-                    "old_meta": response.meta,
+                    "initial_callback": inspect.currentframe().f_code.co_name,
+                    "initial_meta": response.meta,
                     "sitekey": recaptcha_sitekey,
                 },
                 dont_filter=True,

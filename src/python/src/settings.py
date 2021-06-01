@@ -20,9 +20,9 @@ PROXY = os.getenv("PROXY", "")
 PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
-RUCAPTCHA_KEY = os.getenv("RUCAPTCHA_KEY", "")
-RUCAPTCHA_ACTION = os.getenv("RUCAPTCHA_ACTION", "verify")
-RUCAPTCHA_SCORE = os.getenv("RUCAPTCHA_SCORE", 0.3)
+RU_CAPTCHA_KEY = os.getenv("RU_CAPTCHA_KEY", "")
+RU_CAPTCHA_ACTION = os.getenv("RU_CAPTCHA_ACTION", "verify")
+RU_CAPTCHA_SCORE = os.getenv("RU_CAPTCHA_SCORE", 0.3)
 
 USER_AGENT_RELEASE_DATE = '2021-05-28'
 USER_AGENT = (

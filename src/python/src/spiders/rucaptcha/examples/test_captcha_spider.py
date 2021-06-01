@@ -19,8 +19,8 @@ class TestCaptchaSpider(RucaptchaSpider):
     3. Send request to response.url with RucaptchaSpider.parse_captcha callback.
         Request parameters:
         start_url: response.url
-        return_callback: the method name to return to
-        old_meta: meta from current response
+        initial_callback: the method name to return to
+        initial_meta: meta from current response
         sitekey: recaptcha sitekey
 
     4. Get 'captcha_key' from response.meta.

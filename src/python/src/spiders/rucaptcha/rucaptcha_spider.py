@@ -44,7 +44,8 @@ class RucaptchaSpider(Spider):
             "min_score": rucaptcha_score,
             "googlekey": sitekey,
         }
-        rucaptcha_url = furl(f"{self.RU_CAPTCHA_DOMAIN}/in.php").add(
+        rucaptcha_url = furl(self.RU_CAPTCHA_DOMAIN).add(
+            path='in.php',
             query_params=params
         ).url
 
@@ -73,7 +74,8 @@ class RucaptchaSpider(Spider):
                 "id": captcha_id,
                 "key": response.meta.get("rucaptcha_key"),
             }
-            url = furl(f"{self.RU_CAPTCHA_DOMAIN}/res.php").add(
+            url = furl(self.RU_CAPTCHA_DOMAIN).add(
+                path="res.php",
                 query_params=params
             ).url
 
@@ -113,7 +115,8 @@ class RucaptchaSpider(Spider):
                     "id": response.meta.get("captcha_id"),
                     "key": response.meta.get("rucaptcha_key"),
                 }
-                url = furl(f"{self.RU_CAPTCHA_DOMAIN}/res.php").add(
+                url = furl(self.RU_CAPTCHA_DOMAIN).add(
+                    path="res.php",
                     query_params=params
                 ).url
 

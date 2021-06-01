@@ -16,7 +16,7 @@ class TestCaptchaSpider(RucaptchaSpider):
     Captcha solving steps:
     1. Find captcha.
     2. Check for 'captcha_solved' parameter in response.meta.
-    3. Send request to response.url with RucaptchaSpider.parse_captcha callback.
+    3. Send request to response.url with RucaptchaSpider._parse_captcha callback.
         Request parameters:
         start_url: response.url
         initial_callback: the method name to return to

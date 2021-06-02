@@ -28,6 +28,7 @@ class Producer(ScrapyCommand):
 
     _DEFAULT_CHUNK_SIZE = 100
     _DEFAULT_CHECK_INTERACT_READY_DELAY = 3  # seconds
+    _DEFAULT_DELAY_TIMEOUT = 60
 
     def __init__(self):
         super().__init__()
@@ -40,6 +41,7 @@ class Producer(ScrapyCommand):
         ]
         self.mode = Producer.CommandModes.DEFAULT.value
         self.chunk_size = Producer._DEFAULT_CHUNK_SIZE
+        self.delay = Producer._DEFAULT_DELAY_TIMEOUT
 
         self.delivery_tag_meta_key = RMQConstants.DELIVERY_TAG_META_KEY.value
         self.msg_body_meta_key = RMQConstants.MSG_BODY_META_KEY.value
@@ -98,6 +100,15 @@ class Producer(ScrapyCommand):
             help="number of tasks to produce at one iteration",
         )
 
+        parser.add_option(
+            "-d",
+            "--delay",
+            type="int",
+            default=Producer._DEFAULT_DELAY_TIMEOUT,
+            dest="delay",
+            help="delay timeout if there are no messages",
+        )
+
     def task_queue_option_callback(self, _option, opt, value, parser):
         if value is not None and len(str(value).strip()):
             self.task_queue_name = value
@@ -148,6 +159,7 @@ class Producer(ScrapyCommand):
         self.init_replies_queue_name(opts)
         self.mode = opts.mode
         self.chunk_size = opts.chunk_size
+        self.delay = opts.delay
 
         self.init_db_connection_pool()
 
@@ -190,7 +202,7 @@ class Producer(ScrapyCommand):
 
     def _delay(self, current_count=None) -> int:
         if current_count is None:
-            return 60
+            return self.delay
         return {
             0 <= current_count < 5000: 0,
             5000 <= current_count < 15000: 15,

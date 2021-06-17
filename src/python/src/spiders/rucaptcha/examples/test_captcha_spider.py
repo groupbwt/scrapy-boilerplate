@@ -18,7 +18,7 @@ class TestCaptchaSpider(RucaptchaSpider):
     2. Check for 'captcha_solved' parameter in response.meta.
     3. Send request to response.url with RucaptchaSpider._parse_captcha callback.
         Request parameters:
-        start_url: response.url
+        initial_url: response.url
         initial_callback: the method name to return to
         initial_meta: meta from current response
         sitekey: recaptcha sitekey
@@ -45,11 +45,12 @@ class TestCaptchaSpider(RucaptchaSpider):
         solve_captcha = not captcha_solved
 
         if recaptcha_js and recaptcha_sitekey and solve_captcha:
+
             yield Request(
                 response.url,
                 callback=self._parse_captcha,
                 meta={
-                    "start_url": response.url,
+                    "initial_url": response.url,
                     "initial_callback": inspect.currentframe().f_code.co_name,
                     "initial_meta": response.meta,
                     "sitekey": recaptcha_sitekey,

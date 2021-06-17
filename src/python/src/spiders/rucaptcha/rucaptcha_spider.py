@@ -3,32 +3,41 @@ import logging
 from furl import furl
 
 from scrapy import Request, Spider
-from scrapy.utils.project import get_project_settings
 
 
 class RucaptchaSpider(Spider):
-    RU_CAPTCHA_DOMAIN = 'https://rucaptcha.com'
+    RU_CAPTCHA_DOMAIN = "https://rucaptcha.com"
     MAX_CAPTCHA_RETRIES = 5
     CAPTCHA_REQUEST_DELAY = 30
 
-    custom_settings = {
-        "DOWNLOADER_MIDDLEWARES": {
-            "middlewares.DelayedRequestsMiddleware": 600,
-        }
-    }
+    rucaptcha_key = None
 
     logger = logging.getLogger(name=__name__)
+
+    @classmethod
+    def update_settings(cls, settings):
+        cls.custom_settings: dict = cls.custom_settings or {}
+
+        downloader_middlewares: dict = cls.custom_settings.get(
+            "DOWNLOADER_MIDDLEWARES", {}
+        )
+        downloader_middlewares.update(
+            {"middlewares.DelayedRequestsMiddleware": 600}
+        )
+        cls.custom_settings["DOWNLOADER_MIDDLEWARES"] = downloader_middlewares
+
+        super().update_settings(settings)
 
     def parse(self, response, **kwargs):
         pass
 
     def _parse_captcha(self, response):
-        project_settings = get_project_settings()
-        rucaptcha_key = project_settings.get("RU_CAPTCHA_KEY")
-        rucaptcha_action = project_settings.get("RU_CAPTCHA_ACTION")
-        rucaptcha_score = project_settings.get("RU_CAPTCHA_SCORE")
+        rucaptcha_action = self.settings.get("RU_CAPTCHA_ACTION")
+        rucaptcha_score = self.settings.get("RU_CAPTCHA_SCORE")
 
-        if not rucaptcha_key:
+        self.rucaptcha_key = self.settings.get("RU_CAPTCHA_KEY")
+
+        if not self.rucaptcha_key:
             raise Exception("RU_CAPTCHA_KEY is not provided")
 
         pageurl = response.url
@@ -39,25 +48,25 @@ class RucaptchaSpider(Spider):
             "pageurl": pageurl,
             "invisible": 1,
             "json": 1,
-            "key": rucaptcha_key,
+            "key": self.rucaptcha_key,
             "action": rucaptcha_action,
             "min_score": rucaptcha_score,
             "googlekey": sitekey,
         }
-        rucaptcha_url = furl(self.RU_CAPTCHA_DOMAIN).add(
-            path='in.php',
-            query_params=params
-        ).url
+        rucaptcha_url = (
+            furl(self.RU_CAPTCHA_DOMAIN)
+            .add(path="in.php", query_params=params)
+            .url
+        )
 
         yield Request(
             url=rucaptcha_url,
             method="POST",
             callback=self.__captcha_request,
             meta={
-                "start_url": response.meta.get("start_url"),
+                "initial_url": response.meta.get("initial_url"),
                 "initial_callback": response.meta.get("initial_callback"),
                 "initial_meta": response.meta.get("initial_meta"),
-                "rucaptcha_key": rucaptcha_key,
             },
             dont_filter=True,
         )
@@ -72,33 +81,35 @@ class RucaptchaSpider(Spider):
                 "action": "get",
                 "json": 1,
                 "id": captcha_id,
-                "key": response.meta.get("rucaptcha_key"),
+                "key": self.rucaptcha_key,
             }
-            url = furl(self.RU_CAPTCHA_DOMAIN).add(
-                path="res.php",
-                query_params=params
-            ).url
+            url = (
+                furl(self.RU_CAPTCHA_DOMAIN)
+                .add(path="res.php", query_params=params)
+                .url
+            )
 
             yield Request(
                 url=url,
                 method="POST",
                 callback=self.__captcha_solving,
                 meta={
-                    "start_url": response.meta.get("start_url"),
+                    "initial_url": response.meta.get("initial_url"),
                     "initial_callback": response.meta.get("initial_callback"),
                     "initial_meta": response.meta.get("initial_meta"),
-                    "rucaptcha_key": response.meta.get("rucaptcha_key"),
                     "captcha_id": captcha_id,
                 },
                 dont_filter=True,
             )
+        else:
+            raise Exception("Error during captcha request")
 
     def __captcha_solving(self, response):
         data = response.json()
         if data["status"] == 1:
             captcha_result = data["request"]
             yield Request(
-                response.meta.get("start_url"),
+                response.meta.get("initial_url"),
                 callback=getattr(self, response.meta.get("initial_callback")),
                 meta={
                     "initial_meta": response.meta.get("initial_meta"),
@@ -113,12 +124,13 @@ class RucaptchaSpider(Spider):
                     "action": "get",
                     "json": 1,
                     "id": response.meta.get("captcha_id"),
-                    "key": response.meta.get("rucaptcha_key"),
+                    "key": self.rucaptcha_key,
                 }
-                url = furl(self.RU_CAPTCHA_DOMAIN).add(
-                    path="res.php",
-                    query_params=params
-                ).url
+                url = (
+                    furl(self.RU_CAPTCHA_DOMAIN)
+                    .add(path="res.php", query_params=params)
+                    .url
+                )
 
                 captcha_retries = (
                     response.meta.get("captcha_retries") + 1
@@ -136,12 +148,11 @@ class RucaptchaSpider(Spider):
                     callback=self.__captcha_solving,
                     meta={
                         "delay_request": self.CAPTCHA_REQUEST_DELAY,
-                        "start_url": response.meta.get("start_url"),
+                        "initial_url": response.meta.get("initial_url"),
                         "initial_callback": response.meta.get(
                             "initial_callback"
                         ),
                         "initial_meta": response.meta.get("initial_meta"),
-                        "rucaptcha_key": response.meta.get("rucaptcha_key"),
                         "captcha_id": response.meta.get("captcha_id"),
                         "captcha_retries": captcha_retries,
                     },

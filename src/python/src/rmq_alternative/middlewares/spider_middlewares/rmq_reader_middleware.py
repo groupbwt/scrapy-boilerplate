@@ -174,6 +174,7 @@ class RmqReaderMiddleware(object):
             self.crawler.engine.crawl(request, spider=self.__spider)
 
     def on_spider_error(self, failure, response: Response, spider: BaseRmqSpider, *args, **kwargs):
+        self.logger.error(str(failure))
         if isinstance(response, Response):
             meta = response.meta
         else:

@@ -8,6 +8,7 @@ from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DontCloseSpider
 from scrapy.http import Response
+from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
@@ -51,6 +52,7 @@ class RmqReaderMiddleware(object):
 
         self.message_meta_name: str = '__rmq_message'
         self.init_request_meta_name: str = '__rmq_init_request'
+        self.is_http_error_received: str = '__is_http_error_received'
 
         self.logger = logging.getLogger(name=self.__class__.__name__)
         self.logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
@@ -134,8 +136,11 @@ class RmqReaderMiddleware(object):
                 if response in self.failed_response_deque:
                     return
 
-                self.request_counter_decrement(delivery_tag)
-                self.try_to_acknowledge_message(rmq_message)
+                if response.request.meta.get(self.is_http_error_received):
+                    self.nack(rmq_message)
+                else:
+                    self.request_counter_decrement(delivery_tag)
+                    self.try_to_acknowledge_message(rmq_message)
             else:
                 self.logger.warning('filtered processing of an inactive message')
         elif self.init_request_meta_name in response.request.meta:
@@ -229,4 +234,7 @@ class RmqReaderMiddleware(object):
         return delivery_tag in self.request_counter
 
     def default_errback(self, failure: Failure, *args, **kwargs):
+        exception = failure.value
+        if isinstance(exception, HttpError):
+            failure.value.response.meta[self.is_http_error_received] = True
         raise failure

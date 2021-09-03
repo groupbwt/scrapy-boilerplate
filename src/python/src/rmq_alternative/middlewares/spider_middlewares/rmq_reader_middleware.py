@@ -131,6 +131,8 @@ class RmqReaderMiddleware(object):
                     if isinstance(item_or_request, scrapy.Request):
                         self.request_counter_increment(delivery_tag)
                         item_or_request.meta[self.message_meta_name] = rmq_message
+                        if item_or_request.errback is None:
+                            item_or_request.errback = self.default_errback
                     yield item_or_request
 
                 if response in self.failed_response_deque:

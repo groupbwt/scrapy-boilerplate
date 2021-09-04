@@ -8,10 +8,7 @@ from rmq_alternative.base_rmq_spider import BaseRmqSpider
 class RmqSpider(BaseRmqSpider, ABC):
     @classmethod
     def update_settings(cls, settings):
-        cls.custom_settings: dict = cls.custom_settings or {}
-
-        spider_middlewares: dict = cls.custom_settings.get('SPIDER_MIDDLEWARES', {})
-        spider_middlewares.update({get_import_full_name(rmq_reader_middleware.RmqReaderMiddleware): 1})
-        cls.custom_settings['SPIDER_MIDDLEWARES'] = spider_middlewares
-
+        spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES")
+        spider_middlewares[get_import_full_name(rmq_reader_middleware.RmqReaderMiddleware)] = 1
+        settings.set("SPIDER_MIDDLEWARES", spider_middlewares)
         super().update_settings(settings)

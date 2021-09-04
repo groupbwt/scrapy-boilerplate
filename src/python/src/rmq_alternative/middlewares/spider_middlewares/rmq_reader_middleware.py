@@ -139,7 +139,10 @@ class RmqReaderMiddleware(object):
             else:
                 self.logger.warning('filtered processing of an inactive message')
         elif self.init_request_meta_name in response.request.meta:
-            pass
+            for item_or_request in result:
+                if isinstance(item_or_request, Request):
+                    item_or_request.meta[self.init_request_meta_name] = True
+                yield item_or_request
         else:
             raise Exception('received response without sqs message')
 

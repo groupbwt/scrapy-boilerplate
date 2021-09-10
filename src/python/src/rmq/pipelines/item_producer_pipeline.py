@@ -134,14 +134,14 @@ class ItemProducerPipeline:
                 del item_as_dictionary[self.delivery_tag_meta_key]
             cb = functools.partial(
                 self.rmq_connection.publish_message,
-                queue_name=self.choose_queue_name(item),
+                queue_name=self.choose_queue_name(item, self.__spider),
                 message=json.dumps(item_as_dictionary)
             )
             self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
 
-    def choose_queue_name(self, item):
+    def choose_queue_name(self, item, spider):
         if isinstance(item, RMQItem):
-            return self.__spider.get_result_queue_name()
+            return spider.get_result_queue_name()
         else:
             raise NotImplementedError(
                 f"Method choose_queue_name must be overriding, because got unexpected item type: {type(item)}"

@@ -69,6 +69,8 @@ RABBITMQ_USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
 RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
 RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "/")
 
+WIT_AI_ACCESS_KEY: str = os.getenv("WIT_AI_ACCESS_KEY", "")
+
 try:
     HTTPCACHE_ENABLED = strtobool(os.getenv("HTTPCACHE_ENABLED", "False"))
 except ValueError:

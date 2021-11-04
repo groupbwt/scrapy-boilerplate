@@ -207,10 +207,10 @@ class Producer(ScrapyCommand):
         d.addCallback(self.process_tasks).addErrback(self.on_get_tasks_error)
 
     def validate_queue_message_count(self, message_count=None):
-        delay_timeout = self.calculate_delay(message_count)
+        delay_timeout = self._calculate_delay(message_count)
         reactor.callLater(delay_timeout, self.produce_tasks, True)
 
-    def calculate_delay(self, current_count=None) -> int:
+    def _calculate_delay(self, current_count=None) -> int:
         if current_count is None:
             return self.default_delay_timeout
         return {
@@ -290,7 +290,7 @@ class Producer(ScrapyCommand):
 
     def process_tasks(self, rows):
         if rows is None or not len(rows):
-            delay = self.calculate_delay(None)
+            delay = self._calculate_delay(None)
             self.logger.info(f"DB is empty. waiting for {delay} seconds...")
             reactor.callLater(delay, self.produce_tasks, True)
             return

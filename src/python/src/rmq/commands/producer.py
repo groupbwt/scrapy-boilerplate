@@ -28,6 +28,7 @@ class Producer(ScrapyCommand):
 
     _DEFAULT_CHUNK_SIZE = 100
     _DEFAULT_CHECK_INTERACT_READY_DELAY = 3  # seconds
+    _DEFAULT_DELAY_TIMEOUT = 60
 
     def __init__(self):
         super().__init__()
@@ -53,6 +54,7 @@ class Producer(ScrapyCommand):
         self.db_connection_pool = None
 
         self.check_interact_ready_delay = Producer._DEFAULT_CHECK_INTERACT_READY_DELAY
+        self.default_delay_timeout = Producer._DEFAULT_DELAY_TIMEOUT
 
     def set_logger(self, name: str = "COMMAND", level: str = "DEBUG"):
         self.logger = logging.getLogger(name=name)
@@ -98,6 +100,17 @@ class Producer(ScrapyCommand):
             help="number of tasks to produce at one iteration",
         )
 
+        parser.add_option(
+            "-d",
+            "--delay",
+            type="int",
+            default=Producer._DEFAULT_DELAY_TIMEOUT,
+            dest="delay",
+            help="defines default delay timeout",
+            action="callback",
+            callback=self.delay_option_callback,
+        )
+
     def task_queue_option_callback(self, _option, opt, value, parser):
         if value is not None and len(str(value).strip()):
             self.task_queue_name = value
@@ -109,6 +122,15 @@ class Producer(ScrapyCommand):
         if value is not None and len(str(value).strip()):
             self.reply_to_queue_name = value
             setattr(parser.values, "reply_to_queue_name", value)
+
+    def delay_option_callback(self, _option, _opt, value, parser):
+        if isinstance(value, int) and value >= 0:
+            self.default_delay_timeout = value
+            setattr(parser.values, "default_delay_timeout", value)
+        else:
+            self.logger.warning(
+                f"Got incorrect value for 'delay' option: {value}, expected positive number. Default value will use instead."
+            )
 
     def init_task_queue_name(self, opts):
         task_queue_name = getattr(opts, "task_queue_name", None)
@@ -185,12 +207,12 @@ class Producer(ScrapyCommand):
         d.addCallback(self.process_tasks).addErrback(self.on_get_tasks_error)
 
     def validate_queue_message_count(self, message_count=None):
-        delay_timeout = self._delay(message_count)
+        delay_timeout = self._calculate_delay(message_count)
         reactor.callLater(delay_timeout, self.produce_tasks, True)
 
-    def _delay(self, current_count=None) -> int:
+    def _calculate_delay(self, current_count=None) -> int:
         if current_count is None:
-            return 60
+            return self.default_delay_timeout
         return {
             0 <= current_count < 5000: 0,
             5000 <= current_count < 15000: 15,
@@ -268,7 +290,7 @@ class Producer(ScrapyCommand):
 
     def process_tasks(self, rows):
         if rows is None or not len(rows):
-            delay = self._delay(None)
+            delay = self._calculate_delay(None)
             self.logger.info(f"DB is empty. waiting for {delay} seconds...")
             reactor.callLater(delay, self.produce_tasks, True)
             return
@@ -331,7 +353,7 @@ class Producer(ScrapyCommand):
             parameters,
             queue_name,
             owner=self,
-            options={"enable_delivery_confirmations": True, "prefetch_count": 1,},
+            options={"enable_delivery_confirmations": True, "prefetch_count": 1, },
             is_consumer=False,
         )
         c.run()

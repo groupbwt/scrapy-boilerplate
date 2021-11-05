@@ -15,6 +15,7 @@
   "dependencies": {
     "amqplib-as-promised": "^4.0.0",
     "apify": "^0.22.4",
+    "axios": "^0.24.0",
     "clone-deep": "^4.0.1",
     "dotenv": "^8.2.0",
     "emailjs-imap-client": "git+https://github.com/vulreid/emailjs-imap-client.git",

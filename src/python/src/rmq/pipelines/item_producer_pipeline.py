@@ -49,9 +49,9 @@ class ItemProducerPipeline:
         self.__spider = spider
 
         """Check spider for correct declared callbacks/errbacks/methods/variables"""
-        if self._validate_spider_has_attributes() is False:
+        if not self._is_spider_has_required_methods():
             raise CloseSpider(
-                "Attached spider has no configured task_queue_name and processing_tasks observer"
+                "Attached spider has no configured get_result_queue_name"
             )
 
         """Configure loggers"""
@@ -59,7 +59,11 @@ class ItemProducerPipeline:
         logging.getLogger("pika").setLevel(self.__spider.settings.get("PIKA_LOG_LEVEL", "WARNING"))
 
         """Declare/retrieve queue name from spider instance"""
-        result_queue_name = spider.result_queue_name
+        result_queue_name = self._get_result_queue_name()
+        if not isinstance(result_queue_name, str) or len(result_queue_name) == 0:
+            raise CloseSpider(
+                f"Invalid result queue name: {result_queue_name}"
+            )
 
         """Build pika connection parameters and start connection in separate twisted thread"""
         parameters = pika.ConnectionParameters(
@@ -87,16 +91,11 @@ class ItemProducerPipeline:
                     self.rmq_connection.stop
                 )
 
-    def _validate_spider_has_attributes(self):
-        spider_attributes = [
-            attr for attr in dir(self.__spider) if not callable(getattr(self.__spider, attr))
+    def _is_spider_has_required_methods(self):
+        spider_methods = [
+            attr for attr in dir(self.__spider) if callable(getattr(self.__spider, attr))
         ]
-        if "result_queue_name" not in spider_attributes:
-            return False
-        if (
-            not isinstance(self.__spider.result_queue_name, str)
-            or len(self.__spider.result_queue_name) == 0
-        ):
+        if "get_result_queue_name" not in spider_methods:
             return False
         return True
 
@@ -134,9 +133,19 @@ class ItemProducerPipeline:
             if self.delivery_tag_meta_key in item_as_dictionary:
                 del item_as_dictionary[self.delivery_tag_meta_key]
             cb = functools.partial(
-                self.rmq_connection.publish_message, message=json.dumps(item_as_dictionary)
+                self.rmq_connection.publish_message,
+                queue_name=self.choose_queue_name(item, self.__spider),
+                message=json.dumps(item_as_dictionary)
             )
             self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
+
+    def choose_queue_name(self, item, spider):
+        if isinstance(item, RMQItem):
+            return spider.get_result_queue_name()
+        else:
+            raise NotImplementedError(
+                f"Method choose_queue_name must be overriding, because got unexpected item type: {type(item)}"
+            )
 
     def process_item(self, item, spider):
         """Invoked when item is processed"""
@@ -148,3 +157,6 @@ class ItemProducerPipeline:
             else:
                 self.pending_items_buffer.append(item)
         return item
+
+    def _get_result_queue_name(self) -> str:
+        return self.__spider.get_result_queue_name()

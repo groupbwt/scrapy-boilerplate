@@ -1,5 +1,5 @@
-import rp from 'request-promise-native';
-import { LoggingLevel, Logger } from '../logger';
+import axios from "axios";
+import { Logger } from '../logger';
 import { Logger as LoggerInterface } from "winston";
 import pauseFor from "../sleep";
 
@@ -32,7 +32,7 @@ export default class RuCaptchaClient {
 
     async getSolution(
         googleSiteKey: string,
-        currentUrl: string,
+        currentUrl: string
         // proxyUser: string,
         // proxyPassword: string,
         // proxyAddress: string,
@@ -40,22 +40,20 @@ export default class RuCaptchaClient {
     ): Promise<string> {
         let captchaToken: string = '';
         let ticks = 0;
-        const ruCaptchaSendResponse = await rp.get({
-            uri: RuCaptchaClient.RU_CAPTCHA_SEND_ENDPOINT,
-            json: true,
-            qs: {
+        const ruCaptchaSendResponse = await axios.get(RuCaptchaClient.RU_CAPTCHA_SEND_ENDPOINT, {
+            params: {
                 key: this.apiKey,
                 method: 'userrecaptcha',
                 googlekey: googleSiteKey,
                 pageurl: currentUrl,
                 here: 'now',
-                json: '1',
+                json: '1'
                 // proxy: `${proxyUser}:${proxyPassword}@${proxyAddress}`,
                 // proxytype: proxyType,
-            },
+            }
         });
 
-        const ruCaptchaRequestId = ruCaptchaSendResponse.request;
+        const ruCaptchaRequestId = ruCaptchaSendResponse.data.request;
         if (ruCaptchaRequestId === 'ERROR_ZERO_BALANCE') {
             return Promise.reject(new Error(ruCaptchaRequestId));
         }
@@ -64,24 +62,22 @@ export default class RuCaptchaClient {
             ticks += 1;
             await pauseFor(RuCaptchaClient.TICK_PERIOD);
             try {
-                const ruCaptchaSolutionResponse = await rp.get({
-                    uri: RuCaptchaClient.RU_CAPTCHA_CHECK_RES_ENDPOINT,
-                    json: true,
-                    qs: {
+                const ruCaptchaSolutionResponse = await axios.get(RuCaptchaClient.RU_CAPTCHA_CHECK_RES_ENDPOINT, {
+                    params: {
                         key: this.apiKey,
                         action: 'get',
                         id: ruCaptchaRequestId,
-                        json: '1',
+                        json: '1'
                         // proxy: `${proxyUser}:${proxyPassword}@${proxyAddress}`,
                         // proxytype: proxyType,
-                    },
+                    }
                 });
                 this.logger.info("tick %s; ruCaptchaSolutionResponse: %s", ruCaptchaSolutionResponse);
-                if (parseInt(ruCaptchaSolutionResponse.status, 10) === 1) {
+                if (parseInt(ruCaptchaSolutionResponse.data.status, 10) === 1) {
                     captchaToken = ruCaptchaSolutionResponse.request;
                 }
-            } catch (e) {
-                this.logger.warn(e.toString());
+            } catch (e: unknown) {
+                this.logger.warn(e instanceof Error ? e.toString() : e);
             }
         }
         if (captchaToken) {

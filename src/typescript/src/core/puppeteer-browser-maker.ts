@@ -1,6 +1,6 @@
 import { addExtra, PuppeteerExtra, PuppeteerExtraPlugin } from 'puppeteer-extra';
-import vanillaPuppeteer, { Browser, Page } from "puppeteer";
-import { LoggingLevel, Logger as LoggerMaker } from "../utils/logger";
+import puppeteer, { Browser, Page } from "puppeteer";
+import { Logger as LoggerMaker } from "../utils/logger";
 import Settings from '../settings';
 import { Logger as LoggerInterface } from "winston";
 
@@ -20,12 +20,13 @@ export default class PuppeteerBrowserMaker {
 
         const settings = Settings.getInstance();
 
-        const puppeteerInstance: PuppeteerExtra = addExtra(vanillaPuppeteer);
+        //@ts-ignore
+        const puppeteerInstance: PuppeteerExtra = addExtra(puppeteer);
 
         const plugins: PuppeteerExtraPlugin[] = [
             this.getProxyPlugin(settings),
             this.getRecaptchaPlugin(settings),
-            StealthPlugin(),
+            StealthPlugin()
         ].filter((plugin): plugin is PuppeteerExtraPlugin => plugin !== null);
 
         plugins.forEach((plugin: PuppeteerExtraPlugin) => puppeteerInstance.use(plugin));
@@ -63,7 +64,7 @@ export default class PuppeteerBrowserMaker {
                     port: Number.parseInt(settings.proxy.port),
                     credentials: {
                         username: settings.proxy.username,
-                        password: settings.proxy.password,
+                        password: settings.proxy.password
                     }
                 });
             } else {
@@ -81,7 +82,7 @@ export default class PuppeteerBrowserMaker {
                 return RecaptchaPlugin({
                     provider: {
                         id: '2captcha',
-                        token: settings.captchaSolverApiKey,
+                        token: settings.captchaSolverApiKey
                     },
                     visualFeedback: true
                 });

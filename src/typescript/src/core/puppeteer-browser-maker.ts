@@ -1,9 +1,8 @@
 import { addExtra, PuppeteerExtra, PuppeteerExtraPlugin } from 'puppeteer-extra';
-import vanillaPuppeteer, { Browser, Page } from "puppeteer";
-import { LoggingLevel, Logger as LoggerMaker } from "../utils/logger";
+import puppeteer, { Browser, Page } from "puppeteer";
+import { Logger as LoggerMaker } from "../utils/logger";
 import Settings from '../settings';
 import { Logger as LoggerInterface } from "winston";
-
 
 // TODO: add .d.ts file or ignore this syntax
 const ProxyPlugin = require('puppeteer-extra-plugin-proxy');
@@ -20,7 +19,7 @@ export default class PuppeteerBrowserMaker {
 
         const settings = Settings.getInstance();
 
-        const puppeteerInstance: PuppeteerExtra = addExtra(vanillaPuppeteer);
+        const puppeteerInstance: PuppeteerExtra = addExtra(puppeteer);
 
         const plugins: PuppeteerExtraPlugin[] = [
             this.getProxyPlugin(settings),

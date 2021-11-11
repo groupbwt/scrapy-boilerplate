@@ -1,11 +1,9 @@
-import { Connection, Channel } from 'amqplib-as-promised';
-import { Message, Options } from 'amqplib';
+import amqplib, { Channel, Connection, Message, Options } from 'amqplib';
 import { Logger as LoggerInterface } from "winston";
-import { LoggingLevel, Logger } from "../utils/logger";
+import { Logger } from "../utils/logger";
 import { v4 as uuid4 } from 'uuid';
 import { RmqChannelWrapper } from "../interfaces/rmq-channel-wrapper";
 import { RabbitSettings } from "../interfaces/rabbit-settings";
-
 
 export class RabbitConnector {
     private readonly host: string;
@@ -20,7 +18,7 @@ export class RabbitConnector {
     private static channels: RmqChannelWrapper[] = [];
 
     public constructor(
-        private rabbitSettings: RabbitSettings,
+        private rabbitSettings: RabbitSettings
     ) {
         this.host = rabbitSettings.host;
         this.port = rabbitSettings.port;
@@ -102,15 +100,14 @@ export class RabbitConnector {
 
     private async connect(): Promise<void> {
         if (!RabbitConnector.connection) {
-            RabbitConnector.connection = new Connection(this.getConnectionURI());
-            await RabbitConnector.connection.init();
+            RabbitConnector.connection = await amqplib.connect(this.getConnectionURI());
             this.logger.debug(`opened connection on ${this.host}`);
         }
     }
 
     private async getChannel(queueName: string): Promise<Channel> {
         const channelItem = RabbitConnector.channels.find((channel) => channel.queueName === queueName);
-        let channel = !!channelItem ? channelItem.channel : null;
+        let channel: Channel | null = !!channelItem ? channelItem.channel : null;
         if (!channel) {
             await this.connect();
             channel = await RabbitConnector.connection!.createChannel();

@@ -1,4 +1,4 @@
-import { Channel } from 'amqplib-as-promised';
+import { Channel } from 'amqplib';
 
 export interface RmqChannelWrapper {
     queueName: string,

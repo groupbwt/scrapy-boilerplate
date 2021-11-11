@@ -57,9 +57,10 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
         };
 
         this.browserOptions = {
+            defaultViewport: { width: 1920, height: 1080 },
             headless: strToBool(process.env.HEADLESS, true),
             devtools: strToBool(process.env.DEVTOOLS, false),
-            args: []
+            args: [`--window-size=${1920},${1080}`]
         };
 
         this.captchaSolverEnabled = strToBool(process.env.CAPTCHA_SOLVER_ENABLED);

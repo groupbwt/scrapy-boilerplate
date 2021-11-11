@@ -1,4 +1,4 @@
-import { Browser, Page, Request } from "puppeteer";
+import { Browser, Page, HTTPRequest } from "puppeteer";
 import { LoggingLevel, Logger } from "../../utils/logger";
 import InputItem from "../../items/input-item/input-item";
 import OutputItem from "../../items/output-item/output-item";
@@ -14,8 +14,8 @@ export default abstract class Spider {
     public settings: Settings;
     public logger = Logger.createLogger(this.constructor.name);
     public taskQueueName: string | null = null;
-    protected blockedRequestList: Array<(request: Request) => boolean> = [];
-    protected allowedRequestList: Array<(request: Request) => boolean> = [];
+    protected blockedRequestList: Array<(request: HTTPRequest) => boolean> = [];
+    protected allowedRequestList: Array<(request: HTTPRequest) => boolean> = [];
     protected browser: Browser | null = null;
     protected page: Page | null = null;
 
@@ -44,7 +44,7 @@ export default abstract class Spider {
 
     protected async addRequestFilter(page: Page) {
         await page.setRequestInterception(true);
-        page.on('request', async (request: Request) => {
+        page.on('request', async (request: HTTPRequest) => {
                 if (this.allowedRequestList.some(func => func(request))) {
                     await request.continue();
                     return;

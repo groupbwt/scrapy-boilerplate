@@ -1,13 +1,13 @@
-import { DirectNavigationOptions, Page, Response } from "puppeteer";
+import { HTTPResponse, Page, WaitForOptions } from "puppeteer";
 
 export default async function gotoWithRetries(
     page: Page,
     url: string,
-    options?: DirectNavigationOptions,
+    options?: WaitForOptions & { referer?: string; },
     maxRetries: number = 3
-): Promise<Response | null> {
+): Promise<HTTPResponse | null> {
     let pageLoadTries = 0;
-    let lastError: Error | null = null;
+    let lastError: Error | unknown;
     while (pageLoadTries < maxRetries) {
         try {
             return await page.goto(url, options);

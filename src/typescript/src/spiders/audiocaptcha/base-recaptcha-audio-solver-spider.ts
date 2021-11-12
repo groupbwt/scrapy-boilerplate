@@ -7,12 +7,12 @@ import ExampleOutputItem from "../../items/output-item/example-output-item";
 import gotoWithRetries from "../../utils/puppeteer/goto-with-retries";
 import RecaptchaAudioSolver from "../../utils/puppeteer/recaptcha-audio-solver";
 import path from "path";
-import { Request } from "puppeteer";
+import { HTTPRequest } from "puppeteer";
 
 export default abstract class BaseRecaptchaAudioSolverSpider extends Spider {
     private readonly recaptchaWebAudioSolver: RecaptchaAudioSolver;
 
-    protected blockedRequestList: Array<(request: Request) => boolean> = [
+    protected blockedRequestList: Array<(request: HTTPRequest) => boolean> = [
         (request) => ["image"].includes(request.resourceType()),
         (request) => request.url().includes('google.com/recaptcha/') && ["image"].includes(request.resourceType())
     ];
@@ -46,7 +46,7 @@ export default abstract class BaseRecaptchaAudioSolverSpider extends Spider {
                 if (attempt === maxRetryTimes - 1) {
                     this.logger.error(e);
                     yield new ErrorItem(
-                        e.toString(),
+                        e instanceof Error ? e.toString() : String(e),
                         null,
                         inputMessage.url,
                         null,
@@ -65,18 +65,18 @@ export default abstract class BaseRecaptchaAudioSolverSpider extends Spider {
         });
 
         if (inputMessage.url.includes('e-beszamolo.im')) {
-            const companyNameInput = await this.page!.waitForSelector('#firmName', { visible: true });
+            const companyNameInput = (await this.page!.waitForSelector('#firmName', { visible: true }))!;
             await companyNameInput.type('food');
             await this.recaptchaWebAudioSolver.recaptchaWebAudioSolver(this.page!);
-            const searchButton = await this.page!.waitForSelector('#btnSubmit:not([disabled])', { visible: true });
+            const searchButton = (await this.page!.waitForSelector('#btnSubmit:not([disabled])', { visible: true }))!;
             await searchButton.click();
         } else if (inputMessage.url.includes('e-cegjegyzek.hu')) {
-            const findInput = await this.page!.waitForSelector('#kereses_cegnev', { visible: true });
+            const findInput = (await this.page!.waitForSelector('#kereses_cegnev', { visible: true }))!;
             await findInput.type(Math.random().toString(36).substr(0, 5), { delay: 150 });
-            const submitButton = await this.page!.waitForSelector('#keresesbtn', { visible: true });
+            const submitButton = (await this.page!.waitForSelector('#keresesbtn', { visible: true }))!;
             await submitButton.click();
             await this.recaptchaWebAudioSolver.recaptchaWebAudioSolver(this.page!);
-            const confirmButton = await this.page!.waitForSelector('#popupOk', { visible: true });
+            const confirmButton = (await this.page!.waitForSelector('#popupOk', { visible: true }))!;
             await confirmButton.click();
         } else {
             await this.recaptchaWebAudioSolver.recaptchaWebAudioSolver(this.page!);

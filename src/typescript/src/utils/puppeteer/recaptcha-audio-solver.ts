@@ -1,4 +1,4 @@
-import { ElementHandle, Frame, Page, Response as HTTPResponse } from "puppeteer";
+import { ElementHandle, Frame, HTTPResponse, Page } from "puppeteer";
 import { waitForFrame } from "./wait-for-frame";
 import WitAi from "../wit-ai";
 import { Logger } from "../logger";
@@ -35,7 +35,7 @@ export default class RecaptchaAudioSolver {
 
         const responseOrErrorSelector = await Promise.race([
             audioResponsePromise,
-            captchaContentFrame.waitForSelector('.rc-doscaptcha-body-text', { visible: true })
+            captchaContentFrame.waitForSelector('.rc-doscaptcha-body-text', { visible: true }) as Promise<ElementHandle>
         ]);
         if (this.isHTTPResponse(responseOrErrorSelector)) {
             const audioBuffer = await responseOrErrorSelector.buffer();
@@ -59,7 +59,7 @@ export default class RecaptchaAudioSolver {
 
         const captchaContentFrame = await Promise.race([
             waitForFrame(page, 'iframe[src*="google.com/recaptcha/"][src*="/bframe"]', { visible: true }),
-            captchaUIFrame.waitForSelector('.recaptcha-checkbox-checked', { visible: true })
+            captchaUIFrame.waitForSelector('.recaptcha-checkbox-checked', { visible: true }) as Promise<ElementHandle>
         ]);
 
         const audioResponsePromise: Promise<HTTPResponse> = page.waitForResponse(res => {
@@ -93,7 +93,7 @@ export default class RecaptchaAudioSolver {
     }
 
     private async enterAudioMessage(audioMessage: string, captchaContentFrame: Frame, captchaUIFrame: Frame): Promise<void> {
-        const enterMessageElement = await captchaContentFrame.waitForSelector('#audio-response', { visible: true });
+        const enterMessageElement = (await captchaContentFrame.waitForSelector('#audio-response', { visible: true }))!;
         await enterMessageElement.type(audioMessage);
 
         const verifyButton = await captchaContentFrame.waitForSelector('#recaptcha-verify-button', { visible: true });

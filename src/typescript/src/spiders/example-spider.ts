@@ -1,6 +1,6 @@
 import Spider from "../core/spiders/spider";
 import RmqPipeline from "../pipelines/rmq-pipeline";
-import { Response } from "puppeteer";
+import { HTTPResponse } from "puppeteer";
 import gotoWithRetries from "../utils/puppeteer/goto-with-retries";
 import ProcessArguments from "../interfaces/argv";
 
@@ -27,8 +27,8 @@ export default class ExampleSpider extends Spider {
     }
 
     async* process(inputMessage: ExampleInputItem): AsyncIterableIterator<ExampleOutputItem | ErrorItem> {
-        let error = null;
-        let response: Response | null = null;
+        let error: Error | unknown;
+        let response: HTTPResponse | null = null;
         let url = inputMessage.url;
 
         for (let attempt = 0; attempt < 5; attempt++) {
@@ -58,7 +58,7 @@ export default class ExampleSpider extends Spider {
         if (error) {
             this.logger.error(error);
             yield new ErrorItem(
-                error.toString(),
+                error instanceof Error ? error.toString() : String(error),
                 null, // error.stack ? error.stack: null,
                 response !== null ? response.url() : url,
                 !!response ? response.status() : null,
@@ -68,7 +68,7 @@ export default class ExampleSpider extends Spider {
         }
     }
 
-    async isErrorResponseStatusCode(response: Response | null): Promise<boolean> {
+    async isErrorResponseStatusCode(response: HTTPResponse | null): Promise<boolean> {
         if (!!response) {
             const status = response.status();
             return status >= 400;

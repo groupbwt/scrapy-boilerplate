@@ -7,7 +7,7 @@ export default async function sleep(timeout: millisecond): Promise<void> {
                 resolve();
             }, timeout);
         } catch (e) {
-            reject(new Error(e.toString()));
+            reject(e instanceof Error ? e.toString() : e);
         }
     });
 }

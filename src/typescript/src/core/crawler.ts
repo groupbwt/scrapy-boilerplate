@@ -1,9 +1,9 @@
 import spiders from "../spiders";
 import { Logger as LoggerInterface } from "winston";
-import { LoggingLevel, Logger } from "../utils/logger";
+import { Logger } from "../utils/logger";
 import BasePipeline from "../pipelines/base-pipeline";
 import { RabbitConnector } from "../rmq/rabbit-connector";
-import { Channel, Message } from "amqplib-as-promised/lib";
+import { Channel, Message } from "amqplib";
 import Settings from "../settings";
 import Spider from "./spiders/spider";
 import Argv from "../interfaces/argv";

@@ -1,7 +1,6 @@
-import dotenv from 'dotenv';
 import strToBool from "./utils/strtobool";
 import { millisecond } from "./types";
-import { LaunchOptions } from "puppeteer";
+import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from "puppeteer";
 import ExampleSpiderProperties from "./interfaces/example-spider-properties";
 import SettingsProperties from "./interfaces/settings-properties";
 import { ProxySettings } from "./interfaces/proxy-settings";
@@ -15,7 +14,10 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
 
     public readonly rabbit: RabbitSettings;
 
-    public readonly browserOptions: LaunchOptions;
+    public readonly browserOptions: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
+        product?: Product;
+        extraPrefsFirefox?: Record<string, unknown>;
+    };
 
     public readonly captchaSolverEnabled: boolean;
     public readonly captchaSolverApiKey?: string;
@@ -52,7 +54,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
             port: process.env.RABBITMQ_PORT ? Number.parseInt(process.env.RABBITMQ_PORT) : 5672,
             username: process.env.RABBITMQ_USERNAME ? process.env.RABBITMQ_USERNAME : '',
             password: process.env.RABBITMQ_PASSWORD ? process.env.RABBITMQ_PASSWORD : '',
-            vhost: process.env.RABBITMQ_VIRTUAL_HOST ? process.env.RABBITMQ_VIRTUAL_HOST : '/',
+            vhost: process.env.RABBITMQ_VIRTUAL_HOST ? process.env.RABBITMQ_VIRTUAL_HOST : '/'
         };
 
         this.browserOptions = {

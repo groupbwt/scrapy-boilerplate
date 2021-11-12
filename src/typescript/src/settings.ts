@@ -29,6 +29,8 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
     public readonly EXAMPLE_SPIDER_TASK_QUEUE: string;
     public readonly EXAMPLE_SPIDER_ERROR_QUEUE: string;
 
+    public readonly WIT_AI_ACCESS_KEY: string;
+
     public static getInstance(settingsProperties: SettingsProperties = {}): Settings {
         if (!this.instance) {
             this.instance = new this();
@@ -58,9 +60,10 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
         };
 
         this.browserOptions = {
+            defaultViewport: { width: 1920, height: 1080 },
             headless: strToBool(process.env.HEADLESS, true),
             devtools: strToBool(process.env.DEVTOOLS, false),
-            args: []
+            args: [`--window-size=${1920},${1080}`]
         };
 
         this.captchaSolverEnabled = strToBool(process.env.CAPTCHA_SOLVER_ENABLED);
@@ -68,5 +71,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
 
         this.EXAMPLE_SPIDER_TASK_QUEUE = process.env.EXAMPLE_SPIDER_TASK_QUEUE ? process.env.EXAMPLE_SPIDER_TASK_QUEUE : 'example_spider_task_queue';
         this.EXAMPLE_SPIDER_ERROR_QUEUE = process.env.EXAMPLE_SPIDER_ERROR_QUEUE ? process.env.EXAMPLE_SPIDER_ERROR_QUEUE : 'example_spider_error_queue';
+
+        this.WIT_AI_ACCESS_KEY = process.env.WIT_AI_ACCESS_KEY ? process.env.WIT_AI_ACCESS_KEY : '';
     }
 }

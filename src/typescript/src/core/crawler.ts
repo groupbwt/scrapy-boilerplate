@@ -22,7 +22,7 @@ export default class Crawler {
 
         const pipelines: BasePipeline[] = settings.pipelines.map(<T extends BasePipeline>(PipelineChild: typeof BasePipeline): T => {
             //@ts-ignore TODO
-            return new PipelineChild(argv, settings);
+            return new PipelineChild(spider, argv, settings);
         });
 
         for await (const pipeline of pipelines) {

@@ -59,11 +59,12 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
             vhost: process.env.RABBITMQ_VIRTUAL_HOST ? process.env.RABBITMQ_VIRTUAL_HOST : '/'
         };
 
+        const [width, height] = [1920, 1080];
         this.browserOptions = {
-            defaultViewport: { width: 1920, height: 1080 },
+            defaultViewport: { width, height },
             headless: strToBool(process.env.HEADLESS, true),
             devtools: strToBool(process.env.DEVTOOLS, false),
-            args: [`--window-size=${1920},${1080}`]
+            args: [`--window-size=${width},${height}`]
         };
 
         this.captchaSolverEnabled = strToBool(process.env.CAPTCHA_SOLVER_ENABLED);

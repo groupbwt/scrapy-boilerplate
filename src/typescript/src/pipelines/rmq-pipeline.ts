@@ -3,7 +3,7 @@ import { RabbitConnector } from "../rmq/rabbit-connector";
 import OutputItem from "../items/output-item/output-item";
 
 export default class RmqPipeline extends BasePipeline {
-    private connector: RabbitConnector | undefined;
+    protected connector: RabbitConnector | undefined;
 
     async init(): Promise<void> {
         this.connector = new RabbitConnector(this.settings.rabbit);

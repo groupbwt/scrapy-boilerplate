@@ -88,7 +88,7 @@ export default class Crawler {
                 const messageJson = JSON.parse(msg.content.toString());
                 for await (const item of spider.consume(messageJson)) {
                     for (const pipeline of pipelines) {
-                        await pipeline.process(item);
+                        await pipeline.process(item, msg);
                     }
                 }
 

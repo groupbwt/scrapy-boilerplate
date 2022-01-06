@@ -1,7 +1,7 @@
 import { ElementHandle, Frame, HTTPResponse, Page } from "puppeteer";
-import { waitForFrame } from "./wait-for-frame";
-import WitAi from "../wit-ai";
-import { Logger } from "../logger";
+import { waitForFrame } from "../../utils/puppeteer/wait-for-frame";
+import WitAi from "../../utils/wit-ai";
+import { Logger } from "../../utils/logger";
 import winston from "winston";
 import fs from "fs";
 import path from "path";
@@ -17,36 +17,34 @@ export default class RecaptchaAudioSolver {
         this.saveDirectory = saveDirectory && fs.existsSync(saveDirectory) ? saveDirectory : null;
     }
 
-    public async recaptchaWebAudioSolver(page: Page): Promise<void> {
+    public async solve(page: Page): Promise<string> {
         this.logger.info('start solving audiocaptcha');
         const [isSolved, captchaUIFrame, captchaContentFrameOrNull, audioResponsePromise] = await this.openAudioCaptchaModalWindow(page);
         if (isSolved) {
             audioResponsePromise.catch(e => null);
-            return;
-        }
-
-        const captchaContentFrame = captchaContentFrameOrNull!;
-
-        // const audioElement = await captchaSolverFrame.waitForSelector('.rc-audiochallenge-tdownload-link[href]', {visible: true});
-        // const audioUrl = await captchaSolverFrame.evaluate(el => el.href, audioElement);
-
-        // const playButton = await captchaContentFrame.waitForSelector('button[aria-labelledby]', { visible: true });
-        // await captchaContentFrame.evaluate(e => e.click(), playButton);
-
-        const responseOrErrorSelector = await Promise.race([
-            audioResponsePromise,
-            captchaContentFrame.waitForSelector('.rc-doscaptcha-body-text', { visible: true }) as Promise<ElementHandle>
-        ]);
-        if (this.isHTTPResponse(responseOrErrorSelector)) {
-            const audioBuffer = await responseOrErrorSelector.buffer();
-            const audioMessage = await this.speechAudio(page, audioBuffer);
-            await this.enterAudioMessage(audioMessage, captchaContentFrame, captchaUIFrame);
-            this.saveAudioToDirectory(page, audioMessage, audioBuffer);
-            this.logger.info('audiocaptcha solved');
         } else {
-            const message = await captchaContentFrame.evaluate(e => e.textContent, responseOrErrorSelector);
-            throw new Error(`an error message is received when solving the captcha (1): "${message}"`);
+            const captchaContentFrame = captchaContentFrameOrNull!;
+
+            const responseOrErrorSelector = await Promise.race([
+                audioResponsePromise,
+                captchaContentFrame.waitForSelector('.rc-doscaptcha-body-text', { visible: true }) as Promise<ElementHandle>
+            ]);
+            if (this.isHTTPResponse(responseOrErrorSelector)) {
+                const audioBuffer = await responseOrErrorSelector.buffer();
+                const audioMessage = await this.speechAudio(page, audioBuffer);
+                await this.enterAudioMessage(audioMessage, captchaContentFrame, captchaUIFrame);
+                this.saveAudioToDirectory(page, audioMessage, audioBuffer);
+            } else {
+                const message = await captchaContentFrame.evaluate(e => e.textContent, responseOrErrorSelector);
+                throw new Error(`an error message is received when solving the captcha (1): "${message}"`);
+            }
         }
+
+        const gRecaptchaResponse = await page.evaluate(() => {
+            return (document.querySelector('.g-recaptcha-response') as HTMLTextAreaElement).value;
+        });
+        this.logger.info(`audiocaptcha solved.`);
+        return gRecaptchaResponse;
     }
 
     private async openAudioCaptchaModalWindow(page: Page): Promise<[boolean, Frame, Frame | null, Promise<HTTPResponse>]> {

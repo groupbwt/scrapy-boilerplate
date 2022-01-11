@@ -3,10 +3,10 @@ import logging
 import os
 from datetime import datetime, timedelta
 from distutils.util import strtobool
+from typing import Dict
 
 from dotenv import load_dotenv
 from scrapy.utils.log import configure_logging
-from typing import Dict
 
 load_dotenv()
 
@@ -68,8 +68,6 @@ RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
 RABBITMQ_USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
 RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
 RABBITMQ_VIRTUAL_HOST = os.getenv("RABBITMQ_VIRTUAL_HOST", "/")
-
-WIT_AI_ACCESS_KEY: str = os.getenv("WIT_AI_ACCESS_KEY", "")
 
 try:
     HTTPCACHE_ENABLED = strtobool(os.getenv("HTTPCACHE_ENABLED", "False"))

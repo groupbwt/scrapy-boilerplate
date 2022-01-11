@@ -16,13 +16,10 @@ import RecaptchaPipeline from "./recaptcha-pipeline";
 export default abstract class RecaptchaSpider extends Spider {
     private readonly recaptchaAudioSolver: RecaptchaAudioSolver;
     private CACHE_DIR: string = path.join(process.cwd(), 'storage', 'cache');
-    private totalBytes: number = 0;
 
     protected blockedRequestList: Array<(request: HTTPRequest) => boolean> = [
         (request) => ["image"].includes(request.resourceType()),
-        (request) => request.url().includes('google.com/recaptcha/') && ["image"].includes(request.resourceType()),
         (request) => request.url().includes('.woff'),
-        (request) => request.url().includes('.png'),
         (request) => request.url().includes('.ico'),
         (request) => request.url().includes('data:image/png')
     ];
@@ -148,12 +145,6 @@ export default abstract class RecaptchaSpider extends Spider {
         });
 
         page.on('response', async (r: HTTPResponse) => {
-            const headers = r.headers();
-            if (headers['content-length'] !== undefined && headers['local-cache'] === undefined) {
-                const length = parseInt(headers['content-length']);
-                this.totalBytes += length;
-            }
-
             if (this.cacheEnabled && r.ok()) {
                 if (this.isCached(r.request())) {
                     const filePath = this.requestToFilename(r.request());

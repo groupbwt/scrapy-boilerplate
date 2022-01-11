@@ -1,4 +1,4 @@
-import RecaptchaSpider from "../extensions/recaptcha-audio-solver/recaptcha-spider";
+import RecaptchaSpider from "../../extensions/recaptcha-audio-solver/recaptcha-spider";
 
 export default class RecaptchaSolverWorkerSpider extends RecaptchaSpider {
     public static spiderName: string = 'recaptcha-spider';

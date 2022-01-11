@@ -27,6 +27,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
     public readonly pipelines: any[] = [];
 
     public readonly EXAMPLE_SPIDER_TASK_QUEUE: string;
+    public readonly EXAMPLE_SPIDER_RESULT_QUEUE: string;
     public readonly EXAMPLE_SPIDER_ERROR_QUEUE: string;
 
     public readonly WIT_AI_ACCESS_KEY: string;
@@ -71,6 +72,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
         this.captchaSolverApiKey = process.env.CAPTCHA_SOLVER_API_KEY;
 
         this.EXAMPLE_SPIDER_TASK_QUEUE = process.env.EXAMPLE_SPIDER_TASK_QUEUE ? process.env.EXAMPLE_SPIDER_TASK_QUEUE : 'example_spider_task_queue';
+        this.EXAMPLE_SPIDER_RESULT_QUEUE = process.env.EXAMPLE_SPIDER_RESULT_QUEUE ? process.env.EXAMPLE_SPIDER_RESULT_QUEUE : 'example_spider_result_queue';
         this.EXAMPLE_SPIDER_ERROR_QUEUE = process.env.EXAMPLE_SPIDER_ERROR_QUEUE ? process.env.EXAMPLE_SPIDER_ERROR_QUEUE : 'example_spider_error_queue';
 
         this.WIT_AI_ACCESS_KEY = process.env.WIT_AI_ACCESS_KEY ? process.env.WIT_AI_ACCESS_KEY : '';

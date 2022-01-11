@@ -82,23 +82,18 @@ export default abstract class RecaptchaSpider extends Spider {
     }
 
     public async* parsePageWithCaptcha(inputMessage: RecaptchaInputItem): AsyncIterableIterator<RecaptchaOutputItem | ErrorItem> {
-        // TODO:
-        await this.page!.setExtraHTTPHeaders({
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
-        });
+        // await this.page!.setExtraHTTPHeaders({
+        //     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
+        // });
         this.setSitekey(inputMessage.sitekey);
-        const timeout = 30000;
         await Promise.all([
-            this.page!.goto(inputMessage.url, {
-                waitUntil: ['load', "domcontentloaded", "networkidle0"],
-                timeout
-            }),
-            this.page!.waitForResponse((r: HTTPResponse) => r.url().includes('api.js'), { timeout }),
-            this.page!.waitForResponse((r: HTTPResponse) => r.url().includes('recaptcha__en.js'), { timeout })
+            this.page!.goto(inputMessage.url, { waitUntil: ['load', "domcontentloaded", "networkidle0"] }),
+            this.page!.waitForResponse((r: HTTPResponse) => r.url().includes('api.js')),
+            this.page!.waitForResponse((r: HTTPResponse) => r.url().includes('recaptcha__en.js'))
         ]);
 
         const gRecaptchaResponse = await this.recaptchaAudioSolver.solve(this.page!);
-        yield { "g_recaptcha_response": gRecaptchaResponse };
+        yield new RecaptchaOutputItem(gRecaptchaResponse);
     }
 
     public setSitekey(sitekey: string) {

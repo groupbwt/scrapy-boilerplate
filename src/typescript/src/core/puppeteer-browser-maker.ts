@@ -1,5 +1,6 @@
 import { addExtra, PuppeteerExtra, PuppeteerExtraPlugin } from 'puppeteer-extra';
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer from 'puppeteer-extra';
+import { Browser, Page } from "puppeteer";
 import { Logger as LoggerMaker } from "../utils/logger";
 import Settings from '../settings';
 import { Logger as LoggerInterface } from "winston";
@@ -20,7 +21,6 @@ export default class PuppeteerBrowserMaker {
 
         const settings = Settings.getInstance();
 
-        //@ts-ignore
         const puppeteerInstance: PuppeteerExtra = addExtra(puppeteer);
 
         const plugins: PuppeteerExtraPlugin[] = [

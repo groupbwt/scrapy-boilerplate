@@ -27,8 +27,8 @@ export default abstract class Spider {
 
     abstract convertArgsToInputMessage(args: ProcessArguments | object): InputItem;
 
-    //@ts-ignore
-    abstract async* process(inputMessage: InputItem): AsyncIterableIterator<OutputItem>;
+
+    abstract process(inputMessage: InputItem): AsyncIterableIterator<OutputItem>;
 
     public async* run(args: ProcessArguments): AsyncIterableIterator<OutputItem> {
         for await (const item of this.process(this.convertArgsToInputMessage(args))) {

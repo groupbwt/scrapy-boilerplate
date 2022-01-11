@@ -4,10 +4,9 @@ import Argv from "./interfaces/argv";
 import { loadDotEnv } from "./utils/laod-dot-env";
 import { Logger } from "./utils/logger";
 
-//@ts-ignore
 yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
     yargs.positional('name', {
-        describe: 'spider name',
+        describe: 'spider name'
     });
 }, main)
     .options({
@@ -15,7 +14,7 @@ yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
             type: 'string',
             default: 'parser',
             choices: ['parser', 'worker']
-        },
+        }
         // 'task': {
         //     type: 'string',
         //     demandOption: true,

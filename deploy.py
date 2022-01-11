@@ -16,6 +16,9 @@ server_dir = args.server_dir
 release_candidate_dir = args.release_candidate_dir
 project_prefix = args.project_prefix
 
+if not project_prefix:
+    raise Exception('The PREFIX environment variable is not set')
+
 client = SSHClient()
 client.load_system_host_keys()
 client.connect(host, username=user)

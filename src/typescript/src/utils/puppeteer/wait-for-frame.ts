@@ -10,6 +10,6 @@ export async function waitForFrame(
     if (result) {
         return result;
     } else {
-        throw Error('extracted element is not a frame');
+        throw new Error('extracted element is not a frame');
     }
 }

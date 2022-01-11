@@ -36,7 +36,7 @@ export default class Crawler {
             } else if (argv.type === 'worker') {
                 await this.processWorker(argv, spider, settings, pipelines);
             } else {
-                throw Error('Missing required field argv.type');
+                throw new Error('Missing required field argv.type');
             }
             for await (const pipeline of pipelines) {
                 await pipeline.close();
@@ -54,7 +54,7 @@ export default class Crawler {
         } else {
             const message = `Spider with name "${spiderName}" not found`;
             Crawler.logger.error(message);
-            throw Error(message);
+            throw new Error(message);
         }
     }
 

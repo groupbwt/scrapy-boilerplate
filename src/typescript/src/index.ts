@@ -2,8 +2,9 @@ import yargs from 'yargs';
 import Crawler from "./core/crawler";
 import Argv from "./interfaces/argv";
 import { loadDotEnv } from "./utils/laod-dot-env";
-import { LoggingLevel, Logger } from "./utils/logger";
+import { Logger } from "./utils/logger";
 
+//@ts-ignore
 yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {
     yargs.positional('name', {
         describe: 'spider name',

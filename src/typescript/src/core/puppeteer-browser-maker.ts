@@ -35,9 +35,8 @@ export default class PuppeteerBrowserMaker {
             settings.browserOptions.args = [];
         }
 
-        settings.browserOptions.args.push("--disable-features=site-per-process");
         settings.browserOptions.args.push('--disable-web-security');
-        settings.browserOptions.args.push('--disable-features=IsolateOrigins,site-per-process');
+        settings.browserOptions.args.push('--disable-features=IsolateOrigins,site-per-process,UserAgentClientHint');
 
         if (!(process.platform === "win32")) {
             this.logger.warn('DISABLE SANDBOX');

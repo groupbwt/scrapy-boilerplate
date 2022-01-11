@@ -1,13 +1,13 @@
-import Spider from "../core/spiders/spider";
-import RmqPipeline from "../pipelines/rmq-pipeline";
+import Spider from "../../core/spiders/spider";
+import RmqPipeline from "../../pipelines/rmq-pipeline";
 import { HTTPResponse } from "puppeteer";
-import gotoWithRetries from "../utils/puppeteer/goto-with-retries";
-import ProcessArguments from "../interfaces/argv";
+import gotoWithRetries from "../../utils/puppeteer/goto-with-retries";
+import ProcessArguments from "../../interfaces/argv";
 
-import ExampleSpiderProperties from "../interfaces/example-spider-properties";
-import ErrorItem from "../items/output-item/error-item";
-import ExampleInputItem from "../items/input-item/example-input-item";
-import ExampleOutputItem from "../items/output-item/example-output-item";
+import ExampleSpiderProperties from "../../interfaces/example-spider-properties";
+import ErrorItem from "../../items/output-item/error-item";
+import ExampleInputItem from "../../items/input-item/example-input-item";
+import ExampleOutputItem from "../../items/output-item/example-output-item";
 
 
 export default class ExampleSpider extends Spider {

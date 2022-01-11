@@ -11,9 +11,9 @@ import ProcessArguments from "../../interfaces/argv";
 export default abstract class Spider {
     public static spiderName: string = 'base';
 
+    abstract taskQueueName: string;
     public settings: Settings;
     public logger = Logger.createLogger(this.constructor.name);
-    public taskQueueName: string | null = null;
     protected blockedRequestList: Array<(request: HTTPRequest) => boolean> = [];
     protected allowedRequestList: Array<(request: HTTPRequest) => boolean> = [];
     protected browser: Browser | null = null;

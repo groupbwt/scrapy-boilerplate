@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from helpers import mysql_connection_string
+from utils import mysql_connection_string
 
 
 class BaseCommand(ScrapyCommand):

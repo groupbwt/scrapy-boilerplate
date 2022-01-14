@@ -65,9 +65,9 @@ class BaseCSVExporter(ScrapyCommand):
                 rows = [rows]
             else:
                 rows = list(rows)
+            rows = self.exclude_columns(rows)
             self.get_headers(rows[0])
             self.get_file_path()
-            rows = self.exclude_columns(rows)
             self.save(rows)
             deferred_interactions = []
             for row in rows:

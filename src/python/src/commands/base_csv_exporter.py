@@ -14,8 +14,6 @@ from scrapy.utils.project import get_project_settings
 from twisted.enterprise import adbapi
 from twisted.internet import reactor, defer
 
-from database.models import Product
-
 
 class BaseCSVExporter(ScrapyCommand):
     def __init__(self, table=None):
@@ -40,6 +38,7 @@ class BaseCSVExporter(ScrapyCommand):
 
     def execute(self, _args, opts):
         self.init_db_connection_pool()
+        self.logger.debug('Connection established.')
         reactor.callFromThread(self.produce_data)
 
     def produce_data(self, _result=None):
@@ -59,6 +58,7 @@ class BaseCSVExporter(ScrapyCommand):
 
     def export(self, rows):
         if not rows:
+            self.logger.debug('Export finished: nothing found.')
             reactor.stop()
         else:
             if self.chunk_size == 1:
@@ -78,6 +78,7 @@ class BaseCSVExporter(ScrapyCommand):
 
     def save(self, rows):
         with open(self.file_path, 'a', encoding='utf-8') as file:
+            self.logger.debug(f'Exporting to {self.file_path}...')
             writer = csv.DictWriter(file, fieldnames=self.headers)
             writer.writerows(rows)
 
@@ -96,7 +97,7 @@ class BaseCSVExporter(ScrapyCommand):
         )
 
     def build_select_query_stmt(self, chunk_size):
-        return select(Product).limit(chunk_size).where(Product.sent_to_customer == None)
+        return select(self.table).limit(chunk_size).where(self.table.sent_to_customer == None)
 
     def update(self, transaction, row):
         stmt = self.build_update_query_stmt(row)
@@ -106,8 +107,8 @@ class BaseCSVExporter(ScrapyCommand):
 
     def build_update_query_stmt(self, row):
         export_date = {self.export_date_column: date.today().strftime('%Y-%m-%d')}
-        update_date_stmt = update(Product).values(**export_date)
-        return update_date_stmt.where(Product.id == row['id'])
+        update_date_stmt = update(self.table).values(**export_date)
+        return update_date_stmt.where(self.table.id == row['id'])
 
     def get_headers(self, row):
         if not self.headers:
@@ -127,7 +128,7 @@ class BaseCSVExporter(ScrapyCommand):
             for column in self.exclude:
                 for row in rows:
                     del row[column]
-                return rows
+            return rows
         return rows
 
     def run(self, args, opts):

@@ -8,21 +8,24 @@ from sqlalchemy.dialects.mysql import insert
 
 
 class BaseDBPipeline:
+    """Base pipeline for saving items direct to database,
+    for correct work it must be inherited and its table property must be overridden"""
+    table = None
+
     def __init__(self, project_settings):
         self.project_settings = project_settings
-        self.logger = logging.getLogger(BaseDBPipeline.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.db_connection_pool = None
         self.db_api = 'MySQLdb'
         self.charset = 'utf8mb4'
-        self.table = None
+        if not getattr(self, 'table', None):
+            raise NotConfigured('Table attribute is not set for DB pipeline.')
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(crawler.settings)
 
     def open_spider(self, spider):
-        if not self.table:
-            raise NotConfigured('Table attribute is not set for DB pipeline.')
         self.db_connection_pool = adbapi.ConnectionPool(
             self.db_api,
             host=self.project_settings.get("DB_HOST"),
@@ -46,7 +49,7 @@ class BaseDBPipeline:
         if isinstance(stmt, SQLAlchemyExecutable):
             stmt_compiled = stmt.compile(compile_kwargs={'literal_binds': True})
             transaction.execute(str(stmt_compiled))
-            self.logger.debug('Item saved to database.')
+            self.logger.debug('Item was successfully saved to database.')
 
     def build_insert_update_query_stmt(self, item):
         stmt = insert(self.table).values(**item)

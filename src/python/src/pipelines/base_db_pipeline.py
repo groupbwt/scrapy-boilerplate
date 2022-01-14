@@ -2,6 +2,7 @@ import logging
 
 from MySQLdb.cursors import DictCursor
 from scrapy.exceptions import NotConfigured
+from sqlalchemy.dialects import mysql
 from twisted.enterprise import adbapi
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
 from sqlalchemy.dialects.mysql import insert
@@ -47,10 +48,11 @@ class BaseDBPipeline:
     def save_item(self, transaction, item):
         stmt = self.build_insert_update_query_stmt(item)
         if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(compile_kwargs={'literal_binds': True})
-            transaction.execute(str(stmt_compiled))
+            stmt_compiled = stmt.compile(dialect=mysql.dialect(), compile_kwargs={'literal_binds': False})
+            transaction.execute(str(stmt_compiled), tuple(stmt_compiled.params.values()))
             self.logger.debug('Item was successfully saved to database.')
 
     def build_insert_update_query_stmt(self, item):
+        """If there are fields not to be saved it is possible to override this method"""
         stmt = insert(self.table).values(**item)
         return stmt.on_duplicate_key_update(**stmt.inserted)

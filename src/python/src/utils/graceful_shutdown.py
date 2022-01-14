@@ -18,14 +18,15 @@ class GracefulShutdown:
         signal.signal(signal.SIGTERM, self.terminate_signal_handler)
         self.force_shutdown: bool = force_shutdown
 
-    def terminate_signal_handler(self, signum, frame):
+    def terminate_signal_handler(self, signum: int, frame):
+        name: str = signal.Signals(signum).name
         if self.force_shutdown:
-            self.logger.warning('Received SIGINT signal, forcing unclean shutdown')
+            self.logger.warning(f'Received {name} signal, forcing unclean shutdown')
             sys.exit(0)
 
         if self.is_terminate_signal_received:
-            self.logger.warning('Received SIGINT twice, forcing unclean shutdown')
+            self.logger.warning(f'Received {name} twice, forcing unclean shutdown')
             sys.exit(0)
         else:
             self.is_terminate_signal_received = True
-            self.logger.warning('Received SIGINT, shutting down gracefully. Send again to force')
+            self.logger.warning(f'Received {name}, shutting down gracefully. Send again to force')

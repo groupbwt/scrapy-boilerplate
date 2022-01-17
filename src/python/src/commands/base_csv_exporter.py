@@ -6,7 +6,7 @@ from os import path
 
 from MySQLdb.cursors import DictCursor
 from scrapy.commands import ScrapyCommand
-from sqlalchemy import select
+from sqlalchemy import select, Table
 from sqlalchemy.sql import update
 from sqlalchemy.dialects.mysql import dialect
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
@@ -20,23 +20,24 @@ class BaseCSVExporter(ScrapyCommand):
         super().__init__()
         self.table = table
         self.project_settings = get_project_settings()
-        self.logger = logging.getLogger(BaseCSVExporter.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.file_timestamp_format = '%Y%b%d%H%M%S'
         self.export_date_column = 'sent_to_customer'
+        self.file_extension = '.csv'
         self.chunk_size = 1000
-        self.exclude = []
+        self.excluded_columns = []
+        self.specific_columns = []
         self.headers = []
+        self.new_mapping = {}
+        self.file_exists = False
         self.file_path = None
         self.filename_prefix = None
         self.filename_postfix = None
 
-    def short_desc(self):
-        return 'Abstract command for export into CSV'
-
     def add_options(self, parser):
         super().add_options(parser)
 
-    def execute(self, _args, opts):
+    def execute(self, args, opts):
         self.init_db_connection_pool()
         self.logger.debug('Connection established.')
         reactor.callFromThread(self.produce_data)
@@ -58,14 +59,17 @@ class BaseCSVExporter(ScrapyCommand):
 
     def export(self, rows):
         if not rows:
-            self.logger.debug('Export finished: nothing found.')
+            if self.file_exists:
+                self.logger.debug(f'Export finished successfully to {path.basename(self.file_path)}.')
+            else:
+                self.logger.warning('Nothing found')
             reactor.stop()
         else:
             if self.chunk_size == 1:
                 rows = [rows]
             else:
                 rows = list(rows)
-            rows = self.exclude_columns(rows)
+            rows = self.map_columns(rows)
             self.get_headers(rows[0])
             self.get_file_path()
             self.save(rows)
@@ -78,8 +82,11 @@ class BaseCSVExporter(ScrapyCommand):
 
     def save(self, rows):
         with open(self.file_path, 'a', encoding='utf-8') as file:
-            self.logger.debug(f'Exporting to {self.file_path}...')
             writer = csv.DictWriter(file, fieldnames=self.headers)
+            if not self.file_exists:
+                writer.writeheader()
+                self.file_exists = True
+            self.logger.debug(f'Exporting to {self.file_path}...')
             writer.writerows(rows)
 
     def init_db_connection_pool(self):
@@ -97,7 +104,10 @@ class BaseCSVExporter(ScrapyCommand):
         )
 
     def build_select_query_stmt(self, chunk_size):
-        return select(self.table).limit(chunk_size).where(self.table.sent_to_customer == None)
+        if columns := self.specify_columns():
+            return select(*columns).limit(chunk_size).where(self.table.sent_to_customer == None)
+        else:
+            return select(self.table).limit(chunk_size).where(self.table.sent_to_customer == None)
 
     def update(self, transaction, row):
         stmt = self.build_update_query_stmt(row)
@@ -110,6 +120,35 @@ class BaseCSVExporter(ScrapyCommand):
         update_date_stmt = update(self.table).values(**export_date)
         return update_date_stmt.where(self.table.id == row['id'])
 
+    def map_columns(self, rows):
+        if self.new_mapping:
+            for row in rows:
+                for old_name, new_name in self.new_mapping.items():
+                    row[new_name] = row.pop(old_name)
+            return rows
+        return rows
+
+    def specify_columns(self):
+        if self.specific_columns:
+            columns = []
+            for column_name in self.specific_columns:
+                if column := getattr(self.table, column_name, None):
+                    columns.append(column)
+                else:
+                    raise ValueError(f'Column "{column_name}" is not found in the table.')
+            if self.table.__table__.columns.id not in columns:
+                columns.insert(0, self.table.__table__.columns.id)
+            return columns
+        elif self.excluded_columns:
+            columns = []
+            for column in self.table.__table__.columns:
+                if column.name not in self.excluded_columns:
+                    columns.append(column)
+            if self.table.__table__.columns.id not in columns:
+                raise ValueError('Column "id" cannot be excluded!')
+            return columns
+        return None
+
     def get_headers(self, row):
         if not self.headers:
             self.headers = row.keys()
@@ -120,20 +159,12 @@ class BaseCSVExporter(ScrapyCommand):
             file_name = datetime.datetime.now().strftime(self.file_timestamp_format)
             file_name = self.add_prefix(file_name)
             file_name = self.add_postfix(file_name)
-            file_name += '.csv'
+            file_name += self.file_extension
             self.file_path = path.join(export_path, file_name)
 
-    def exclude_columns(self, rows):
-        if self.exclude:
-            for column in self.exclude:
-                for row in rows:
-                    del row[column]
-            return rows
-        return rows
-
     def run(self, args, opts):
-        if not self.table:
-            raise ValueError(f"{type(self).__name__} must have a table")
+        if not self.table and not isinstance(self.table, Table):
+            raise ValueError(f"{type(self).__name__} must have a valid table object")
         reactor.callFromThread(self.execute, args, opts)
         reactor.run()
 
@@ -147,12 +178,12 @@ class BaseCSVExporter(ScrapyCommand):
             return file + self.filename_postfix
         return file
 
+    def _on_row_update_completed(self, _result=None):
+        reactor.callFromThread(self.produce_data)
+
     def _on_data_export_error(self, failure):
         self.logger.error("failure: {}".format(failure.getErrorMessage()))
         failure.trap(Exception)
-
-    def _on_row_update_completed(self, _result=None):
-        reactor.callFromThread(self.produce_data)
 
     def _on_row_update_error(self, failure):
         self.logger.error("failure: {}".format(failure.getErrorMessage()))

@@ -6,8 +6,8 @@ from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
 
 # custom_settings = {
 #     "DOWNLOAD_HANDLERS": {
-#         'http': 'helpers.handlers.RotatingProxiesDownloadHandler',
-#         'https': 'helpers.handlers.RotatingProxiesDownloadHandler'
+#         'http': 'utils.handlers.RotatingProxiesDownloadHandler',
+#         'https': 'utils.handlers.RotatingProxiesDownloadHandler'
 #     },
 #     'ROTATING_PROXIES_DOWNLOADER_HANDLER_AUTO_CLOSE_CACHED_CONNECTIONS_ENABLED': False,
 # }

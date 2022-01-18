@@ -1,52 +1,49 @@
 import csv
 import datetime
-import logging
 from datetime import date
 from os import path
+from typing import List, Dict, Union
+from optparse import Values
 
 from MySQLdb.cursors import DictCursor
-from scrapy.commands import ScrapyCommand
 from sqlalchemy import select, Table
 from sqlalchemy.sql import update
 from sqlalchemy.dialects.mysql import dialect
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
-from scrapy.utils.project import get_project_settings
 from twisted.enterprise import adbapi
+from twisted.enterprise.adbapi import Transaction
 from twisted.internet import reactor, defer
 
+from commands import BaseCommand
 
-class BaseCSVExporter(ScrapyCommand):
-    def __init__(self, table=None):
-        super().__init__()
-        self.table = table
-        self.project_settings = get_project_settings()
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.file_timestamp_format = '%Y%b%d%H%M%S'
-        self.export_date_column = 'sent_to_customer'
-        self.file_extension = '.csv'
-        self.chunk_size = 1000
-        self.excluded_columns = []
-        self.specific_columns = []
-        self.headers = []
-        self.new_mapping = {}
-        self.file_exists = False
-        self.file_path = None
-        self.filename_prefix = None
-        self.filename_postfix = None
 
-    def add_options(self, parser):
-        super().add_options(parser)
+class BaseCSVExporter(BaseCommand):
+    table: Table
+    file_timestamp_format: str = '%Y%b%d%H%M%S'
+    export_date_column: str = 'sent_to_customer'
+    file_extension: str = 'csv'
+    chunk_size: int = 1000
+    excluded_columns: List[str] = []
+    specific_columns: List[str] = []
+    headers: List[str] = []
+    new_mapping: Dict[str, str] = {}
+    filename_prefix: str = ''
+    filename_postfix: str = ''
+    file_path: str = ''
+    file_exists: bool = False
 
-    def execute(self, args, opts):
+    def init(self) -> None:
+        if not isinstance(self.table.__table__, Table):
+            raise ValueError(f'{type(self).__name__} must have a valid table object')
+        self.file_path = self.get_file_path()
         self.init_db_connection_pool()
         self.logger.debug('Connection established.')
-        reactor.callFromThread(self.produce_data)
 
-    def produce_data(self, _result=None):
+    def produce_data(self) -> None:
         d = self.db_connection_pool.runInteraction(self.get_data, self.chunk_size)
         d.addCallback(self.export).addErrback(self._on_data_export_error)
 
-    def get_data(self, transaction, chunk_size=None):
+    def get_data(self, transaction: Transaction, chunk_size: int = None) -> Union[tuple, Dict]:
         if chunk_size is None:
             chunk_size = self.chunk_size
         stmt = self.build_select_query_stmt(chunk_size)
@@ -57,7 +54,7 @@ class BaseCSVExporter(ScrapyCommand):
             return transaction.fetchone()
         return transaction.fetchall()
 
-    def export(self, rows):
+    def export(self, rows: Union[tuple, Dict]) -> None:
         if not rows:
             if self.file_exists:
                 self.logger.debug(f'Export finished successfully to {path.basename(self.file_path)}.')
@@ -71,7 +68,6 @@ class BaseCSVExporter(ScrapyCommand):
                 rows = list(rows)
             rows = self.map_columns(rows)
             self.get_headers(rows[0])
-            self.get_file_path()
             self.save(rows)
             deferred_interactions = []
             for row in rows:
@@ -80,7 +76,7 @@ class BaseCSVExporter(ScrapyCommand):
             deferred_list.addCallback(self._on_row_update_completed)
             deferred_list.addErrback(self._on_row_update_error)
 
-    def save(self, rows):
+    def save(self, rows: List[Dict]) -> None:
         with open(self.file_path, 'a', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=self.headers)
             if not self.file_exists:
@@ -89,38 +85,38 @@ class BaseCSVExporter(ScrapyCommand):
             self.logger.debug(f'Exporting to {self.file_path}...')
             writer.writerows(rows)
 
-    def init_db_connection_pool(self):
+    def init_db_connection_pool(self) -> None:
         self.db_connection_pool = adbapi.ConnectionPool(
             "MySQLdb",
-            host=self.project_settings.get("DB_HOST"),
-            port=self.project_settings.getint("DB_PORT"),
-            user=self.project_settings.get("DB_USERNAME"),
-            passwd=self.project_settings.get("DB_PASSWORD"),
-            db=self.project_settings.get("DB_DATABASE"),
+            host=self.settings.get("DB_HOST"),
+            port=self.settings.getint("DB_PORT"),
+            user=self.settings.get("DB_USERNAME"),
+            passwd=self.settings.get("DB_PASSWORD"),
+            db=self.settings.get("DB_DATABASE"),
             charset="utf8mb4",
             use_unicode=True,
             cursorclass=DictCursor,
             cp_reconnect=True,
         )
 
-    def build_select_query_stmt(self, chunk_size):
+    def build_select_query_stmt(self, chunk_size: int) -> SQLAlchemyExecutable:
         if columns := self.specify_columns():
             return select(*columns).limit(chunk_size).where(self.table.sent_to_customer == None)
         else:
             return select(self.table).limit(chunk_size).where(self.table.sent_to_customer == None)
 
-    def update(self, transaction, row):
+    def update(self, transaction: Transaction, row: Dict) -> None:
         stmt = self.build_update_query_stmt(row)
         if isinstance(stmt, SQLAlchemyExecutable):
             stmt_compiled = stmt.compile(compile_kwargs={'literal_binds': True})
             transaction.execute(str(stmt_compiled))
 
-    def build_update_query_stmt(self, row):
+    def build_update_query_stmt(self, row: Dict) -> SQLAlchemyExecutable:
         export_date = {self.export_date_column: date.today().strftime('%Y-%m-%d')}
         update_date_stmt = update(self.table).values(**export_date)
         return update_date_stmt.where(self.table.id == row['id'])
 
-    def map_columns(self, rows):
+    def map_columns(self, rows: List[Dict]) -> List[Dict]:
         if self.new_mapping:
             for row in rows:
                 for old_name, new_name in self.new_mapping.items():
@@ -128,7 +124,7 @@ class BaseCSVExporter(ScrapyCommand):
             return rows
         return rows
 
-    def specify_columns(self):
+    def specify_columns(self) -> Union[List, None]:
         if self.specific_columns:
             columns = []
             for column_name in self.specific_columns:
@@ -149,34 +145,29 @@ class BaseCSVExporter(ScrapyCommand):
             return columns
         return None
 
-    def get_headers(self, row):
+    def get_headers(self, row: Dict) -> None:
         if not self.headers:
-            self.headers = row.keys()
+            self.headers = list(row.keys())
 
-    def get_file_path(self):
-        if not self.file_path:
-            export_path = path.join(path.abspath('.'), 'storage')
-            file_name = datetime.datetime.now().strftime(self.file_timestamp_format)
-            file_name = self.add_prefix(file_name)
-            file_name = self.add_postfix(file_name)
-            file_name += self.file_extension
-            self.file_path = path.join(export_path, file_name)
+    def get_file_path(self, timestamp_format=None, prefix=None, postfix=None, extension=None):
+        if timestamp_format is None:
+            timestamp_format = self.file_timestamp_format
+        if prefix is None:
+            prefix = self.filename_prefix
+        if postfix is None:
+            postfix = self.filename_postfix
+        if extension is None:
+            extension = self.file_extension
+        export_path = path.join(path.abspath('.'), 'storage')
+        file_name = f'{prefix}{datetime.datetime.now().strftime(timestamp_format)}{postfix}.{extension}'
+        return path.join(export_path, file_name)
 
-    def run(self, args, opts):
-        if not self.table and not isinstance(self.table, Table):
-            raise ValueError(f"{type(self).__name__} must have a valid table object")
-        reactor.callFromThread(self.execute, args, opts)
+    def run(self, args: Values, opts: List) -> None:
+        reactor.callFromThread(self.produce_data)
         reactor.run()
 
-    def add_prefix(self, file):
-        if self.filename_prefix:
-            return self.filename_prefix + file
-        return file
-
     def add_postfix(self, file):
-        if self.filename_postfix:
-            return file + self.filename_postfix
-        return file
+        return file + self.filename_postfix
 
     def _on_row_update_completed(self, _result=None):
         reactor.callFromThread(self.produce_data)

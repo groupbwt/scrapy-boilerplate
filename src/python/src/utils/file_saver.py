@@ -46,13 +46,13 @@ class FileSaver:
             os.mkdir(self.select_folder)
             self.folder_size = 0
 
-        if self.is_folder_full():
-            self.change_folder()
+        if self._is_folder_full():
+            self._change_folder()
 
-    def increment_folder_size(self) -> None:
+    def _increment_folder_size(self) -> None:
         self.folder_size += 1
 
-    def change_folder(self) -> None:
+    def _change_folder(self) -> None:
         self.folder_number += 1
         self.select_folder = os.path.join(
             self.base_folder,
@@ -64,7 +64,7 @@ class FileSaver:
         if not os.path.exists(self.select_folder):
             os.mkdir(self.select_folder)
 
-    def is_folder_full(self) -> bool:
+    def _is_folder_full(self) -> bool:
         return self.folder_size >= self.max_bucket_size
 
     def save_file(
@@ -103,8 +103,8 @@ class FileSaver:
         with open(path_to_file, 'wb') as writer:
             writer.write(response.body)
 
-        self.increment_folder_size()
-        if self.is_folder_full():
-            self.change_folder()
+        self._increment_folder_size()
+        if self._is_folder_full():
+            self._change_folder()
 
         return path_to_file, original_filename

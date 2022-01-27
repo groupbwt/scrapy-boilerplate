@@ -61,19 +61,22 @@ class POP3Client {
 
     async __extractCode(messages: Message[]) {
         if (!!messages) {
-            return messages.reverse().reduce((code: null | string, message) => {
-                if (code !== null) {
-                    return code
-                }
+            let code: string | null = null
+            messages.reverse().some((message: Message) => {
+                console.log(message)
                 if (message.date.getTime() >= this.minMessageTime!) {
-                    if (String(Array.from(message.from).shift()!.address).includes(this._pop_config.emailSenderPattern)) {
+                    if (
+                        String(Array.from(message.from).shift()!.address).includes(this._pop_config.emailSenderPattern)
+                        && message.subject.includes(this._pop_config.emailSubjectPattern)
+                    ) {
                         console.log(`Message with email pattern "${this._pop_config.emailSenderPattern}" found`)
                         console.log('Trying to get code...')
                         code = this.__executeRegExpList(message.html)
+                        return code != null
                     }
                 }
-                return code
-            }, null)
+            })
+            return code
         }
         return null
     }
@@ -85,7 +88,7 @@ class POP3Client {
             if (match !== null && match.length > 1 && match[1] !== null) {
                 console.log('Code found')
                 extractedCode = match[1].trim()
-                return true
+                return extractedCode != null
             }
         })
         return extractedCode

@@ -63,7 +63,6 @@ class POP3Client {
         if (!!messages) {
             let code: string | null = null
             messages.reverse().some((message: Message) => {
-                console.log(message)
                 if (message.date.getTime() >= this.minMessageTime!) {
                     if (
                         String(Array.from(message.from).shift()!.address).includes(this._pop_config.emailSenderPattern)

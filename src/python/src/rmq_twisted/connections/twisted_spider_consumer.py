@@ -14,8 +14,10 @@ CountRequestInteger = int
 
 
 class TwistedSpiderConsumer(TwistedConsumer):
+    # TODO: delete old values
     request_counter: Dict[DeliveryTagInteger, CountRequestInteger] = {}
     spider: BaseRMQSpider
+    is_request_counter_logging: bool = True
 
     def __init__(
         self,
@@ -50,13 +52,26 @@ class TwistedSpiderConsumer(TwistedConsumer):
 
     def counter_increment_and_try_to_acknowledge(self, delivery_tag: int):
         self.request_counter[delivery_tag] += 1
+        if self.is_request_counter_logging:
+            self.logger.debug(f'request counter={self.request_counter[delivery_tag]}')
         self.try_to_acknowledge(delivery_tag)
 
     def counter_decrement_ank_try_to_acknowledge(self, delivery_tag: int):
         self.request_counter[delivery_tag] -= 1
+        if self.is_request_counter_logging:
+            self.logger.debug(f'request counter={self.request_counter[delivery_tag]}')
         self.try_to_acknowledge(delivery_tag)
 
     def try_to_acknowledge(self, delivery_tag: int):
         if self.request_counter[delivery_tag] == 0:
-            self.channel.basic_ack(delivery_tag)
-            self.logger.info('ack message')
+            self.ack(delivery_tag)
+
+    def ack(self, delivery_tag: int):
+        self.channel.basic_ack(delivery_tag)
+        self.logger.info('ack message')
+        self.request_counter[delivery_tag] = -10000
+
+    def nack(self, delivery_tag: int):
+        self.channel.basic_nack(delivery_tag, multiple=False, requeue=False)
+        self.logger.info('nack message')
+        self.request_counter[delivery_tag] = -10000

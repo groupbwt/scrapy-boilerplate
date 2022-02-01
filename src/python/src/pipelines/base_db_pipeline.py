@@ -46,8 +46,8 @@ class BaseDBPipeline:
 
     @inlineCallbacks
     def process_item(self, item, spider):
-        item = yield self.db_connection_pool.runInteraction(self.save_item, item)
-        return item
+        processed_item = yield self.db_connection_pool.runInteraction(self.save_item, item)
+        return processed_item
 
     def save_item(self, transaction: Transaction, item) -> None:
         stmt = self.build_insert_update_query_stmt(item)

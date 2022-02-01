@@ -3,7 +3,6 @@ from collections import deque
 from typing import Type, Dict, Iterator, Union
 
 import pika
-import scrapy
 from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DontCloseSpider
@@ -38,6 +37,7 @@ class RmqReaderMiddleware(object):
         """Subscribe to signals which controls item processing"""
         crawler.signals.connect(o.on_item_dropped, signal=signals.item_dropped)
         crawler.signals.connect(o.on_item_error, signal=signals.item_error)
+        crawler.signals.connect(o.on_item_scraped, signal=signals.item_scraped)
 
         crawler.signals.connect(o.on_request_dropped, signal=signals.request_dropped)
 
@@ -128,7 +128,7 @@ class RmqReaderMiddleware(object):
 
             if self.is_active_message(delivery_tag):
                 for item_or_request in result:
-                    if isinstance(item_or_request, scrapy.Request):
+                    if isinstance(item_or_request, Request):
                         self.request_counter_increment(delivery_tag)
                         item_or_request.meta[self.message_meta_name] = rmq_message
                         if item_or_request.errback is None:
@@ -142,7 +142,6 @@ class RmqReaderMiddleware(object):
                     self.nack(rmq_message)
                 else:
                     self.request_counter_decrement(delivery_tag)
-                    self.try_to_acknowledge_message(rmq_message)
             else:
                 self.logger.warning('filtered processing of an inactive message')
         elif self.init_request_meta_name in response.request.meta:
@@ -195,6 +194,11 @@ class RmqReaderMiddleware(object):
             self.failed_response_deque.append(response)
             rmq_message: BaseRmqMessage = meta[self.message_meta_name]
             self.nack(rmq_message)
+
+    def on_item_scraped(self, item, spider, response):
+        if self.message_meta_name in response.meta:
+            rmq_message: BaseRmqMessage = response.request.meta[self.message_meta_name]
+            self.try_to_acknowledge_message(rmq_message)
 
     def on_item_dropped(self, item, response, exception, spider: BaseRmqSpider):
         if self.message_meta_name in response.meta:

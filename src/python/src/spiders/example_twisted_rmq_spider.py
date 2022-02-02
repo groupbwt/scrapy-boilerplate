@@ -6,7 +6,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 from twisted.python.failure import Failure
 
-from rmq_twisted.schemas.base_rmq_message import BaseRMQMessage
+from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.rmq_spider import RMQSpider
 from utils import get_import_full_name
 

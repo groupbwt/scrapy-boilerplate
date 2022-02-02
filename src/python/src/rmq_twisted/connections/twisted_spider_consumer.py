@@ -5,10 +5,10 @@ from twisted.internet import defer
 from twisted.internet.defer import Deferred
 
 from rmq_twisted.connections.twisted_consumer import TwistedConsumer
-from rmq_twisted.schemas.base_rmq_message import BaseRMQMessage
+from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 from rmq_twisted.utils.rmq_constant import RMQ_CONSTANT
-
+from rmq_twisted.utils import signals as rmq_twisted_signals
 DeliveryTagInteger = int
 CountRequestInteger = int
 
@@ -67,11 +67,15 @@ class TwistedSpiderConsumer(TwistedConsumer):
             self.ack(delivery_tag)
 
     def ack(self, delivery_tag: int):
+        self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.before_ack_message, rmq_message=self)
         self.channel.basic_ack(delivery_tag)
         self.logger.info('ack message')
         self.request_counter[delivery_tag] = -10000
+        self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.after_ack_message, rmq_message=self)
 
     def nack(self, delivery_tag: int):
+        self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.before_nack_message, rmq_message=self)
         self.channel.basic_nack(delivery_tag, multiple=False, requeue=False)
         self.logger.info('nack message')
         self.request_counter[delivery_tag] = -10000
+        self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.after_nack_message, rmq_message=self)

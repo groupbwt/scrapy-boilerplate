@@ -3,7 +3,7 @@ from typing import Type
 
 from scrapy import Spider, Request
 
-from rmq_twisted.schemas.base_rmq_message import BaseRMQMessage
+from rmq_twisted.schemas.messages import BaseRMQMessage
 
 
 class BaseRMQSpider(Spider, ABC):

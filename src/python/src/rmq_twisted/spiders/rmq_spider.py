@@ -7,7 +7,7 @@ from scrapy.exceptions import DontCloseSpider
 from utils import get_import_full_name
 from rmq_twisted.connections.twisted_spider_consumer import TwistedSpiderConsumer
 from rmq_twisted.middlewares.rmq_reader_middleware import RMQReaderMiddleware
-from rmq_twisted.schemas.base_rmq_message import BaseRMQMessage
+from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 
 

@@ -5,7 +5,7 @@ from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DropItem
 from twisted.python.failure import Failure
 
-from rmq_twisted.schemas.base_rmq_message import BaseRMQMessage
+from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 from rmq_twisted.utils.rmq_constant import RMQ_CONSTANT
 

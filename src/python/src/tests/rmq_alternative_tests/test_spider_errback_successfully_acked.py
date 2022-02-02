@@ -14,7 +14,7 @@ from rmq_alternative.rmq_spider import RmqSpider
 from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
 from rmq_alternative.utils import signals as CustomSignals
 from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
-from tests.rmq_new_tests.constant import QUEUE_NAME
+from tests.rmq_alternative_tests.constant import QUEUE_NAME
 
 
 class Response400DownloaderMiddleware:

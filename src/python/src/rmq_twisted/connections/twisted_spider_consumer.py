@@ -23,9 +23,10 @@ class TwistedSpiderConsumer(TwistedConsumer):
         self,
         settings: Settings,
         queue_name: str,
+        prefetch_count: int,
         spider: BaseRMQSpider
     ):
-        super(TwistedSpiderConsumer, self).__init__(settings, queue_name)
+        super(TwistedSpiderConsumer, self).__init__(settings, queue_name, prefetch_count)
         self.spider = spider
 
     @defer.inlineCallbacks

@@ -4,11 +4,11 @@ from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import DontCloseSpider
 
-from utils import get_import_full_name
 from rmq_twisted.connections.twisted_spider_consumer import TwistedSpiderConsumer
 from rmq_twisted.middlewares.rmq_reader_middleware import RMQReaderMiddleware
 from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
+from utils import get_import_full_name
 
 
 class RMQSpider(BaseRMQSpider, ABC):
@@ -20,7 +20,12 @@ class RMQSpider(BaseRMQSpider, ABC):
     def __init__(self, crawler: Crawler, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.crawler = crawler
-        self.rmq_consumer = TwistedSpiderConsumer(crawler.settings, self.task_queue_name, self)
+        self.rmq_consumer = TwistedSpiderConsumer(
+            settings=crawler.settings,
+            queue_name=self.task_queue_name,
+            prefetch_count=crawler.settings.get('CONCURRENT_REQUESTS'),
+            spider=self
+        )
 
     @property
     @abstractmethod

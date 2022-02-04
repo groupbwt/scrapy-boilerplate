@@ -7,14 +7,17 @@ from rmq_twisted.connections.twisted_connection import TwistedConnection
 
 class TwistedConsumer(TwistedConnection):
     queue_name: str
+    prefetch_count: int
 
     def __init__(
         self,
         settings: Settings,
         queue_name: str,
+        prefetch_count: int
     ):
         super().__init__(settings)
         self.queue_name: str = queue_name
+        self.prefetch_count: int = prefetch_count
 
     def start_consuming(self) -> Deferred:
         return self._connect()
@@ -33,11 +36,12 @@ class TwistedConsumer(TwistedConnection):
 
         # self.channel.queue_bind(exchange=self.exchange, routing_key=self.routing_key, queue=self.QUEUE_NAME)
 
-        yield self.channel.basic_qos(prefetch_count=1)
+        yield self.channel.basic_qos(prefetch_count=self.prefetch_count)
         self.queue_object, self.consumer_tag = yield self.channel.basic_consume(queue=self.queue_name, auto_ack=False)
 
-        l = task.LoopingCall(self.on_message_consumed)
-        l.start(interval=0.01, now=False)
+        for _ in range(self.prefetch_count):
+            l: task.LoopingCall = task.LoopingCall(self.on_message_consumed)
+            l.start(interval=0.01, now=False)
 
     def on_message_consumed(self, queue_object):
         """Responsible for consuming the queue. See that it ACKs at the end.

@@ -5,24 +5,28 @@ from scrapy import Request
 from scrapy.crawler import CrawlerProcess
 from scrapy.signalmanager import dispatcher
 
-from rmq_alternative.rmq_spider import RmqSpider
-from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
-from rmq_alternative.utils import signals as CustomSignals
-from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
-from tests.rmq_new_tests.constant import QUEUE_NAME
+from rmq_twisted.schemas.messages.base_rmq_message import BaseRMQMessage
+from rmq_twisted.spiders import RMQSpider
+from rmq_twisted.utils import signals as rmq_twisted_signals
+from rmq_twisted.utils.pika_blocking_connection import PikaBlockingConnection
+from tests.rmq_twisted_tests.constant import QUEUE_NAME
 
 
-class MySpider(RmqSpider):
+class MySpider(RMQSpider):
     name = 'myspider'
-    message_type: Type[BaseRmqMessage] = BaseRmqMessage
+    message_type: Type[BaseRMQMessage] = BaseRMQMessage
     task_queue_name: str = QUEUE_NAME
+
+    def start_requests(self):
+        self.rmq_consumer.start_consuming()
+        yield from ()
 
     def parse(self, response, **kwargs):
         self.logger.info("PARSE METHOD")
         yield from ()
         raise Exception('SPIDER.parse exception')
 
-    def next_request(self, message: BaseRmqMessage) -> Request:
+    def next_request(self, message: BaseRMQMessage) -> Request:
         return Request('https://httpstat.us/200', dont_filter=True)
 
 
@@ -30,18 +34,19 @@ class TestSpiderParseException:
     def test_crawler_successfully(self, rabbit_setup: PikaBlockingConnection, crawler: CrawlerProcess):
         successfully_handled = False
 
-        def nack_callback(rmq_message: BaseRmqMessage):
-            logging.info('NACK_CALLBACK')
-            nonlocal successfully_handled
-            successfully_handled = True
-            crawler.stop()
-
-        def ack_callback(rmq_message: BaseRmqMessage):
+        def on_after_ack_message(rmq_message: BaseRMQMessage):
             logging.info('ACK_CALLBACK')
             crawler.stop()
 
-        dispatcher.connect(ack_callback, CustomSignals.message_ack)
-        dispatcher.connect(nack_callback, CustomSignals.message_nack)
+        def on_after_nack_message(rmq_message: BaseRMQMessage):
+            nonlocal successfully_handled
+            successfully_handled = True
+
+            logging.info('NACK_CALLBACK')
+            crawler.stop()
+
+        dispatcher.connect(on_after_ack_message, rmq_twisted_signals.after_ack_message)
+        dispatcher.connect(on_after_nack_message, rmq_twisted_signals.after_nack_message)
         crawler.crawl(MySpider)
         crawler.start()
 

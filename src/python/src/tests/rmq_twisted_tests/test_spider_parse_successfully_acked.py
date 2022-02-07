@@ -5,7 +5,7 @@ from scrapy import Request
 from scrapy.crawler import CrawlerProcess
 from scrapy.signalmanager import dispatcher
 
-from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
+from rmq_twisted.utils.pika_blocking_connection import PikaBlockingConnection
 from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders import RMQSpider
 from rmq_twisted.utils import signals as rmq_twisted_signals
@@ -34,9 +34,10 @@ class TestSpiderParseException:
         successfully_handled = False
 
         def on_after_ack_message(rmq_message: BaseRMQMessage):
-            logging.info('ACK_CALLBACK')
             nonlocal successfully_handled
             successfully_handled = True
+
+            logging.info('ACK_CALLBACK')
             crawler.stop()
 
         def on_after_nack_message(rmq_message: BaseRMQMessage):

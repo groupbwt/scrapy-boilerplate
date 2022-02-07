@@ -30,7 +30,7 @@ class TwistedSpiderConsumer(TwistedConsumer):
         self.spider = spider
 
     @defer.inlineCallbacks
-    def on_message_consumed(self) -> None:
+    def on_message_consumed(self, index: int) -> None:
         self.logger.debug('on_message_consumed')
         deferred: Deferred = self.queue_object.get()
         channel, method, properties, body = yield deferred

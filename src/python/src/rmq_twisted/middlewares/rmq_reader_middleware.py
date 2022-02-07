@@ -25,10 +25,6 @@ class RMQReaderMiddleware:
         # """Subscribe to signals which controls opening and shutdown hooks/behaviour"""
         # crawler.signals.connect(o.spider_idle, signal=signals.spider_idle)
         # crawler.signals.connect(o.spider_closed, signal=signals.spider_closed)
-        # """Subscribe to signals which controls item processing"""
-        # crawler.signals.connect(o.on_item_dropped, signal=signals.item_dropped)
-        # crawler.signals.connect(o.on_item_error, signal=signals.item_error)
-        #
         # crawler.signals.connect(o.on_request_dropped, signal=signals.request_dropped)
 
         return o

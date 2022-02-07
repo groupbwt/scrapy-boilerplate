@@ -40,10 +40,10 @@ class TwistedConsumer(TwistedConnection):
         self.queue_object, self.consumer_tag = yield self.channel.basic_consume(queue=self.queue_name, auto_ack=False)
 
         for _ in range(self.prefetch_count):
-            l: task.LoopingCall = task.LoopingCall(self.on_message_consumed)
+            l: task.LoopingCall = task.LoopingCall(self.on_message_consumed, _)
             l.start(interval=0.01, now=False)
 
-    def on_message_consumed(self, queue_object):
+    def on_message_consumed(self, index: int):
         """Responsible for consuming the queue. See that it ACKs at the end.
         """
         raise NotImplementedError()

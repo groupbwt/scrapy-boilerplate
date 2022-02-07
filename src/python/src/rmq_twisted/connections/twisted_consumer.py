@@ -8,6 +8,7 @@ from rmq_twisted.connections.twisted_connection import TwistedConnection
 class TwistedConsumer(TwistedConnection):
     queue_name: str
     prefetch_count: int
+    is_consumer_running: bool = False
 
     def __init__(
         self,
@@ -20,6 +21,7 @@ class TwistedConsumer(TwistedConnection):
         self.prefetch_count: int = prefetch_count
 
     def start_consuming(self) -> Deferred:
+        self.is_consumer_running = True
         return self._connect()
 
     @defer.inlineCallbacks

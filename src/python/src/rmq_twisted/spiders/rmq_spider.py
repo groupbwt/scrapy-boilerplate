@@ -50,6 +50,9 @@ class RMQSpider(BaseRMQSpider, ABC):
         :return: None
         """
         self.logger.info('DontCloseSpider')
+        if not self.rmq_consumer.is_consumer_running:
+            message = 'consumer is not running. To read from the queue, call spider.rmq_consumer.start_consuming()'
+            self.logger.warning(message)
         raise DontCloseSpider()
 
     @classmethod

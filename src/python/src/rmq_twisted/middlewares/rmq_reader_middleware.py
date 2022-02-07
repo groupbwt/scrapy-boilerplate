@@ -13,6 +13,7 @@ from rmq_twisted.utils.rmq_constant import RMQ_CONSTANT
 class RMQReaderMiddleware:
     @classmethod
     def from_crawler(cls, crawler: Crawler):
+        # TODO: how to get rid of the cyclic import for checking with RMQSpider?
         if not isinstance(crawler.spider, BaseRMQSpider):
             raise CloseSpider(f"spider must have the {BaseRMQSpider.__name__} class as its parent")
 
@@ -20,11 +21,10 @@ class RMQReaderMiddleware:
         crawler.signals.connect(o.on_item_scraped, signal=signals.item_scraped)
         crawler.signals.connect(o.on_item_dropped, signal=signals.item_dropped)
         crawler.signals.connect(o.on_item_error, signal=signals.item_error)
+        crawler.signals.connect(o.on_spider_error, signal=signals.spider_error)
         # """Subscribe to signals which controls opening and shutdown hooks/behaviour"""
         # crawler.signals.connect(o.spider_idle, signal=signals.spider_idle)
         # crawler.signals.connect(o.spider_closed, signal=signals.spider_closed)
-        # """Subscribe to signals which controls requests scheduling and responses or error retrieving"""
-        # crawler.signals.connect(o.on_spider_error, signal=signals.spider_error)
         # """Subscribe to signals which controls item processing"""
         # crawler.signals.connect(o.on_item_dropped, signal=signals.item_dropped)
         # crawler.signals.connect(o.on_item_error, signal=signals.item_error)
@@ -63,6 +63,9 @@ class RMQReaderMiddleware:
         spider.rmq_consumer.nack(self._get_delivery_tag(response))
 
     def on_item_error(self, item: Union[Item, dict], response, spider: "RMQSpider", failure: Failure):
+        spider.rmq_consumer.nack(self._get_delivery_tag(response))
+
+    def on_spider_error(self, failure, response, spider: "RMQSpider"):
         spider.rmq_consumer.nack(self._get_delivery_tag(response))
 
     @staticmethod

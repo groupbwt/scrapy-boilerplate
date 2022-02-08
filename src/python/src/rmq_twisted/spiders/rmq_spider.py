@@ -1,13 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
-from scrapy import signals, Request
+from scrapy import signals
 from scrapy.crawler import Crawler
 from scrapy.exceptions import DontCloseSpider
 from twisted.internet.defer import Deferred
 
 from rmq_twisted.connections.twisted_spider_consumer import TwistedSpiderConsumer
-from rmq_twisted.middlewares.rmq_reader_middleware import RMQReaderMiddleware
-from rmq_twisted.schemas.messages import BaseRMQMessage
+from rmq_twisted.middlewares import RMQReaderMiddleware, RMQRequestExceptionCheckerMiddleware
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 from utils import get_import_full_name
 
@@ -37,15 +36,6 @@ class RMQSpider(BaseRMQSpider, ABC):
         crawler.signals.connect(spider.on_spider_opened, signal=signals.spider_opened)
         return spider
 
-    @property
-    @abstractmethod
-    def task_queue_name(self) -> str:
-        pass
-
-    @abstractmethod
-    def next_request(self, message: BaseRMQMessage) -> Request:
-        pass
-
     def on_spider_opened(self, spider):
         d = self.rmq_consumer.start_consuming()
         d.addCallback(lambda _: self.logger.info('after start consuming'))
@@ -68,4 +58,9 @@ class RMQSpider(BaseRMQSpider, ABC):
         spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES")
         spider_middlewares[get_import_full_name(RMQReaderMiddleware)] = 1
         settings.set("SPIDER_MIDDLEWARES", spider_middlewares)
+
+        downloader_middlewares = settings.getdict("DOWNLOADER_MIDDLEWARES")
+        # If you specify a higher value, the counter will be triggered before retries
+        downloader_middlewares[get_import_full_name(RMQRequestExceptionCheckerMiddleware)] = 1
+        settings.set("DOWNLOADER_MIDDLEWARES", downloader_middlewares)
         super().update_settings(settings)

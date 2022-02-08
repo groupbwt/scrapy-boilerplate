@@ -35,10 +35,6 @@ class ExampleTwistedRMQSpider(RMQSpider):
         }
     }
 
-    def start_requests(self):
-        self.rmq_consumer.start_consuming()
-        yield from ()
-
     @property
     def message_type(self) -> Type[BaseRMQMessage]:
         return BaseRMQMessage
@@ -48,7 +44,12 @@ class ExampleTwistedRMQSpider(RMQSpider):
         return 'INPUT_TASK'
 
     def next_request(self, message: BaseRMQMessage) -> Request:
-        return Request('https://httpstat.us/200', dont_filter=True, callback=self.parse, errback=self.errback)
+        return Request(
+            'https://httpstat.us/200?sleep=1000',
+            dont_filter=True,
+            callback=self.parse,
+            errback=self.errback
+        )
 
     def parse(self, response, **kwargs):
         self.logger.info('parse')

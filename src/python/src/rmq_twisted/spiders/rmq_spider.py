@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import DontCloseSpider
+from twisted.internet.defer import Deferred
 
 from rmq_twisted.connections.twisted_spider_consumer import TwistedSpiderConsumer
 from rmq_twisted.middlewares.rmq_reader_middleware import RMQReaderMiddleware
@@ -27,6 +28,13 @@ class RMQSpider(BaseRMQSpider, ABC):
             spider=self
         )
 
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, crawler, **kwargs)
+        crawler.signals.connect(spider.on_spider_idle, signal=signals.spider_idle)
+        crawler.signals.connect(spider.on_spider_opened, signal=signals.spider_opened)
+        return spider
+
     @property
     @abstractmethod
     def task_queue_name(self) -> str:
@@ -36,24 +44,22 @@ class RMQSpider(BaseRMQSpider, ABC):
     def next_request(self, message: BaseRMQMessage) -> Request:
         pass
 
-    @classmethod
-    def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super().from_crawler(crawler, crawler, **kwargs)
+    def on_spider_opened(self, spider):
+        d = self.rmq_consumer.start_consuming()
+        d.addCallback(lambda _: self.logger.info('after start consuming'))
+        return d
 
-        crawler.signals.connect(spider.spider_idle, signal=signals.spider_idle)
+    def closed(self, reason) -> Deferred:
+        self.rmq_consumer.stop_consuming()
+        return self.rmq_consumer.close_connection()
 
-        # spider.twisted_consumer.start_consuming()
-        return spider
-
-    def spider_idle(self):
-        """ Waits for request to be scheduled.
-        :return: None
-        """
-        self.logger.info('DontCloseSpider')
-        if not self.rmq_consumer.is_consumer_running:
+    def on_spider_idle(self, spider):
+        if self.rmq_consumer.is_consuming:
+            self.logger.debug('DontCloseSpider')
+            raise DontCloseSpider()
+        else:
             message = 'consumer is not running. To read from the queue, call spider.rmq_consumer.start_consuming()'
             self.logger.warning(message)
-        raise DontCloseSpider()
 
     @classmethod
     def update_settings(cls, settings):

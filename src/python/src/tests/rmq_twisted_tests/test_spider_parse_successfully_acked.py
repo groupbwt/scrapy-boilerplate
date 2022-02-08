@@ -17,10 +17,6 @@ class MySpider(RMQSpider):
     message_type: Type[BaseRMQMessage] = BaseRMQMessage
     task_queue_name: str = QUEUE_NAME
 
-    def start_requests(self):
-        self.rmq_consumer.start_consuming()
-        yield from ()
-
     def parse(self, response, **kwargs):
         self.logger.info("PARSE METHOD")
         yield from ()
@@ -33,14 +29,14 @@ class TestSpiderParseException:
     def test_crawler_successfully(self, rabbit_setup: PikaBlockingConnection, crawler: CrawlerProcess):
         successfully_handled = False
 
-        def on_after_ack_message(rmq_message: BaseRMQMessage):
+        def on_after_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
             nonlocal successfully_handled
             successfully_handled = True
 
             logging.info('ACK_CALLBACK')
             crawler.stop()
 
-        def on_after_nack_message(rmq_message: BaseRMQMessage):
+        def on_after_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
             logging.info('NACK_CALLBACK')
             crawler.stop()
 

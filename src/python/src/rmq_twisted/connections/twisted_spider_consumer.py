@@ -5,6 +5,7 @@ from twisted.internet import defer
 from twisted.internet.defer import Deferred, maybeDeferred
 
 from rmq_twisted.connections.twisted_consumer import TwistedConsumer
+from rmq_twisted.exception.stop_consuming_exception import StopConsumingException
 from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 from rmq_twisted.utils import signals as rmq_twisted_signals
@@ -28,7 +29,7 @@ class TwistedSpiderConsumer(TwistedConsumer):
         prefetch_count: int,
         spider: BaseRMQSpider
     ):
-        super(TwistedSpiderConsumer, self).__init__(settings, queue_name, prefetch_count)
+        super().__init__(settings, queue_name, prefetch_count)
         self.spider = spider
 
     @defer.inlineCallbacks
@@ -36,6 +37,7 @@ class TwistedSpiderConsumer(TwistedConsumer):
         self.logger.debug('on_message_consumed')
         deferred: Deferred = self.queue_object.get()
         channel, method, properties, body = yield deferred
+
         dict_message = {'channel': self.channel, 'method': method, 'properties': properties, 'body': body}
         SpiderRmqMessage: Type[BaseRMQMessage] = self.spider.message_type
         message = SpiderRmqMessage(
@@ -76,16 +78,20 @@ class TwistedSpiderConsumer(TwistedConsumer):
         # bug https://github.com/pika/pika/issues/1341
         d = maybeDeferred(
             lambda:
-            self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.before_ack_message, rmq_message=self),
-        )
+            self.spider.crawler.signals.send_catch_log(
+                rmq_twisted_signals.before_ack_message,
+                rmq_message=self, spider=self.spider
+            ))
         d.addCallback(lambda _: self.channel.basic_ack(delivery_tag=delivery_tag))
         d.addCallback(lambda _: self.logger.debug('before sleep ACK'))
         d.addCallback(lambda _: sleep_deferred(5))
         d.addCallback(lambda _: self.logger.debug('after sleep ACK'))
         d.addCallback(
             lambda _:
-            self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.after_ack_message, rmq_message=self)
-        )
+            self.spider.crawler.signals.send_catch_log(
+                rmq_twisted_signals.after_ack_message,
+                rmq_message=self, spider=self.spider
+            ))
         d.addCallback(lambda _: self.logger.info('ack message'))
         return d
 

@@ -3,12 +3,13 @@ from twisted.internet import defer, task
 from twisted.internet.defer import Deferred
 
 from rmq_twisted.connections.twisted_connection import TwistedConnection
+from rmq_twisted.exception.stop_consuming_exception import StopConsumingException
 
 
 class TwistedConsumer(TwistedConnection):
     queue_name: str
     prefetch_count: int
-    is_consumer_running: bool = False
+    is_consuming: bool = False
 
     def __init__(
         self,
@@ -21,8 +22,19 @@ class TwistedConsumer(TwistedConnection):
         self.prefetch_count: int = prefetch_count
 
     def start_consuming(self) -> Deferred:
-        self.is_consumer_running = True
-        return self._connect()
+        if self.is_consuming is False:
+            self.is_consuming = True
+            return self._connect()
+        else:
+            raise Exception('the consumer is already up and running')
+
+    def stop_consuming(self):
+        self.queue_object.close(StopConsumingException())
+        self.channel.close()
+        self.is_consuming = False
+
+    def close_connection(self) -> Deferred:
+        return self.connection.close()
 
     @defer.inlineCallbacks
     def run(self, connection) -> Deferred:
@@ -42,17 +54,14 @@ class TwistedConsumer(TwistedConnection):
         self.queue_object, self.consumer_tag = yield self.channel.basic_consume(queue=self.queue_name, auto_ack=False)
 
         for _ in range(self.prefetch_count):
-            l: task.LoopingCall = task.LoopingCall(self.on_message_consumed, _)
-            l.start(interval=0.01, now=False)
+            lc: task.LoopingCall = task.LoopingCall(self.on_message_consumed, _)
+            deffered = lc.start(interval=0, now=False)
+            deffered.addErrback(
+                lambda failure:
+                None if isinstance(failure.value, StopConsumingException) else failure.raiseException()
+            )
 
     def on_message_consumed(self, index: int):
         """Responsible for consuming the queue. See that it ACKs at the end.
         """
         raise NotImplementedError()
-        # queue_object.get() is a ClosableDeferredQueue, hence, a Deferred
-        ch, method, properties, body = yield queue_object.get()
-        # TODO
-        if body:
-            pass
-            # self.next_request(body)
-        # self.channel.basic_ack(method.delivery_tag)

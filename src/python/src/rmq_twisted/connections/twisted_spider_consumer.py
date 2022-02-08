@@ -19,6 +19,7 @@ class TwistedSpiderConsumer(TwistedConsumer):
     # TODO: delete old values
     request_counter: Dict[DeliveryTagInteger, CountRequestInteger] = {}
     spider: BaseRMQSpider
+    nack_requeue: bool
     is_request_counter_logging: bool = True
 
     def __init__(
@@ -26,10 +27,12 @@ class TwistedSpiderConsumer(TwistedConsumer):
         settings: Settings,
         queue_name: str,
         prefetch_count: int,
-        spider: BaseRMQSpider
+        spider: BaseRMQSpider,
+        nack_requeue: bool
     ):
         super().__init__(settings, queue_name, prefetch_count)
         self.spider = spider
+        self.nack_requeue = nack_requeue
 
     @defer.inlineCallbacks
     def on_message_consumed(self, index: int) -> None:
@@ -103,7 +106,10 @@ class TwistedSpiderConsumer(TwistedConsumer):
             lambda:
             self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.before_nack_message, rmq_message=self),
         )
-        d.addCallback(lambda _: self.channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False))
+        d.addCallback(
+            lambda _:
+            self.channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=self.nack_requeue)
+        )
         d.addCallback(lambda _: self.logger.debug('before sleep NACK'))
         d.addCallback(lambda _: sleep_deferred(5))
         d.addCallback(lambda _: self.logger.debug('after sleep NACK'))

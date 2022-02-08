@@ -17,6 +17,7 @@ class RMQSpider(BaseRMQSpider, ABC):
     """
     rmq_consumer: TwistedSpiderConsumer
     crawler: Crawler
+    nack_requeue: bool = False
 
     def __init__(self, crawler: Crawler, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,7 +26,8 @@ class RMQSpider(BaseRMQSpider, ABC):
             settings=crawler.settings,
             queue_name=self.task_queue_name,
             prefetch_count=crawler.settings.get('CONCURRENT_REQUESTS'),
-            spider=self
+            spider=self,
+            nack_requeue=self.nack_requeue
         )
 
     @classmethod

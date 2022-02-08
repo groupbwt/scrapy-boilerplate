@@ -8,7 +8,7 @@ from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders import RMQSpider
 from rmq_twisted.utils import signals as rmq_twisted_signals
 from rmq_twisted.utils.pika_blocking_connection import PikaBlockingConnection
-from tests.rmq_twisted_tests.constant import QUEUE_NAME
+from tests.rmq_twisted_tests.constant import QUEUE_NAME, URL
 
 
 class MySpider(RMQSpider):
@@ -20,12 +20,12 @@ class MySpider(RMQSpider):
     }
 
     def next_request(self, message: BaseRMQMessage) -> Request:
-        return Request('https://httpstat.us/200', dont_filter=True)
+        return Request(f'{URL}?level=1', dont_filter=True)
 
     def parse(self, response, **kwargs):
         for index in range(16):
             yield Request(
-                'https://httpstat.us/201',
+                f'{URL}?level=2',
                 callback=self.parse_first_callback,
                 dont_filter=True,
                 cb_kwargs={'index': index}
@@ -33,7 +33,7 @@ class MySpider(RMQSpider):
 
     def parse_first_callback(self, response, index: int):
         self.logger.info(f'INDEX - {index}')
-        yield Request('https://httpstat.us/202', callback=self.parse_second_callback, dont_filter=True)
+        yield Request(f'{URL}?level=3', callback=self.parse_second_callback, dont_filter=True)
 
     def parse_second_callback(self, response):
         pass

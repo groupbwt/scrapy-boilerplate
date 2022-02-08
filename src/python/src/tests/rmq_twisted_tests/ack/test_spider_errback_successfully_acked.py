@@ -1,43 +1,58 @@
 import logging
 from typing import Type
 
+import pytest
 from scrapy import Request
 from scrapy.crawler import CrawlerProcess
+from scrapy.http import HtmlResponse
 from scrapy.signalmanager import dispatcher
+from scrapy.utils.project import get_project_settings
+from twisted.python.failure import Failure
 
+from rmq.utils import get_import_full_name
 from rmq_alternative.rmq_spider import RmqSpider
 from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
 from rmq_alternative.utils import signals as CustomSignals
 from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
-from tests.rmq_new_tests.constant import QUEUE_NAME
+from tests.rmq_twisted_tests.constant import QUEUE_NAME, URL
+
+
+class Response400DownloaderMiddleware:
+    def process_request(self, request, spider):
+        return HtmlResponse(url=URL, status=400, body=b'{"status": "400"}')
+
+
+@pytest.fixture
+def crawler():
+    settings = get_project_settings()
+    custom_settings = {
+        "DOWNLOADER_MIDDLEWARES": {
+            get_import_full_name(Response400DownloaderMiddleware): 1,
+        },
+        'CONCURRENT_REQUESTS': 1,
+        'LOG_FILE': None,
+        'LOG_LEVEL': 'DEBUG',
+    }
+
+    settings.setdict(custom_settings or {}, priority='spider')
+    yield CrawlerProcess(settings=settings)
 
 
 class MySpider(RmqSpider):
     name = 'myspider'
     message_type: Type[BaseRmqMessage] = BaseRmqMessage
     task_queue_name: str = QUEUE_NAME
-    custom_settings = {
-        'CONCURRENT_REQUESTS': 8,
-    }
-
-    def next_request(self, message: BaseRmqMessage) -> Request:
-        return Request('https://httpstat.us/200', dont_filter=True)
 
     def parse(self, response, **kwargs):
-        for index in range(16):
-            yield Request(
-                'https://httpstat.us/200',
-                callback=self.parse_first_callback,
-                dont_filter=True,
-                cb_kwargs={'index': index}
-            )
+        raise Exception('FAILED')
+        yield from ()
 
-    def parse_first_callback(self, response, index: int):
-        self.logger.info(f'INDEX - {index}')
-        yield Request('https://httpstat.us/201', callback=self.parse_second_callback, dont_filter=True)
+    def errback(self, failure: Failure):
+        self.logger.info('SPIDER.errback')
+        yield from ()
 
-    def parse_second_callback(self, response):
-        pass
+    def next_request(self, message: BaseRmqMessage) -> Request:
+        return Request('https://httpstat.us/400', errback=self.errback, dont_filter=True)
 
 
 class TestSpiderParseException:

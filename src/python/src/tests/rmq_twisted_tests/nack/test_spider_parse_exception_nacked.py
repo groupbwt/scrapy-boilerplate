@@ -16,10 +16,7 @@ class MySpider(RMQSpider):
     name = 'myspider'
     message_type: Type[BaseRMQMessage] = BaseRMQMessage
     task_queue_name: str = QUEUE_NAME
-
-    def start_requests(self):
-        self.rmq_consumer.start_consuming()
-        yield from ()
+    nack_requeue = False
 
     def parse(self, response, **kwargs):
         self.logger.info("PARSE METHOD")

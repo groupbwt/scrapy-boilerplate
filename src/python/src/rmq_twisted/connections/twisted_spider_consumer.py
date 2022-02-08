@@ -5,7 +5,6 @@ from twisted.internet import defer
 from twisted.internet.defer import Deferred, maybeDeferred
 
 from rmq_twisted.connections.twisted_consumer import TwistedConsumer
-from rmq_twisted.exception.stop_consuming_exception import StopConsumingException
 from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders.base_rmq_spider import BaseRMQSpider
 from rmq_twisted.utils import signals as rmq_twisted_signals

@@ -38,16 +38,20 @@ class RMQReaderMiddleware:
         if RMQ_CONSTANT.init_request_meta_name in response.request.meta:
             yield from result
         elif RMQ_CONSTANT.message_meta_name in response.request.meta:
+            rmq_message: BaseRMQMessage = response.request.meta[RMQ_CONSTANT.message_meta_name]
             delivery_tag: int = self._get_delivery_tag(response)
+
             for item_or_request in result:
                 if isinstance(item_or_request, Request):
                     spider.rmq_consumer.counter_increment_and_try_to_acknowledge(delivery_tag)
+                    item_or_request.meta[RMQ_CONSTANT.message_meta_name] = rmq_message
                     yield item_or_request
                 elif isinstance(item_or_request, (Item, dict)):
                     spider.rmq_consumer.counter_increment_and_try_to_acknowledge(delivery_tag)
                     yield item_or_request
                 else:
                     raise Exception('received unsupported result')
+
             spider.rmq_consumer.counter_decrement_ank_try_to_acknowledge(delivery_tag)
         else:
             raise Exception('received response without sqs message')

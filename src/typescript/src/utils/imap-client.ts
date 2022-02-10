@@ -13,7 +13,7 @@ import ImapClientConfig from "../interfaces/imap-client-config";
 import ImapClientFilters from "../interfaces/imap-client-filters";
 
 
-class ImapClient {
+export default class ImapClient {
     public startTimeStamp: number | null = null
     public minMessageTime: number | null = null
     public emailSenderPattern: string | undefined = undefined
@@ -213,28 +213,3 @@ class ImapClient {
         })
     }
 }
-
-const imapClient = new ImapClient(
-    {
-        // user: 'halimov_oa@outlook.com',
-        user: 'halimov_oa@mail.ru',
-        // user: 'halimov_oa@groupbwt.com',
-        password: 'CNrvASHa4Fnf8WLBinT9',
-        // password: 'Onelove1999',
-        // host: 'outlook.office365.com',
-        host: 'imap.mail.ru',
-        // host: 'imap.gmail.com',
-        port: 993,
-    })
-
-imapClient.checkMail(5,{
-    emailSubjectPattern: 'password',
-    emailSenderPattern: '@groupbwt.com',
-    cssSelector: 'div[dir="ltr"]'
-})
-    .then(response => {
-        console.log(response.innerText)
-    })
-    .catch(err => {
-        console.log(err)
-    })

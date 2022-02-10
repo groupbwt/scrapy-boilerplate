@@ -1,8 +1,7 @@
-
-export default interface Pop3ClientSettings {
+export default interface EmailClientSettings {
     host: string
     port: number
     emailSubjectPattern: string
     emailSenderPattern: string
-    emailCodeRegexList: RegExp[]
+    emailCodeSelector: string
 }

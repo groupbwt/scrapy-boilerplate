@@ -12,6 +12,9 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
     public readonly proxyEnabled: boolean;
     public readonly proxy: ProxySettings;
 
+    public readonly imapProxyEnabled: boolean;
+    public readonly imapProxy: ProxySettings;
+
     public readonly rabbit: RabbitSettings;
 
     public readonly browserOptions: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
@@ -43,6 +46,7 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
 
     protected constructor() {
         this.proxyEnabled = strToBool(process.env.PUPPETEER_PROXY_ENABLED);
+        this.imapProxyEnabled = strToBool(process.env.IMAP_PROXY_ENABLED);
 
         if (this.proxyEnabled) {
             const [host, port] = process.env.PUPPETEER_PROXY ? process.env.PUPPETEER_PROXY.split(':') : ['', ''];
@@ -50,6 +54,14 @@ export default class Settings implements SettingsProperties, ExampleSpiderProper
             this.proxy = { host, port, username, password };
         } else {
             this.proxy = { host: '', port: '', username: '', password: '' };
+        }
+
+        if (this.imapProxyEnabled) {
+            const [host, port] = process.env.IMAP_PROXY ? process.env.IMAP_PROXY.split(':') : ['', ''];
+            const [username, password] = process.env.IMAP_PROXY_AUTH ? process.env.IMAP_PROXY_AUTH.split(':') : ['', ''];
+            this.imapProxy = { host, port, username, password };
+        } else {
+            this.imapProxy = { host: '', port: '', username: '', password: '' };
         }
 
         this.rabbit = {

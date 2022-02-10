@@ -1,19 +1,20 @@
 import {Message, Client} from 'yapople'
+import HTMLParser = require('node-html-parser')
 
-import Pop3ClientSettings from '../interfaces/pop3-client-settings'
+import EmailClientSettings from '../interfaces/email-client-settings'
 
 
 class POP3Client {
     public startTimeStamp: number | null = null
     public minMessageTime: number | null = null
-    private readonly _pop_config: Pop3ClientSettings
+    private readonly _popConfig: EmailClientSettings
     private readonly _email: string
     private readonly _password: string
 
-    constructor(email: string, password: string, pop_config: Pop3ClientSettings) {
+    constructor(email: string, password: string, pop_config: EmailClientSettings) {
         this._email = email
         this._password = password
-        this._pop_config = pop_config
+        this._popConfig = pop_config
     }
 
     async getVerificationCode(expirationTime: number) {
@@ -38,8 +39,8 @@ class POP3Client {
 
     async __checkMail() {
         const client = new Client({
-            host: this._pop_config.host,
-            port: this._pop_config.port,
+            host: this._popConfig.host,
+            port: this._popConfig.port,
             tls: true,
             mailparser: true,
             username: this._email,
@@ -65,12 +66,16 @@ class POP3Client {
             messages.reverse().some((message: Message) => {
                 if (message.date.getTime() >= this.minMessageTime!) {
                     if (
-                        String(Array.from(message.from).shift()!.address).includes(this._pop_config.emailSenderPattern)
-                        && message.subject.includes(this._pop_config.emailSubjectPattern)
+                        String(Array.from(message.from).shift()!.address).includes(this._popConfig.emailSenderPattern)
+                        && message.subject.includes(this._popConfig.emailSubjectPattern)
                     ) {
-                        console.log(`Message with email pattern "${this._pop_config.emailSenderPattern}" found`)
+                        console.log(`Message with email pattern "${this._popConfig.emailSenderPattern}" found`)
                         console.log('Trying to get code...')
-                        code = this.__executeRegExpList(message.html)
+                        const html = HTMLParser.parse(message.html)
+                        code = html.querySelector("div[dir='3D\"ltr\"\']")!.innerText
+                        if (!code) {
+                            console.log('Code not found')
+                        }
                         return code != null
                     }
                 }
@@ -78,19 +83,6 @@ class POP3Client {
             return code
         }
         return null
-    }
-
-    __executeRegExpList(html: string): string | null {
-        let extractedCode: string | null = null
-        this._pop_config.emailCodeRegexList.some((regexp: RegExp) => {
-            const match = regexp.exec(html)
-            if (match !== null && match.length > 1 && match[1] !== null) {
-                console.log('Code found')
-                extractedCode = match[1].trim()
-                return extractedCode != null
-            }
-        })
-        return extractedCode
     }
 }
 

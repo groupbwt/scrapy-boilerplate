@@ -1,20 +1,20 @@
 import csv
 import datetime
 from datetime import date
+from optparse import Values
 from os import path
 from typing import List, Dict, Union
-from optparse import Values
 
 from MySQLdb.cursors import DictCursor
 from sqlalchemy import select, Table
-from sqlalchemy.sql import update
 from sqlalchemy.dialects.mysql import dialect
+from sqlalchemy.sql import update
 from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
 from twisted.enterprise import adbapi
 from twisted.enterprise.adbapi import Transaction
 from twisted.internet import reactor, defer
 
-from commands import BaseCommand
+from commands.base import BaseCommand
 
 
 class BaseCSVExporter(BaseCommand):
@@ -158,7 +158,7 @@ class BaseCSVExporter(BaseCommand):
             postfix = self.filename_postfix
         if extension is None:
             extension = self.file_extension
-        export_path = path.join(path.abspath('.'), 'storage')
+        export_path = path.join(path.abspath('..'), 'storage')
         file_name = f'{prefix}{datetime.datetime.now().strftime(timestamp_format)}{postfix}.{extension}'
         return path.join(export_path, file_name)
 

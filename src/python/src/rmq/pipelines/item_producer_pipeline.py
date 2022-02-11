@@ -4,6 +4,7 @@ import logging
 
 import pika
 from scrapy import signals
+from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DontCloseSpider
 from twisted.internet import reactor
 
@@ -30,10 +31,10 @@ class ItemProducerPipeline:
         crawler.signals.connect(o.spider_idle, signal=signals.spider_idle)
         return o
 
-    def __init__(self, crawler):
+    def __init__(self, crawler: Crawler):
         super().__init__()
         self.crawler = crawler
-        self.__spider = None
+        self.spider = crawler.spider
 
         self.delivery_tag_meta_key = RMQConstants.DELIVERY_TAG_META_KEY.value
         self.msg_body_meta_key = RMQConstants.MSG_BODY_META_KEY.value
@@ -44,10 +45,6 @@ class ItemProducerPipeline:
         self.pending_items_buffer = []
 
     def spider_opened(self, spider):
-        """execute on spider_opened signal and initialize connection, callbacks, start consuming"""
-        """Set current spider instance"""
-        self.__spider = spider
-
         """Check spider for correct declared callbacks/errbacks/methods/variables"""
         if self._validate_spider_has_attributes() is False:
             raise CloseSpider(
@@ -55,20 +52,20 @@ class ItemProducerPipeline:
             )
 
         """Configure loggers"""
-        logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
-        logging.getLogger("pika").setLevel(self.__spider.settings.get("PIKA_LOG_LEVEL", "WARNING"))
+        logger.setLevel(self.spider.settings.get("LOG_LEVEL", "INFO"))
+        logging.getLogger("pika").setLevel(self.spider.settings.get("PIKA_LOG_LEVEL", "WARNING"))
 
         """Declare/retrieve queue name from spider instance"""
         result_queue_name = spider.result_queue_name
 
         """Build pika connection parameters and start connection in separate twisted thread"""
         parameters = pika.ConnectionParameters(
-            host=self.__spider.settings.get("RABBITMQ_HOST"),
-            port=int(self.__spider.settings.get("RABBITMQ_PORT")),
-            virtual_host=self.__spider.settings.get("RABBITMQ_VIRTUAL_HOST"),
+            host=self.spider.settings.get("RABBITMQ_HOST"),
+            port=int(self.spider.settings.get("RABBITMQ_PORT")),
+            virtual_host=self.spider.settings.get("RABBITMQ_VIRTUAL_HOST"),
             credentials=pika.credentials.PlainCredentials(
-                username=self.__spider.settings.get("RABBITMQ_USERNAME"),
-                password=self.__spider.settings.get("RABBITMQ_PASSWORD"),
+                username=self.spider.settings.get("RABBITMQ_USERNAME"),
+                password=self.spider.settings.get("RABBITMQ_PASSWORD"),
             ),
             heartbeat=RMQDefaultOptions.CONNECTION_HEARTBEAT.value,
         )
@@ -89,13 +86,13 @@ class ItemProducerPipeline:
 
     def _validate_spider_has_attributes(self):
         spider_attributes = [
-            attr for attr in dir(self.__spider) if not callable(getattr(self.__spider, attr))
+            attr for attr in dir(self.spider) if not callable(getattr(self.spider, attr))
         ]
         if "result_queue_name" not in spider_attributes:
             return False
         if (
-            not isinstance(self.__spider.result_queue_name, str)
-            or len(self.__spider.result_queue_name) == 0
+            not isinstance(self.spider.result_queue_name, str)
+            or len(self.spider.result_queue_name) == 0
         ):
             return False
         return True
@@ -111,7 +108,7 @@ class ItemProducerPipeline:
         if self.crawler.engine.slot is None or self.crawler.engine.slot.closing:
             logger.critical("SPIDER ALREADY CLOSED")
             return
-        self.crawler.engine.close_spider(self.__spider)
+        self.crawler.engine.close_spider(self.spider)
 
     def connect(self, parameters, queue_name):
         """Creates and runs pika select connection"""
@@ -121,7 +118,7 @@ class ItemProducerPipeline:
             owner=self,
             options={
                 "enable_delivery_confirmations": False,
-                "prefetch_count": self.__spider.settings.get("CONCURRENT_REQUESTS", 1),
+                "prefetch_count": self.spider.settings.get("CONCURRENT_REQUESTS", 1),
             },
             is_consumer=False,
         )

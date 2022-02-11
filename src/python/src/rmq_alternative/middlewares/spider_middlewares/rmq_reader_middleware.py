@@ -133,6 +133,8 @@ class RmqReaderMiddleware(object):
                         item_or_request.meta[self.message_meta_name] = rmq_message
                         if item_or_request.errback is None:
                             item_or_request.errback = self.default_errback
+                    if isinstance(item_or_request, dict):
+                        self.request_counter_increment(delivery_tag)
                     yield item_or_request
 
                 if response in self.failed_response_deque:
@@ -142,6 +144,7 @@ class RmqReaderMiddleware(object):
                     self.nack(rmq_message)
                 else:
                     self.request_counter_decrement(delivery_tag)
+                    self.try_to_acknowledge_message(rmq_message)
             else:
                 self.logger.warning('filtered processing of an inactive message')
         elif self.init_request_meta_name in response.request.meta:
@@ -198,6 +201,7 @@ class RmqReaderMiddleware(object):
     def on_item_scraped(self, item, spider, response):
         if self.message_meta_name in response.meta:
             rmq_message: BaseRmqMessage = response.request.meta[self.message_meta_name]
+            self.request_counter_decrement(rmq_message.deliver.delivery_tag)
             self.try_to_acknowledge_message(rmq_message)
 
     def on_item_dropped(self, item, response, exception, spider: BaseRmqSpider):

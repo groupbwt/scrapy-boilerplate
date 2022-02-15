@@ -391,6 +391,7 @@ class PikaSelectConnection:
                 )
 
             self.connection.ioloop.start()
+        reactor.stop()
         logger.info("Stopped")
 
     def stop_from_reactor_event(self):

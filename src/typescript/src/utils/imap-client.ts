@@ -9,8 +9,8 @@ import ImapConnection from './imap-connection'
 import ImapClientMessage from '../interfaces/imap-client-message'
 import Settings from '../settings'
 import {loadDotEnv} from './load-dot-env'
-import ImapClientConfig from "../interfaces/imap-client-config";
-import ImapClientFilters from "../interfaces/imap-client-filters";
+import ImapClientConfig from '../interfaces/imap-client-config'
+import EmailClientFilters from '../interfaces/email-client-filters'
 
 
 export default class ImapClient {
@@ -40,7 +40,7 @@ export default class ImapClient {
         }
     }
 
-    async checkMail(expirationTime: number, filters: ImapClientFilters): Promise<HTMLElement> {
+    async checkMail(expirationTime: number, filters: EmailClientFilters): Promise<HTMLElement> {
         this.startTimeStamp = new Date().getTime()
         const stopTimeStamp = this.startTimeStamp + expirationTime * 60000
         this.minMessageTime = this.startTimeStamp - 60 * 1000 // set min message time one minute less than start time

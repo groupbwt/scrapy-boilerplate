@@ -1,4 +1,4 @@
-export default interface ImapClientFilters {
+export default interface EmailClientFilters {
     emailSenderPattern: string
     emailSubjectPattern: string
     cssSelector: string

@@ -57,14 +57,14 @@ export default class Pop3Client {
             .slice(0, Math.min(messagesCount, this.messageLimit))
     }
 
-    checkStringIncludes(value: string, pattern: string): boolean {
-        return value.trim().toLowerCase().includes(pattern.trim().toLowerCase())
+    testRegExp(value: string, pattern: string): boolean {
+        return new RegExp(pattern, 'i').test(value)
     }
 
     passFilters(message: Message): boolean {
         return new Date(message.date).getTime() > this.minMessageTime! &&
-            this.checkStringIncludes(message.from[0].address, this.emailSenderPattern!) &&
-            this.checkStringIncludes(message.subject, this.emailSubjectPattern!)
+            this.testRegExp(message.from[0].address, this.emailSenderPattern!) &&
+            this.testRegExp(message.subject, this.emailSubjectPattern!)
     }
 
     getElement(message: Message): HTMLElement | null {

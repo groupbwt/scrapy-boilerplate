@@ -51,17 +51,17 @@ export default class Pop3Client {
         throw new Error('Verification code has been expired')
     }
 
-    getLastMessagesNumbers(messagesCount: number) {
+    getLastMessagesNumbers(messagesCount: number): number[] {
         return Array.from(Array(messagesCount).keys(), v => v + 1)
             .reverse()
             .slice(0, Math.min(messagesCount, this.messageLimit))
     }
 
-    checkStringIncludes(value: string, pattern: string) {
+    checkStringIncludes(value: string, pattern: string): boolean {
         return value.trim().toLowerCase().includes(pattern.trim().toLowerCase())
     }
 
-    passFilters(message: Message) {
+    passFilters(message: Message): boolean {
         return new Date(message.date).getTime() > this.minMessageTime! &&
             this.checkStringIncludes(message.from[0].address, this.emailSenderPattern!) &&
             this.checkStringIncludes(message.subject, this.emailSubjectPattern!)
@@ -77,7 +77,7 @@ export default class Pop3Client {
         return element
     }
 
-    async __checkMail() {
+    async __checkMail(): Promise<HTMLElement | null> {
         await this.client.connect()
         this.debug && this.debug('Connected')
         const count = await this.client.count()

@@ -98,20 +98,3 @@ export default class Pop3Client {
         return element
     }
 }
-
-const client = new Pop3Client({
-    username: 'halimov_oa@groupbwt.com',
-    password: 'Onelove1999',
-    host: 'pop.gmail.com',
-    port: 995,
-    debug: (info) => console.log(info),
-})
-
-client.checkMail(3, {
-    emailSubjectPattern: 'password',
-    emailSenderPattern: '@amazon.com',
-    cssSelector: 'p.otp',
-}).then(result => {
-    console.log(result)
-}).catch(err => console.log(err))
-

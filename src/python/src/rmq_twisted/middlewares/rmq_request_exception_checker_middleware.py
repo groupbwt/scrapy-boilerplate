@@ -22,7 +22,10 @@ class RMQRequestExceptionCheckerMiddleware:
         """
         if not request.errback:
             delivery_tag = RMQReaderMiddleware.get_delivery_tag(request.meta)
-            request.errback = lambda failure: spider.rmq_consumer.nack(delivery_tag)
+            if request.meta.get("finally_ack", False):
+                request.errback = lambda failure: spider.rmq_consumer.ack(delivery_tag)
+            else:
+                request.errback = lambda failure: spider.rmq_consumer.nack(delivery_tag)
 
     def process_exception(self, request: Request, exception, spider: "RMQSpider"):
         """

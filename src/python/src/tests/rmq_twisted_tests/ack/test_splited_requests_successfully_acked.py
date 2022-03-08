@@ -6,7 +6,7 @@ from scrapy.signalmanager import dispatcher
 
 from rmq_twisted.schemas.messages import BaseRMQMessage
 from rmq_twisted.spiders import RMQSpider
-from rmq_twisted.utils import signals as rmq_twisted_signals
+from rmq_twisted.utils import signals as CustomSignals
 from rmq_twisted.utils.pika_blocking_connection import PikaBlockingConnection
 from tests.rmq_twisted_tests.constant import QUEUE_NAME, URL
 
@@ -43,19 +43,27 @@ class TestSpiderParseException:
     def test_crawler_successfully(self, rabbit_setup: PikaBlockingConnection, crawler: CrawlerProcess):
         successfully_handled = False
 
+        def on_before_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            logging.info('BEFORE ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
+            crawler.stop()
+
         def on_after_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
             nonlocal successfully_handled
             successfully_handled = True
 
-            logging.info('ACK_CALLBACK')
+            logging.info('AFTER ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
             crawler.stop()
+
+        def on_before_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            logging.info('BEFORE NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
 
         def on_after_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
-            logging.info('NACK_CALLBACK')
-            crawler.stop()
+            logging.info('AFTER NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
 
-        dispatcher.connect(on_after_ack_message, rmq_twisted_signals.after_ack_message)
-        dispatcher.connect(on_after_nack_message, rmq_twisted_signals.after_nack_message)
+        dispatcher.connect(on_before_ack_message, CustomSignals.before_ack_message)
+        dispatcher.connect(on_after_ack_message, CustomSignals.after_ack_message)
+        dispatcher.connect(on_before_nack_message, CustomSignals.before_nack_message)
+        dispatcher.connect(on_after_nack_message, CustomSignals.after_nack_message)
         crawler.crawl(MySpider)
         crawler.start()
 

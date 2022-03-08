@@ -8,11 +8,11 @@ from scrapy import Request
 from scrapy.crawler import CrawlerProcess
 from scrapy.signalmanager import dispatcher
 
-from rmq_alternative.rmq_spider import RmqSpider
-from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
-from rmq_alternative.utils import signals as CustomSignals
-from rmq_alternative.utils.pika_blocking_connection import PikaBlockingConnection
-from tests.rmq_new_tests.constant import QUEUE_NAME
+from rmq_twisted.spiders import RMQSpider
+from rmq_twisted.schemas.messages.base_rmq_message import BaseRMQMessage
+from rmq_twisted.utils import signals as CustomSignals
+from rmq_twisted.utils.pika_blocking_connection import PikaBlockingConnection
+from tests.rmq_twisted_tests.constant import QUEUE_NAME
 
 
 @pytest.fixture
@@ -29,6 +29,7 @@ def rabbit_setup():
                 delivery_mode=2,  # make message persistent
             ),
         )
+        logging.info("Message published")
 
     yield rmq_connection
 
@@ -36,17 +37,18 @@ def rabbit_setup():
     rmq_connection.rabbit_channel.queue_delete(QUEUE_NAME)
 
 
-class MySpider(RmqSpider):
+class MySpider(RMQSpider):
     name = 'myspider'
-    message_type: Type[BaseRmqMessage] = BaseRmqMessage
+    message_type: Type[BaseRMQMessage] = BaseRMQMessage
     task_queue_name: str = QUEUE_NAME
 
     def parse(self, response, **kwargs):
         self.logger.info("PARSE METHOD")
         yield from ()
 
-    def next_request(self, message: BaseRmqMessage) -> Request:
-        return Request('https://httpstat.us/200', dont_filter=False)
+    def next_request(self, message: BaseRMQMessage) -> Request:
+        self.logger.debug("Next request")
+        return Request('https://httpstat.us/200', dont_filter=True)
 
 
 class TestSpiderParseException:
@@ -54,21 +56,29 @@ class TestSpiderParseException:
         count_ack = 0
         count_nack = 0
 
-        def nack_callback(rmq_message: BaseRmqMessage):
-            logging.info('NACK_CALLBACK')
+        def on_before_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            logging.info('BEFORE ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
+
+        def on_after_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            nonlocal count_ack
+            count_ack += 1
+            logging.info('AFTER ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
+            if count_ack == 2:
+                crawler.stop()
+
+        def on_before_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            logging.info('BEFORE NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
+
+        def on_after_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            logging.info('AFTER NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
             nonlocal count_nack
             count_nack += 1
             crawler.stop()
 
-        def ack_callback(rmq_message: BaseRmqMessage):
-            logging.info('ACK_CALLBACK')
-            nonlocal count_ack
-            count_ack += 1
-            if count_ack == 2:
-                crawler.stop()
-
-        dispatcher.connect(ack_callback, CustomSignals.message_ack)
-        dispatcher.connect(nack_callback, CustomSignals.message_nack)
+        dispatcher.connect(on_before_ack_message, CustomSignals.before_ack_message)
+        dispatcher.connect(on_after_ack_message, CustomSignals.after_ack_message)
+        dispatcher.connect(on_before_nack_message, CustomSignals.before_nack_message)
+        dispatcher.connect(on_after_nack_message, CustomSignals.after_nack_message)
         crawler.crawl(MySpider)
         crawler.start()
 

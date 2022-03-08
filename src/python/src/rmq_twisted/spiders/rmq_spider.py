@@ -57,12 +57,17 @@ class RMQSpider(BaseRMQSpider, ABC):
     def update_settings(cls, settings):
         super().update_settings(settings)
         spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES", {})
-        smw_highest_precedence = min(spider_middlewares.values() or [1])
+        smw_highest_precedence = cls._min_precedence(spider_middlewares)
         spider_middlewares[get_import_full_name(RMQReaderMiddleware)] = smw_highest_precedence - 1
         settings.set("SPIDER_MIDDLEWARES", spider_middlewares, priority='spider')
 
         downloader_middlewares = settings.getdict("DOWNLOADER_MIDDLEWARES", {})
         # If you specify a higher value, the counter will be triggered before retries
-        dmw_highest_precedence = min(downloader_middlewares.values() or [1])
+        dmw_highest_precedence = cls._min_precedence(downloader_middlewares)
         downloader_middlewares[get_import_full_name(RMQRequestExceptionCheckerMiddleware)] = dmw_highest_precedence - 1
         settings.set("DOWNLOADER_MIDDLEWARES", downloader_middlewares, priority='spider')
+
+    @staticmethod
+    def _min_precedence(middlewares: dict) -> int:
+        precedences = list(filter(lambda value: value is not None, middlewares.values()))
+        return min(precedences or [1])

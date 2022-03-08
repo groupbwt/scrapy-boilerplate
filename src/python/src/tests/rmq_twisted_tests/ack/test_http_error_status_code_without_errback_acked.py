@@ -17,7 +17,7 @@ from utils import get_import_full_name
 
 class MySpider(RMQSpider):
     """
-        If {Request} has not errback and flag FINALLY_ACK is False then nack message
+        If {Request} has not errback and flag FINALLY_ACK is True then ack message
     """
     name = "myspider"
     message_type: Type[BaseRMQMessage] = BaseRMQMessage
@@ -35,7 +35,7 @@ class MySpider(RMQSpider):
 
     def next_request(self, message: BaseRMQMessage) -> Request:
         self.logger.debug("Next request")
-        return Request('https://httpstat.us/400', dont_filter=True)
+        return Request('https://httpstat.us/400', dont_filter=True, meta={"finally_ack": True})
 
 
 class TestSpiderParseException:
@@ -46,6 +46,9 @@ class TestSpiderParseException:
             logging.info('BEFORE ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
 
         def on_after_ack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
+            nonlocal successfully_handled
+            successfully_handled = True
+
             logging.info('AFTER ACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
             crawler.stop()
 
@@ -53,9 +56,6 @@ class TestSpiderParseException:
             logging.info('BEFORE NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
 
         def on_after_nack_message(rmq_message: BaseRMQMessage, spider: RMQSpider):
-            nonlocal successfully_handled
-            successfully_handled = True
-
             logging.info('AFTER NACK_CALLBACK %s:%s', spider.name, rmq_message.deliver.delivery_tag)
             crawler.stop()
 
@@ -69,4 +69,4 @@ class TestSpiderParseException:
         assert successfully_handled
 
         queue = rabbit_setup.rabbit_channel.queue_declare(queue=QUEUE_NAME, durable=True)
-        assert queue.method.message_count == 1
+        assert queue.method.message_count == 0

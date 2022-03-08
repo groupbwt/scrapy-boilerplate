@@ -16,7 +16,7 @@ class RMQSpider(BaseRMQSpider, ABC):
     """
     rmq_consumer: TwistedSpiderConsumer
     crawler: Crawler
-    nack_requeue: bool = False
+    nack_requeue: bool = True
 
     def __init__(self, crawler: Crawler, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,12 +55,14 @@ class RMQSpider(BaseRMQSpider, ABC):
 
     @classmethod
     def update_settings(cls, settings):
-        spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES")
-        spider_middlewares[get_import_full_name(RMQReaderMiddleware)] = 1
-        settings.set("SPIDER_MIDDLEWARES", spider_middlewares)
-
-        downloader_middlewares = settings.getdict("DOWNLOADER_MIDDLEWARES")
-        # If you specify a higher value, the counter will be triggered before retries
-        downloader_middlewares[get_import_full_name(RMQRequestExceptionCheckerMiddleware)] = 1
-        settings.set("DOWNLOADER_MIDDLEWARES", downloader_middlewares)
         super().update_settings(settings)
+        spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES", {})
+        smw_highest_precedence = min(spider_middlewares.values() or [1])
+        spider_middlewares[get_import_full_name(RMQReaderMiddleware)] = smw_highest_precedence - 1
+        settings.set("SPIDER_MIDDLEWARES", spider_middlewares, priority='spider')
+
+        downloader_middlewares = settings.getdict("DOWNLOADER_MIDDLEWARES", {})
+        # If you specify a higher value, the counter will be triggered before retries
+        dmw_highest_precedence = min(downloader_middlewares.values() or [1])
+        downloader_middlewares[get_import_full_name(RMQRequestExceptionCheckerMiddleware)] = dmw_highest_precedence - 1
+        settings.set("DOWNLOADER_MIDDLEWARES", downloader_middlewares, priority='spider')

@@ -62,12 +62,12 @@ class RMQReaderMiddleware:
                 else:
                     raise Exception('received unsupported result')
 
-            spider.rmq_consumer.counter_decrement_ank_try_to_acknowledge(delivery_tag)
+            spider.rmq_consumer.counter_decrement_ack_try_to_acknowledge(delivery_tag)
         else:
             raise Exception('received response without sqs message')
 
     def on_item_scraped(self, item: Union[Item, dict], response, spider: "RMQSpider"):
-        spider.rmq_consumer.counter_decrement_ank_try_to_acknowledge(self.get_delivery_tag(response.request.meta))
+        spider.rmq_consumer.counter_decrement_ack_try_to_acknowledge(self.get_delivery_tag(response.request.meta))
 
     def on_item_dropped(self, item: Union[Item, dict], response, exception: DropItem, spider: "RMQSpider"):
         spider.rmq_consumer.nack(self.get_delivery_tag(response.request.meta))

@@ -1,4 +1,5 @@
-from typing import Type, Dict
+import dataclasses
+from typing import Type, Dict, List
 
 from scrapy.settings import Settings
 from twisted.internet import defer
@@ -15,9 +16,16 @@ DeliveryTagInteger = int
 CountRequestInteger = int
 
 
+# TODO: move to utils
+@dataclasses.dataclass
+class RequestCounterData(object):
+    message: BaseRMQMessage
+    counter: CountRequestInteger = dataclasses.field(default=1)
+
+
 class TwistedSpiderConsumer(TwistedConsumer):
     # TODO: delete old values
-    request_counter: Dict[DeliveryTagInteger, CountRequestInteger] = {}
+    request_counter: Dict[DeliveryTagInteger, RequestCounterData] = {}
     spider: BaseRMQSpider
     nack_requeue: bool
     is_request_counter_logging: bool = True
@@ -50,7 +58,7 @@ class TwistedSpiderConsumer(TwistedConsumer):
         )
         request = self.spider.next_request(message)
         request.meta[RMQ_CONSTANT.message_meta_name] = message
-        self.request_counter[message.deliver.delivery_tag] = 1
+        self.request_counter[message.deliver.delivery_tag] = RequestCounterData(message)
         # if request.errback is None:
         #     request.errback = self.default_errback
 
@@ -58,64 +66,76 @@ class TwistedSpiderConsumer(TwistedConsumer):
             self.spider.crawler.engine.crawl(request, spider=self.spider)
 
     def counter_increment_and_try_to_acknowledge(self, delivery_tag: int):
-        self.request_counter[delivery_tag] += 1
+        self.request_counter[delivery_tag].counter += 1
         if self.is_request_counter_logging:
             self.logger.debug(f'request counter={self.request_counter[delivery_tag]}')
         self.try_to_acknowledge(delivery_tag)
 
-    def counter_decrement_ank_try_to_acknowledge(self, delivery_tag: int):
-        self.request_counter[delivery_tag] -= 1
+    def counter_decrement_ack_try_to_acknowledge(self, delivery_tag: int):
+        self.request_counter[delivery_tag].counter -= 1
         if self.is_request_counter_logging:
             self.logger.debug(f'request counter={self.request_counter[delivery_tag]}')
         self.try_to_acknowledge(delivery_tag)
 
     def try_to_acknowledge(self, delivery_tag: int):
-        if self.request_counter[delivery_tag] == 0:
+        if self.request_counter[delivery_tag].counter == 0:
             self.ack(delivery_tag)
 
     def ack(self, delivery_tag: int) -> Deferred:
         # TODO: we need a better option
-        self.request_counter[delivery_tag] = -10000
+        self.request_counter[delivery_tag].counter = -10000
 
         # bug https://github.com/pika/pika/issues/1341
         d = maybeDeferred(
             lambda:
             self.spider.crawler.signals.send_catch_log(
                 rmq_twisted_signals.before_ack_message,
-                rmq_message=self, spider=self.spider
+                rmq_message=self.request_counter[delivery_tag].message,
+                spider=self.spider
             ))
         d.addCallback(lambda _: self.channel.basic_ack(delivery_tag=delivery_tag))
-        d.addCallback(lambda _: self.logger.debug('before sleep ACK'))
-        d.addCallback(lambda _: sleep_deferred(5))
-        d.addCallback(lambda _: self.logger.debug('after sleep ACK'))
+        # TODO: remove if message nack bug will not be reproduced
+        # d.addCallback(lambda _: self.logger.debug('before sleep ACK'))
+        # d.addCallback(lambda _: sleep_deferred(5))
+        # d.addCallback(lambda _: self.logger.debug('after sleep ACK'))
         d.addCallback(
             lambda _:
             self.spider.crawler.signals.send_catch_log(
-                rmq_twisted_signals.after_ack_message,
-                rmq_message=self, spider=self.spider
+                signal=rmq_twisted_signals.after_ack_message,
+                rmq_message=self.request_counter[delivery_tag].message,
+                spider=self.spider
             ))
         d.addCallback(lambda _: self.logger.info('ack message'))
         return d
 
     def nack(self, delivery_tag: int):
         # TODO: we need a better option
-        self.request_counter[delivery_tag] = -10000
+        self.request_counter[delivery_tag].counter = -10000
 
         # bug https://github.com/pika/pika/issues/1341
         d = maybeDeferred(
             lambda:
-            self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.before_nack_message, rmq_message=self),
+            self.spider.crawler.signals.send_catch_log(
+                signal=rmq_twisted_signals.before_nack_message,
+                rmq_message=self.request_counter[delivery_tag].message,
+                spider=self.spider
+            )
         )
         d.addCallback(
             lambda _:
             self.channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=self.nack_requeue)
         )
-        d.addCallback(lambda _: self.logger.debug('before sleep NACK'))
-        d.addCallback(lambda _: sleep_deferred(5))
-        d.addCallback(lambda _: self.logger.debug('after sleep NACK'))
+        # TODO: remove if message nack bug will not be reproduced
+        # d.addCallback(lambda _: self.logger.debug('before sleep NACK'))
+        # d.addCallback(lambda _: sleep_deferred(5))
+        # d.addCallback(lambda _: self.logger.debug('after sleep NACK'))
         d.addCallback(
             lambda _:
-            self.spider.crawler.signals.send_catch_log(rmq_twisted_signals.after_nack_message, rmq_message=self)
+            self.spider.crawler.signals.send_catch_log(
+                signal=rmq_twisted_signals.after_nack_message,
+                rmq_message=self.request_counter[delivery_tag].message,
+                spider=self.spider
+            )
         )
         d.addCallback(lambda _: self.logger.info('nack message'))
         return d

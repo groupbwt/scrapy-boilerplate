@@ -34,7 +34,7 @@ class RMQRequestExceptionCheckerMiddleware:
         example:
             twisted.python.failure.Failure twisted.internet.error.ConnectionLost: Connection to the other side was lost in a non-clean fashion.
         """
-
+        a=1
         rmq_message: BaseRMQMessage = request.meta[RMQ_CONSTANT.message_meta_name]
 
         # self.logger.debug('failed to get a response, the RMQ message will be rejected (nack)')

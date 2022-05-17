@@ -18,7 +18,6 @@ class RmqSpider(BaseRmqSpider, ABC):
         spider_middlewares = settings.getdict("SPIDER_MIDDLEWARES")
         spider_middlewares[get_import_full_name(rmq_reader_middleware.RmqReaderMiddleware)] = 1
         settings.set("SPIDER_MIDDLEWARES", spider_middlewares)
-        super().update_settings(settings)
 
         downloader_middlewares = settings.getdict("DOWNLOADER_MIDDLEWARES")
         # If you specify a higher value, the counter will be triggered before retries

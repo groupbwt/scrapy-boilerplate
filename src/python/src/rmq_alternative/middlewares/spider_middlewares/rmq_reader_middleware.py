@@ -8,7 +8,6 @@ from scrapy import signals, Request
 from scrapy.crawler import Crawler
 from scrapy.exceptions import CloseSpider, DontCloseSpider
 from scrapy.http import Response
-from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 
@@ -16,6 +15,7 @@ from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQDefaultOptions
 from rmq_alternative.base_rmq_spider import BaseRmqSpider
 from rmq_alternative.schemas.messages.base_rmq_message import BaseRmqMessage
+from utils import get_response_or_request
 
 DeliveryTagInteger = int
 CountRequestInteger = int
@@ -23,6 +23,11 @@ CountRequestInteger = int
 
 class RmqReaderMiddleware(object):
     request_counter: Dict[DeliveryTagInteger, CountRequestInteger] = {}
+    message_meta_name: str = '__rmq_message'
+    init_request_meta_name: str = '__rmq_init_request'
+    is_http_error_received: str = '__is_http_error_received'
+    failed_response_deque = deque([], maxlen=16)
+    logger = logging.getLogger(name='RmqReaderMiddleware')
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -48,13 +53,13 @@ class RmqReaderMiddleware(object):
         self.crawler = crawler
         self.__spider: BaseRmqSpider = crawler.spider
 
-        self.failed_response_deque = deque([], maxlen=crawler.settings.get('CONCURRENT_REQUESTS'))
+        RmqReaderMiddleware.failed_response_deque = deque(
+            [i for i in RmqReaderMiddleware.failed_response_deque],
+            maxlen=crawler.settings.get('CONCURRENT_REQUESTS')
+        )
 
-        self.message_meta_name: str = '__rmq_message'
-        self.init_request_meta_name: str = '__rmq_init_request'
-        self.is_http_error_received: str = '__is_http_error_received'
+        self.logger = RmqReaderMiddleware.logger
 
-        self.logger = logging.getLogger(name=self.__class__.__name__)
         self.logger.setLevel(self.__spider.settings.get("LOG_LEVEL", "INFO"))
         logging.getLogger("pika").setLevel(self.__spider.settings.get("PIKA_LOG_LEVEL", "WARNING"))
 
@@ -113,7 +118,7 @@ class RmqReaderMiddleware(object):
     # SPIDER MIDDLEWARE METHOD
     def process_start_requests(self, start_requests, spider: BaseRmqSpider) -> Iterator[Request]:
         for request in start_requests:
-            request.meta[self.init_request_meta_name] = True
+            request.meta[RmqReaderMiddleware.init_request_meta_name] = True
             yield request
 
     # SPIDER MIDDLEWARE METHOD
@@ -121,34 +126,36 @@ class RmqReaderMiddleware(object):
         pass  # raise Exception('process_spider_input exception')
 
     # SPIDER MIDDLEWARE METHOD
-    def process_spider_output(self, response, result, spider: BaseRmqSpider) -> Iterator[Union[Request, dict]]:
-        if self.message_meta_name in response.request.meta:
-            rmq_message: BaseRmqMessage = response.request.meta[self.message_meta_name]
+    @staticmethod
+    def process_spider_output(response, result, spider: BaseRmqSpider) -> Iterator[Union[Request, dict]]:
+        request = response if isinstance(response, Request) else response.request
+        if RmqReaderMiddleware.message_meta_name in request.meta:
+            rmq_message: BaseRmqMessage = request.meta[RmqReaderMiddleware.message_meta_name]
             delivery_tag = rmq_message.deliver.delivery_tag
 
-            if self.is_active_message(delivery_tag):
+            if RmqReaderMiddleware.is_active_message(delivery_tag):
                 for item_or_request in result:
                     if isinstance(item_or_request, scrapy.Request):
-                        self.request_counter_increment(delivery_tag)
-                        item_or_request.meta[self.message_meta_name] = rmq_message
+                        RmqReaderMiddleware.request_counter_increment(delivery_tag)
+                        item_or_request.meta[RmqReaderMiddleware.message_meta_name] = rmq_message
                         if item_or_request.errback is None:
-                            item_or_request.errback = self.default_errback
+                            item_or_request.errback = RmqReaderMiddleware.default_errback
                     yield item_or_request
 
-                if response in self.failed_response_deque:
+                if response in RmqReaderMiddleware.failed_response_deque:
                     return
 
-                if response.request.meta.get(self.is_http_error_received):
-                    self.nack(rmq_message)
+                if request.meta.get(RmqReaderMiddleware.is_http_error_received):
+                    RmqReaderMiddleware.nack(rmq_message)
                 else:
-                    self.request_counter_decrement(delivery_tag)
-                    self.try_to_acknowledge_message(rmq_message)
+                    RmqReaderMiddleware.request_counter_decrement(delivery_tag)
+                    RmqReaderMiddleware.try_to_acknowledge_message(rmq_message)
             else:
-                self.logger.warning('filtered processing of an inactive message')
-        elif self.init_request_meta_name in response.request.meta:
+                RmqReaderMiddleware.logger.warning('filtered processing of an inactive message')
+        elif RmqReaderMiddleware.init_request_meta_name in request.meta:
             for item_or_request in result:
                 if isinstance(item_or_request, Request):
-                    item_or_request.meta[self.init_request_meta_name] = True
+                    item_or_request.meta[RmqReaderMiddleware.init_request_meta_name] = True
                 yield item_or_request
         else:
             raise Exception('received response without sqs message')
@@ -178,7 +185,7 @@ class RmqReaderMiddleware(object):
         request.meta[self.message_meta_name] = message
         self.request_counter[message.deliver.delivery_tag] = 1
         if request.errback is None:
-            request.errback = self.default_errback
+            request.errback = RmqReaderMiddleware.default_errback
 
         if self.crawler.crawling:
             self.crawler.engine.crawl(request, spider=self.__spider)
@@ -192,19 +199,19 @@ class RmqReaderMiddleware(object):
 
         if self.message_meta_name in meta:
             # TODO: What was I trying to do?
-            self.failed_response_deque.append(response)
+            RmqReaderMiddleware.failed_response_deque.append(response)
             rmq_message: BaseRmqMessage = meta[self.message_meta_name]
-            self.nack(rmq_message)
+            RmqReaderMiddleware.nack(rmq_message)
 
     def on_item_dropped(self, item, response, exception, spider: BaseRmqSpider):
         if self.message_meta_name in response.meta:
             rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
-            self.nack(rmq_message)
+            RmqReaderMiddleware.nack(rmq_message)
 
     def on_item_error(self, item, response, spider: BaseRmqSpider, failure):
         if self.message_meta_name in response.meta:
             rmq_message: BaseRmqMessage = response.meta[self.message_meta_name]
-            self.nack(rmq_message)
+            RmqReaderMiddleware.nack(rmq_message)
 
     def on_request_dropped(self, request, spider: BaseRmqSpider):
         """
@@ -215,28 +222,35 @@ class RmqReaderMiddleware(object):
             delivery_tag = rmq_message.deliver.delivery_tag
             self.logger.warning(f'request_dropped, delivery tag {delivery_tag}')
             self.request_counter_decrement(delivery_tag)
-            self.try_to_acknowledge_message(rmq_message)
+            RmqReaderMiddleware.try_to_acknowledge_message(rmq_message)
 
-    def request_counter_increment(self, delivery_tag: int):
-        self.request_counter[delivery_tag] += 1
+    @staticmethod
+    def request_counter_increment(delivery_tag: int):
+        RmqReaderMiddleware.request_counter[delivery_tag] += 1
 
-    def request_counter_decrement(self, delivery_tag: int):
-        self.request_counter[delivery_tag] -= 1
+    @staticmethod
+    def request_counter_decrement(delivery_tag: int):
+        RmqReaderMiddleware.request_counter[delivery_tag] -= 1
 
-    def try_to_acknowledge_message(self, rmq_message: BaseRmqMessage):
-        self.logger.warning('try for acknowledge - {}'.format(self.request_counter[rmq_message.deliver.delivery_tag]))
-        if self.request_counter[rmq_message.deliver.delivery_tag] == 0:
+    @staticmethod
+    def try_to_acknowledge_message(rmq_message: BaseRmqMessage):
+        RmqReaderMiddleware.logger.warning('try for acknowledge - {}'.format(
+            RmqReaderMiddleware.request_counter[rmq_message.deliver.delivery_tag])
+        )
+        if RmqReaderMiddleware.request_counter[rmq_message.deliver.delivery_tag] == 0:
             rmq_message.ack()
 
-    def nack(self, rmq_message: BaseRmqMessage) -> None:
+    @staticmethod
+    def nack(rmq_message: BaseRmqMessage) -> None:
         rmq_message.nack()
-        self.request_counter.pop(rmq_message.deliver.delivery_tag, None)
+        RmqReaderMiddleware.request_counter.pop(rmq_message.deliver.delivery_tag, None)
 
-    def is_active_message(self, delivery_tag: int) -> bool:
-        return delivery_tag in self.request_counter
+    @staticmethod
+    def is_active_message(delivery_tag: int) -> bool:
+        return delivery_tag in RmqReaderMiddleware.request_counter
 
-    def default_errback(self, failure: Failure, *args, **kwargs):
-        exception = failure.value
-        if isinstance(exception, HttpError):
-            failure.value.response.meta[self.is_http_error_received] = True
-        raise failure
+    @staticmethod
+    def default_errback(failure: Failure, *args, **kwargs):
+        request = get_response_or_request(failure)
+        rmq_message: BaseRmqMessage = request.meta[RmqReaderMiddleware.message_meta_name]
+        rmq_message.nack()

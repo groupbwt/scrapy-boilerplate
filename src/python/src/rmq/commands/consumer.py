@@ -196,11 +196,8 @@ class Consumer(ScrapyCommand):
         """
         stmt = self.build_message_store_stmt(message_body)
         if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(
-                dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}
-            )
-            transaction.execute(str(stmt_compiled))
-            # transaction.execute(str(stmt_compiled), stmt_compiled.params)
+            stmt_compiled = self.prepare_stmt(stmt, mysql.dialect(), use_literal_binds=True)
+            self.execute_stmt(stmt_compiled, transaction, use_tuple_params=True)
         else:
             transaction.execute(stmt)
         return True
@@ -222,6 +219,29 @@ class Consumer(ScrapyCommand):
         return stmt
         """
         raise NotImplementedError
+
+    @staticmethod
+    def prepare_stmt(stmt, current_dialect, use_literal_binds=False):
+        """
+        Use this method to compile statement with passed dialect
+        Pass `use_literal_binds`=True to compile with bind params
+        """
+        if use_literal_binds:
+            stmt_compiled = stmt.compile(dialect=current_dialect, compile_kwargs={"literal_binds": True})
+        else:
+            stmt_compiled = stmt.compile(dialect=current_dialect)
+        return stmt_compiled
+
+    @staticmethod
+    def execute_stmt(stmt, transaction, use_tuple_params=False):
+        """
+        Use this method to stringify statement and execute it with supplied params
+        or pass `use_tuple_params`=True flag to execute with bind params
+        """
+        if use_tuple_params:
+            transaction.execute(str(stmt), tuple(stmt.params.values()))
+        else:
+            transaction.execute(str(stmt))
 
     @staticmethod
     def _compile_and_stringify_statement(stmt):

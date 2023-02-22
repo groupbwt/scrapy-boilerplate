@@ -83,7 +83,7 @@ export default class Crawler {
 
         const connector = new RabbitConnector(settings.rabbit);
         this.logger.debug(`start consuming from "${spider.taskQueueName}" queue`);
-        await connector.consume(spider.taskQueueName, async (channel: Channel, msg: Message): Promise<any> => {
+        await connector.basic_consume(spider.taskQueueName, async (channel: Channel, msg: Message): Promise<any> => {
             try {
                 const messageJson = JSON.parse(msg.content.toString());
                 for await (const item of spider.consume(messageJson)) {

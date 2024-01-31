@@ -2,7 +2,6 @@ import functools
 import json
 import logging
 from enum import Enum
-from optparse import OptionValueError
 
 import pika
 from MySQLdb import OperationalError
@@ -11,13 +10,14 @@ from scrapy.commands import ScrapyCommand
 from scrapy.utils.log import configure_logging
 from scrapy.utils.project import get_project_settings
 from sqlalchemy.dialects import mysql
-from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
+from sqlalchemy.sql import ClauseElement
 from twisted.enterprise import adbapi
 from twisted.internet import reactor
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions
 from rmq.utils.decorators import call_once
+from rmq.utils.sql_expressions import compile_expression
 
 
 class Consumer(ScrapyCommand):
@@ -62,42 +62,33 @@ class Consumer(ScrapyCommand):
 
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
-        parser.add_option(
+        parser.add_argument(
             "-q",
             "--queue",
-            type="str",
+            type=str,
             dest="queue_name",
             help="Queue name to consume messages",
-            action="callback",
-            callback=self.queue_option_callback,
         )
-        parser.add_option(
+        parser.add_argument(
             "-m",
             "--mode",
-            type="choice",
+            type=str,
             choices=self.action_modes,
-            default="action",
+            default=self.CommandModes.ACTION.value,
             dest="mode",
             help="Command run mode: action for one time execution and exit or worker",
         )
-        parser.add_option(
+        parser.add_argument(
             "-p",
             "--prefetch_count",
-            type="int",
+            type=int,
             default=None,
             dest="prefetch_count",
             help="RabbitMQ consumer prefetch count setting",
         )
 
-    def queue_option_callback(self, _option, opt, value, parser):
-        if value is not None and len(str(value).strip()):
-            self.queue_name = value
-            setattr(parser.values, "queue_name", value)
-        else:
-            raise OptionValueError(f"Option {opt} has incorrect value provided")
-
-    def init_queue_name(self, opts):
-        queue_name = getattr(opts, "queue_name", None)
+    def init_queue_name(self, namespace):
+        queue_name = getattr(namespace, "queue_name", None)
         if queue_name is None:
             queue_name = self.queue_name
         if queue_name is None:
@@ -107,15 +98,15 @@ class Consumer(ScrapyCommand):
         self.queue_name = queue_name
         return queue_name
 
-    def init_prefetch_count(self, opts):
-        mode = getattr(opts, "mode", None)
+    def init_prefetch_count(self, namespace):
+        mode = getattr(namespace, "mode", None)
         if mode == Consumer.CommandModes.ACTION.value:
             self.prefetch_count = 1
         thread_pool = reactor.getThreadPool()
         if thread_pool and hasattr(thread_pool, "max"):
             self.prefetch_count = int(thread_pool.max - (thread_pool.max % 4))
-        if opts.prefetch_count is not None and opts.prefetch_count > 0:
-            self.prefetch_count = opts.prefetch_count
+        if namespace.prefetch_count is not None and namespace.prefetch_count > 0:
+            self.prefetch_count = namespace.prefetch_count
         return self.prefetch_count
 
     def init_db_connection_pool(self):
@@ -135,10 +126,10 @@ class Consumer(ScrapyCommand):
             cp_reconnect=True,
         )
 
-    def execute(self, _args, opts):
-        self.init_queue_name(opts)
-        self.init_prefetch_count(opts)
-        self.mode = opts.mode
+    def execute(self, _args, namespace):
+        self.init_queue_name(namespace)
+        self.init_prefetch_count(namespace)
+        self.mode = namespace.mode
 
         self.init_db_connection_pool()
 
@@ -195,12 +186,9 @@ class Consumer(ScrapyCommand):
         Also this method must be overridden in case of target database changed from mysql
         """
         stmt = self.build_message_store_stmt(message_body)
-        if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(
-                dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}
-            )
-            transaction.execute(str(stmt_compiled))
-            # transaction.execute(str(stmt_compiled), stmt_compiled.params)
+        if isinstance(stmt, ClauseElement):
+            # parameter passing method describes here: https://peps.python.org/pep-0249/#id20
+            transaction.execute(*compile_expression(stmt))
         else:
             transaction.execute(stmt)
         return True
@@ -284,7 +272,7 @@ class Consumer(ScrapyCommand):
         )
         c.run()
 
-    def run(self, args, opts):
+    def run(self, args, namespace):
         self.set_logger(self.__class__.__name__, self.project_settings.get("LOG_LEVEL"))
-        reactor.callLater(0, self.execute, args, opts)
+        reactor.callLater(0, self.execute, args, namespace)
         reactor.run()

@@ -90,3 +90,5 @@ if IS_SENTRY_ENABLED:
 configure_logging()
 if datetime(*[int(number) for number in USER_AGENT_RELEASE_DATE.split('-')]) + timedelta(days=180) < datetime.now():
     logging.warning('USER_AGENT is outdated')
+
+REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"

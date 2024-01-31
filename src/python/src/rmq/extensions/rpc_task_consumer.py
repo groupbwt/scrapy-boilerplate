@@ -469,7 +469,7 @@ class RPCTaskConsumer(object):
                     prepared_request = prepared_request.replace(meta=prepared_request_meta)
                 if prepared_request.dont_filter is False:
                     prepared_request = prepared_request.replace(dont_filter=True)
-            self.crawler.engine.crawl(prepared_request, spider=self.__spider)
+            self.crawler.engine.crawl(prepared_request)
 
     def on_message_consumed(self, message):
         self.on_basic_get_message(message)

@@ -3,7 +3,6 @@ import functools
 import json
 import logging
 from enum import Enum
-from optparse import OptionValueError
 
 import pika
 from MySQLdb import OperationalError
@@ -11,13 +10,13 @@ from MySQLdb.cursors import DictCursor
 from scrapy.commands import ScrapyCommand
 from scrapy.utils.log import configure_logging
 from scrapy.utils.project import get_project_settings
-from sqlalchemy.sql.base import Executable as SQLAlchemyExecutable
-from sqlalchemy.dialects import mysql
+from sqlalchemy.sql import ClauseElement
 from twisted.enterprise import adbapi
 from twisted.internet import reactor, defer
 
 from rmq.connections import PikaSelectConnection
 from rmq.utils import RMQConstants, RMQDefaultOptions, TaskStatusCodes
+from rmq.utils.sql_expressions import compile_expression
 
 
 class Producer(ScrapyCommand):
@@ -28,6 +27,7 @@ class Producer(ScrapyCommand):
 
     _DEFAULT_CHUNK_SIZE = 100
     _DEFAULT_CHECK_INTERACT_READY_DELAY = 3  # seconds
+    _DEFAULT_DELAY_TIMEOUT = 15
 
     def __init__(self):
         super().__init__()
@@ -62,56 +62,48 @@ class Producer(ScrapyCommand):
 
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
-        parser.add_option(
+        parser.add_argument(
             "-t",
             "--task_queue",
-            type="str",
+            type=str,
             dest="task_queue_name",
             help="Queue name to produce tasks",
-            action="callback",
-            callback=self.task_queue_option_callback,
         )
-        parser.add_option(
+        parser.add_argument(
             "-r",
             "--reply_to_queue",
-            type="str",
+            type=str,
             dest="reply_to_queue_name",
             help="Queue name to return replies",
-            action="callback",
-            callback=self.reply_to_queue_option_callback,
         )
-        parser.add_option(
+        parser.add_argument(
             "-m",
             "--mode",
-            type="choice",
+            type=str,
             choices=self.action_modes,
-            default="action",
+            default=self.CommandModes.ACTION.value,
             dest="mode",
             help="Command run mode: action for one time execution and exit or worker",
         )
-        parser.add_option(
+        parser.add_argument(
             "-c",
             "--chunk_size",
-            type="int",
+            type=int,
             default=Producer._DEFAULT_CHUNK_SIZE,
             dest="chunk_size",
-            help="number of tasks to produce at one iteration",
+            help="Number of tasks to produce at one iteration",
+        )
+        parser.add_argument(
+            "-d",
+            "--delay",
+            type=int,
+            default=Producer._DEFAULT_DELAY_TIMEOUT,
+            dest="delay",
+            help="Default delay timeout in seconds",
         )
 
-    def task_queue_option_callback(self, _option, opt, value, parser):
-        if value is not None and len(str(value).strip()):
-            self.task_queue_name = value
-            setattr(parser.values, "task_queue_name", value)
-        else:
-            raise OptionValueError(f"Option {opt} has incorrect value provided")
-
-    def reply_to_queue_option_callback(self, _option, _opt, value, parser):
-        if value is not None and len(str(value).strip()):
-            self.reply_to_queue_name = value
-            setattr(parser.values, "reply_to_queue_name", value)
-
-    def init_task_queue_name(self, opts):
-        task_queue_name = getattr(opts, "task_queue_name", None)
+    def init_task_queue_name(self, namespace):
+        task_queue_name = getattr(namespace, "task_queue_name", None)
         if task_queue_name is None:
             task_queue_name = self.task_queue_name
         if task_queue_name is None:
@@ -121,8 +113,8 @@ class Producer(ScrapyCommand):
         self.task_queue_name = task_queue_name
         return task_queue_name
 
-    def init_replies_queue_name(self, opts):
-        reply_to_queue_name = getattr(opts, "reply_to_queue_name", None)
+    def init_replies_queue_name(self, namespace):
+        reply_to_queue_name = getattr(namespace, "reply_to_queue_name", None)
         if reply_to_queue_name is None:
             reply_to_queue_name = self.reply_to_queue_name
         self.reply_to_queue_name = reply_to_queue_name
@@ -143,11 +135,12 @@ class Producer(ScrapyCommand):
             cp_reconnect=True,
         )
 
-    def execute(self, _args, opts):
-        self.init_task_queue_name(opts)
-        self.init_replies_queue_name(opts)
-        self.mode = opts.mode
-        self.chunk_size = opts.chunk_size
+    def execute(self, _args, namespace):
+        self.init_task_queue_name(namespace)
+        self.init_replies_queue_name(namespace)
+        self.mode = namespace.mode
+        self.chunk_size = namespace.chunk_size
+        self.default_delay_timeout = namespace.delay
 
         self.init_db_connection_pool()
 
@@ -190,7 +183,7 @@ class Producer(ScrapyCommand):
 
     def _delay(self, current_count=None) -> int:
         if current_count is None:
-            return 60
+            return self.default_delay_timeout
         return {
             0 <= current_count < 5000: 0,
             5000 <= current_count < 15000: 15,
@@ -207,10 +200,9 @@ class Producer(ScrapyCommand):
         if chunk_size is None:
             chunk_size = self.chunk_size
         stmt = self.build_task_query_stmt(chunk_size)
-        if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True}, dialect=mysql.dialect())
-            transaction.execute(str(stmt_compiled))
-            # transaction.execute(str(stmt_compiled), stmt_compiled.params)
+        if isinstance(stmt, ClauseElement):
+            # parameter passing method describes here: https://peps.python.org/pep-0249/#id20
+            transaction.execute(*compile_expression(stmt))
         else:
             transaction.execute(stmt)
         if chunk_size == 1:
@@ -239,10 +231,9 @@ class Producer(ScrapyCommand):
         then this method must be overridden with pass statement
         """
         stmt = self.build_task_update_stmt(db_task, status)
-        if isinstance(stmt, SQLAlchemyExecutable):
-            stmt_compiled = stmt.compile(compile_kwargs={"literal_binds": True})
-            transaction.execute(str(stmt_compiled))
-            # transaction.execute(str(stmt_compiled), stmt_compiled.params)
+        if isinstance(stmt, ClauseElement):
+            # parameter passing method describes here: https://peps.python.org/pep-0249/#id20
+            transaction.execute(*compile_expression(stmt))
         else:
             transaction.execute(stmt)
 
@@ -331,12 +322,12 @@ class Producer(ScrapyCommand):
             parameters,
             queue_name,
             owner=self,
-            options={"enable_delivery_confirmations": True, "prefetch_count": 1,},
+            options={"enable_delivery_confirmations": True, "prefetch_count": 1, },
             is_consumer=False,
         )
         c.run()
 
-    def run(self, args, opts):
+    def run(self, args, namespace):
         self.set_logger(self.__class__.__name__, self.project_settings.get("LOG_LEVEL"))
-        reactor.callLater(0, self.execute, args, opts)
+        reactor.callLater(0, self.execute, args, namespace)
         reactor.run()

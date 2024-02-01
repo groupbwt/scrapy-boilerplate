@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "YOUR_PROJECT_NAME"
-version = "2.2.0"
+version = "2.3.0"
 description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.11"
 alembic = "^1.3.3"
 brotli = "^1.0.7"
 pika = "^1.1.0"
@@ -14,10 +14,10 @@ sqlalchemy = "^1.3.13"
 w3lib = "^1.21.0"
 python-dotenv = "^0.10.5"
 dotenv-linter = "^0.1.5"
-mysqlclient = "^1.4.6"
+mysqlclient = "^2.2.1"
 scrapy-sentry-sdk = "^0.3.0"
 furl = "^2.1.0"
-scrapy = "2.5.1"
+scrapy = "^2.11.0"
 dateparser = "^0.7.6"
 paramiko = "^2.7.2"
 pydantic = "^1.8.1"

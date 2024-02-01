@@ -2,6 +2,7 @@ import datetime
 import functools
 import json
 import logging
+from argparse import Namespace
 from enum import Enum
 
 import pika
@@ -102,8 +103,8 @@ class Producer(ScrapyCommand):
             help="Default delay timeout in seconds",
         )
 
-    def init_task_queue_name(self, namespace):
-        task_queue_name = getattr(namespace, "task_queue_name", None)
+    def init_task_queue_name(self, opts: Namespace):
+        task_queue_name = getattr(opts, "task_queue_name", None)
         if task_queue_name is None:
             task_queue_name = self.task_queue_name
         if task_queue_name is None:
@@ -113,8 +114,8 @@ class Producer(ScrapyCommand):
         self.task_queue_name = task_queue_name
         return task_queue_name
 
-    def init_replies_queue_name(self, namespace):
-        reply_to_queue_name = getattr(namespace, "reply_to_queue_name", None)
+    def init_replies_queue_name(self, opts: Namespace):
+        reply_to_queue_name = getattr(opts, "reply_to_queue_name", None)
         if reply_to_queue_name is None:
             reply_to_queue_name = self.reply_to_queue_name
         self.reply_to_queue_name = reply_to_queue_name
@@ -135,12 +136,12 @@ class Producer(ScrapyCommand):
             cp_reconnect=True,
         )
 
-    def execute(self, _args, namespace):
-        self.init_task_queue_name(namespace)
-        self.init_replies_queue_name(namespace)
-        self.mode = namespace.mode
-        self.chunk_size = namespace.chunk_size
-        self.default_delay_timeout = namespace.delay
+    def execute(self, _args: list[str], opts: Namespace):
+        self.init_task_queue_name(opts)
+        self.init_replies_queue_name(opts)
+        self.mode = opts.mode
+        self.chunk_size = opts.chunk_size
+        self.default_delay_timeout = opts.delay
 
         self.init_db_connection_pool()
 
@@ -327,7 +328,7 @@ class Producer(ScrapyCommand):
         )
         c.run()
 
-    def run(self, args, namespace):
+    def run(self, args: list[str], opts: Namespace):
         self.set_logger(self.__class__.__name__, self.project_settings.get("LOG_LEVEL"))
-        reactor.callLater(0, self.execute, args, namespace)
+        reactor.callLater(0, self.execute, args, opts)
         reactor.run()

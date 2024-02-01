@@ -1,6 +1,7 @@
 import functools
 import json
 import logging
+from argparse import Namespace
 from enum import Enum
 
 import pika
@@ -87,8 +88,8 @@ class Consumer(ScrapyCommand):
             help="RabbitMQ consumer prefetch count setting",
         )
 
-    def init_queue_name(self, namespace):
-        queue_name = getattr(namespace, "queue_name", None)
+    def init_queue_name(self, opts: Namespace):
+        queue_name = getattr(opts, "queue_name", None)
         if queue_name is None:
             queue_name = self.queue_name
         if queue_name is None:
@@ -98,15 +99,15 @@ class Consumer(ScrapyCommand):
         self.queue_name = queue_name
         return queue_name
 
-    def init_prefetch_count(self, namespace):
-        mode = getattr(namespace, "mode", None)
-        if mode == Consumer.CommandModes.ACTION.value:
+    def init_prefetch_count(self, opts: Namespace):
+        mode = getattr(opts, "mode", None)
+        if mode == self.CommandModes.ACTION.value:
             self.prefetch_count = 1
         thread_pool = reactor.getThreadPool()
         if thread_pool and hasattr(thread_pool, "max"):
             self.prefetch_count = int(thread_pool.max - (thread_pool.max % 4))
-        if namespace.prefetch_count is not None and namespace.prefetch_count > 0:
-            self.prefetch_count = namespace.prefetch_count
+        if opts.prefetch_count is not None and opts.prefetch_count > 0:
+            self.prefetch_count = opts.prefetch_count
         return self.prefetch_count
 
     def init_db_connection_pool(self):
@@ -126,10 +127,10 @@ class Consumer(ScrapyCommand):
             cp_reconnect=True,
         )
 
-    def execute(self, _args, namespace):
-        self.init_queue_name(namespace)
-        self.init_prefetch_count(namespace)
-        self.mode = namespace.mode
+    def execute(self, _args: list[str], opts: Namespace):
+        self.init_queue_name(opts)
+        self.init_prefetch_count(opts)
+        self.mode = opts.mode
 
         self.init_db_connection_pool()
 
@@ -272,7 +273,7 @@ class Consumer(ScrapyCommand):
         )
         c.run()
 
-    def run(self, args, namespace):
+    def run(self, args: list[str], opts: Namespace):
         self.set_logger(self.__class__.__name__, self.project_settings.get("LOG_LEVEL"))
-        reactor.callLater(0, self.execute, args, namespace)
+        reactor.callLater(0, self.execute, args, opts)
         reactor.run()

@@ -29,5 +29,8 @@ def compile_expression(expression: ClauseElement, dialect: Dialect = mysql.diale
         tuple[str, tuple[...]]: Complied and stringified expression and tuple of parameters.
 
     """
-    expression_compiled = expression.compile(dialect=dialect)
-    return str(expression_compiled), tuple(expression_compiled.params.values())
+    expression_compiled = expression.compile(dialect=dialect, compile_kwargs={"render_postcompile": True})
+    params = tuple(expression_compiled.params.values())
+    if position_tup := getattr(expression_compiled, "positiontup", []):
+        params = tuple(expression_compiled.params[pos] for pos in position_tup)
+    return str(expression_compiled), params

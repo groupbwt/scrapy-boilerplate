@@ -25,7 +25,7 @@ class Producer(ScrapyCommand):
         if reactor._stopped:
             self.logger.critical("PRODUCER ALREADY CLOSED")
             return
-        self.reactor.stop()
+        reactor.stop()
 
     class CommandModes(Enum):
         ACTION = "action"

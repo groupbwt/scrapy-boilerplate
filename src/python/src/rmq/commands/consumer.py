@@ -26,7 +26,7 @@ class Consumer(ScrapyCommand):
         if reactor._stopped:
             self.logger.critical("CONSUMER ALREADY CLOSED")
             return
-        self.reactor.stop()
+        reactor.stop()
 
     class CommandModes(Enum):
         ACTION = "action"

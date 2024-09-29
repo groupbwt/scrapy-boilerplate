@@ -5,7 +5,7 @@ from typing import List
 
 import pika
 from pika.exceptions import ChannelWrongStateError, ConnectionWrongStateError
-from twisted.internet import reactor, threads
+from twisted.internet import reactor
 
 from rmq.utils.decorators import log_current_thread
 
@@ -391,6 +391,7 @@ class PikaSelectConnection:
                 )
 
             self.connection.ioloop.start()
+        reactor.callFromThread(reactor.stop)
         logger.info("Stopped")
 
     def stop_from_reactor_event(self):

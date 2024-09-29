@@ -22,6 +22,12 @@ from rmq.utils.sql_expressions import compile_expression
 
 
 class Consumer(ScrapyCommand):
+    def raise_close_spider(self):
+        if reactor._stopped:
+            self.logger.critical("CONSUMER ALREADY CLOSED")
+            return
+        self.reactor.stop()
+
     class CommandModes(Enum):
         ACTION = "action"
         WORKER = "worker"

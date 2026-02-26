@@ -22,14 +22,10 @@ class Task:
         self.exception = None
 
         self.__ack_callback = (
-            ack_callback
-            if ack_callback is not None and callable(ack_callback)
-            else self.__empty_callback
+            ack_callback if ack_callback is not None and callable(ack_callback) else self.__empty_callback
         )
         self.__nack_callback = (
-            nack_callback
-            if nack_callback is not None and callable(nack_callback)
-            else self.__empty_callback
+            nack_callback if nack_callback is not None and callable(nack_callback) else self.__empty_callback
         )
 
         self.scheduled_requests = 0
@@ -94,6 +90,15 @@ class Task:
         if ignore_zero is True and self.scheduled_requests == 0:
             return False
         return self.scheduled_requests == (self.success_responses + self.failed_responses)
+
+    def get_reply_payload(self):
+        return {
+            "status": self.status,
+            "exception": self.exception,
+        }
+
+    def has_pending_items(self):
+        return self.scheduled_items > (self.scraped_items + self.dropped_items + self.error_items)
 
     def __repr__(self):
         return json.dumps(

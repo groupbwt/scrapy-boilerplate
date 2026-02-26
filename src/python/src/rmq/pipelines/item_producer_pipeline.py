@@ -135,7 +135,7 @@ class ItemProducerPipeline:
             )
             self.rmq_connection.connection.ioloop.add_callback_threadsafe(cb)
 
-    def process_item(self, item, spider):
+    def process_item(self, item, spider=None):
         """Invoked when item is processed"""
         if isinstance(item, RMQItem):
             if self._can_interact:

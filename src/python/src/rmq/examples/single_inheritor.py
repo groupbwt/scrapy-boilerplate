@@ -5,7 +5,7 @@ from scrapy.core.downloader.handlers.http11 import TunnelError
 
 from rmq.items import RMQItem
 from rmq.pipelines import ItemProducerPipeline
-from rmq.spiders import TaskToSingleResultSpider
+from rmq.spiders import TaskBaseSpider
 from rmq.utils import get_import_full_name
 from rmq.utils.decorators import rmq_callback, rmq_errback
 
@@ -14,7 +14,7 @@ class MetaDescriptionItem(RMQItem):
     description = scrapy.Field()
 
 
-class SingleInheritor(TaskToSingleResultSpider):
+class SingleInheritor(TaskBaseSpider):
     name = "single_inheritor_example"
 
     custom_settings = {"ITEM_PIPELINES": {get_import_full_name(ItemProducerPipeline): 310,}}

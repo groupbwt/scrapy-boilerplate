@@ -32,6 +32,9 @@ class BaseCommand(ScrapyCommand, ABC):
         if not getattr(self, "logger", None):
             self.logger = logging.getLogger(name=self.__class__.__name__)
 
+    def run(self, args, opts):
+        raise NotImplementedError("This is a base class")
+
     def _decorate_run(self):
         def decorator(function):
             def wrapper(*args, **kwargs):

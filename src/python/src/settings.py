@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
+from scrapy.utils.reactor import install_reactor
 import logging
 import os
 from datetime import datetime, timedelta
-from distutils.util import strtobool
 from typing import Dict
 
 from dotenv import load_dotenv
 from scrapy.utils.log import configure_logging
+
+from utils.strtobool import strtobool
+
 
 load_dotenv()
 
@@ -20,8 +23,10 @@ PROXY = os.getenv("PROXY", "")
 PROXY_AUTH = os.getenv("PROXY_AUTH", "")
 PROXY_ENABLED = strtobool(os.getenv("PROXY_ENABLED", "False"))
 
-USER_AGENT_RELEASE_DATE = '2021-11-01'
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+USER_AGENT_RELEASE_DATE = "2021-11-01"
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
+)
 
 CONCURRENT_REQUESTS = int(os.getenv("CONCURRENT_REQUESTS", "16"))
 CONCURRENT_REQUESTS_PER_DOMAIN = int(os.getenv("CONCURRENT_REQUESTS_PER_DOMAIN", "8"))
@@ -69,9 +74,7 @@ try:
 except ValueError:
     HTTPCACHE_ENABLED = False
 
-HTTPCACHE_IGNORE_HTTP_CODES = list(
-    map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s))
-)
+HTTPCACHE_IGNORE_HTTP_CODES = list(map(int, (s for s in os.getenv("HTTPCACHE_IGNORE_HTTP_CODES", "").split(",") if s)))
 
 EXTENSIONS = {}
 
@@ -88,7 +91,9 @@ if IS_SENTRY_ENABLED:
     EXTENSIONS["scrapy_sentry_sdk.extensions.SentryLogging"] = 1
 
 configure_logging()
-if datetime(*[int(number) for number in USER_AGENT_RELEASE_DATE.split('-')]) + timedelta(days=180) < datetime.now():
-    logging.warning('USER_AGENT is outdated')
+if datetime.strptime(USER_AGENT_RELEASE_DATE, "%Y-%m-%d") + timedelta(days=180) < datetime.now():
+    logging.warning("USER_AGENT is outdated")
 
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
+TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+install_reactor(TWISTED_REACTOR)

@@ -27,8 +27,8 @@ ln -s "$1/logs" src/typescript/src
 # install dependencies
 # python
 cd "$release_dir/src/python/src"
-python3.8 -m poetry install
-python3.8 -m poetry run alembic upgrade head
+python3.12 -m poetry install
+python3.12 -m poetry run alembic upgrade head
 # typescript
 cd "$release_dir/src/typescript/src"
 npm install

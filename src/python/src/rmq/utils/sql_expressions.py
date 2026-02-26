@@ -18,7 +18,7 @@ def stringify_expression(expression: ClauseElement, dialect: Dialect = mysql.dia
     return str(expression_compiled)
 
 
-def compile_expression(expression: ClauseElement, dialect: Dialect = mysql.dialect()) -> tuple[str, tuple[...]]:
+def compile_expression(expression: ClauseElement, dialect: Dialect = mysql.dialect()) -> tuple[str, tuple]:
     """Complies SQLAlchemy expression without binds parameters.
 
     Args:

@@ -5,7 +5,7 @@ from typing import List
 
 import pika
 from pika.exceptions import ChannelWrongStateError, ConnectionWrongStateError
-from twisted.internet import reactor, threads
+from twisted.internet import reactor
 
 from rmq.utils.decorators import log_current_thread
 
@@ -323,7 +323,12 @@ class PikaSelectConnection:
         self._channel.basic_get(self.queue_name, self.on_basic_get_message, auto_ack=False)
 
     def on_basic_get_message(self, channel, method, properties, body):
-        msg_object = {"channel": channel, "method": method, "properties": properties, "body": body}
+        msg_object = {
+            "channel": channel,
+            "method": method,
+            "properties": properties,
+            "body": body,
+        }
         self.__owner_call_on_basic_get_msg_handler(msg_object)
 
     def on_basic_get_empty(self, _method):
@@ -337,7 +342,12 @@ class PikaSelectConnection:
 
     @log_current_thread
     def on_message(self, channel, method, properties, body):
-        msg_object = {"channel": channel, "method": method, "properties": properties, "body": body}
+        msg_object = {
+            "channel": channel,
+            "method": method,
+            "properties": properties,
+            "body": body,
+        }
         self.__owner_call_on_msg_consumed_handler(msg_object)
 
     @log_current_thread
@@ -396,7 +406,8 @@ class PikaSelectConnection:
     def stop_from_reactor_event(self):
         logger.debug("stop called from reactor event")
         if self.options.get(
-            "enable_delivery_confirmations", self._DEFAULT_OPTIONS["enable_delivery_confirmations"]
+            "enable_delivery_confirmations",
+            self._DEFAULT_OPTIONS["enable_delivery_confirmations"],
         ) and len(self._deliveries):
             self._current_graceful_stop_attempts_count += 1
             if self._current_graceful_stop_attempts_count < self._MAX_GRACEFUL_STOP_ATTEMPTS:

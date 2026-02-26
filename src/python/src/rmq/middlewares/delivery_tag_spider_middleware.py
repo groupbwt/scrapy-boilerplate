@@ -1,11 +1,13 @@
+from scrapy.utils.asyncgen import as_async_generator
 from rmq.items import RMQItem
 from rmq.utils import RMQConstants
 
 
 class DeliveryTagSpiderMiddleware:
-    def process_spider_output(self, response, result, spider):
+    async def process_spider_output(self, response, result, spider=None):
         delivery_tag_key = RMQConstants.DELIVERY_TAG_META_KEY.value
-        for result_item in result:
+
+        async for result_item in as_async_generator(result):
             if isinstance(result_item, RMQItem):
                 response_delivery_tag = response.meta.get(delivery_tag_key, None)
                 if response_delivery_tag is not None and (

@@ -5,31 +5,33 @@ description = ""
 authors = ["Kristobal Junta <junta.kristobal@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-alembic = "^1.3.3"
+python = "^3.12"
+alembic = "^1.18.3"
 brotli = "^1.0.7"
-pika = "^1.1.0"
+pika = "^1.3.2"
 requests = "^2.22.0"
-sqlalchemy = "^1.3.13"
+sqlalchemy = "^2.0.46"
 w3lib = "^1.21.0"
-python-dotenv = "^0.10.5"
-dotenv-linter = "^0.1.5"
-mysqlclient = "^2.2.1"
+python-dotenv = "^1.2.1"
+dotenv-linter = "^0.7.0"
+mysqlclient = "^2.2.7"
 scrapy-sentry-sdk = "^0.3.0"
 furl = "^2.1.0"
-scrapy = "^2.11.0"
+scrapy = "^2.14.1"
 dateparser = "^0.7.6"
 paramiko = "^2.7.2"
-pydantic = "^1.8.1"
+pydantic = "^2.12.5"
 pytest = "^6.2.3"
 
-[tool.poetry.dev-dependencies]
-scrapy-new = "^0.2"
-black = "^19.10b0"
-pylint = "^2.4.4"
-pre-commit = "^2.0.1"
-isort = "^4.3.21"
+[tool.poetry.group.dev.dependencies] #poetry.group.dev.dependencies
+scrapy-new = "^0.2.1"
+black = "^26.1.0"
+pylint = "^4.0.4"
+pre-commit = "^4.5.1"
+isort = "^7.0.0"
 pika-stubs = "^0.1.3"
+mypy = "1.7.1"
+ruff = "^0.15.0"
 
 [tool.black]
 line-length = 99
@@ -38,5 +40,22 @@ include = '\.pyi?$'
 exclude = '/(\.eggs|\.git|\.venv|\.scrapy)/'
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+mypy_path = "src/python/src"
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scrapy.*",
+    "furl.*",
+    "pika.*",
+    "MySQLdb.*",
+    "apscheduler.*",
+    "apscheduler.schedulers.*",
+    "apscheduler.triggers.*",
+]
+ignore_missing_imports = true

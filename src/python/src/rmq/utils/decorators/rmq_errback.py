@@ -39,9 +39,7 @@ def rmq_errback(errback_method):
                     )
                 if isinstance(response_or_failure, Failure):
                     if hasattr(response_or_failure, "request"):
-                        delivery_tag = response_or_failure.request.meta.get(
-                            delivery_tag_meta_key, None
-                        )
+                        delivery_tag = response_or_failure.request.meta.get(delivery_tag_meta_key, None)
                         try:
                             iter(errback_result)
                             for errback_result_item in errback_result:

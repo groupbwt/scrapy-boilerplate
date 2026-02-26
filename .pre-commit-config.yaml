@@ -18,6 +18,7 @@ repos:
     rev: master
     hooks:
       - id: mypy
+        args: [--config-file, src/python/src/pyproject.toml]
         additional_dependencies: [tokenize-rt]
   - repo: https://github.com/wemake-services/dotenv-linter
     rev: master

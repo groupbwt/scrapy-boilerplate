@@ -7,6 +7,9 @@ export default interface SettingsProperties {
     proxyEnabled?: boolean;
     proxy?: ProxySettings;
 
+    imapProxyEnabled?: boolean;
+    imapProxy?: ProxySettings;
+
     rabbit?: RabbitSettings;
 
     browserOptions?: LaunchOptions;
@@ -14,7 +17,7 @@ export default interface SettingsProperties {
     captchaSolverEnabled?: boolean;
     captchaSolverApiKey?: string;
 
-    navigationTimeout?: millisecond,
+    navigationTimeout?: millisecond;
 
-    pipelines?: Array<object>
+    pipelines?: Array<object>;
 }

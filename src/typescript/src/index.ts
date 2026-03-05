@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 import Crawler from "./core/crawler";
 import Argv from "./interfaces/argv";
-import { loadDotEnv } from "./utils/laod-dot-env";
+import { loadDotEnv } from "./utils/load-dot-env";
 import { Logger } from "./utils/logger";
 
 yargs.command('crawl <spiderName>', 'run the spider', (yargs) => {

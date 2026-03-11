@@ -79,6 +79,37 @@ export class RabbitConnector {
         }
     }
 
+    public async basic_consume(queueName: string, callback: (channel: Channel, message: Message) => any): Promise<void> {
+        const channel = await this.getChannel(queueName);
+        const wrapper = async (msg: Message): Promise<any> => {
+            await callback(channel, msg!);
+        };
+        let loggerCounter = 0;
+        let loggerStartConsume = Math.floor(Date.now() / 1000);
+        let loggerSecond = loggerStartConsume;
+
+        try {
+            await channel.consume(queueName, receivedMessage => {
+                this.logger.info(`received message with delivery tag ${receivedMessage!.fields.deliveryTag}`);
+                wrapper(receivedMessage!);
+                loggerCounter = 0;
+                loggerStartConsume = loggerSecond;
+            })
+            while (true){
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                if (loggerCounter % 30 === 0) {
+                    await this.logger.debug(`no messages for more than ${loggerSecond - loggerStartConsume} seconds`);
+                    loggerCounter = 1;
+                } else {
+                    loggerCounter++;
+                    loggerSecond = Math.floor(Date.now() / 1000);
+                }
+            }
+        } finally {
+            await this.close();
+        }
+    }
+
     public async close(forceClose: boolean = false) {
         if (RabbitConnector.connection !== null) {
             const channels: RmqChannelWrapper[] = RabbitConnector.channels.filter(
